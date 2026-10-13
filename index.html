@@ -77,6 +77,8 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
 .mlTable th,.mlTable td{padding:.65rem;text-align:left;border-bottom:1px solid var(--bd);vertical-align:top}.mlTable th{background:var(--cv)}
 #mlReport{display:flex;flex-direction:column;gap:1rem}#mlReport ul{padding-left:1.2rem}#mlExtras p{line-height:1.6}
 @media print{header,footer,#creditosModal,main> :not(#mlExtras),#mlExtras> :not(#mlReport),.mlPagination{display:none!important}body,main,#mlExtras{display:block!important;background:#fff!important;color:#000!important;max-width:none!important;padding:0!important;border:0!important}#mlReport *{color:#000!important;background:#fff!important}table{font-size:9pt!important}thead{display:table-header-group}tr{break-inside:avoid}}
+.ggbbox{width:100%;height:300px;border:2px solid var(--bd);border-radius:12px;overflow:hidden;background:#fff}
+.gg-note{font-size:.8rem;color:var(--mu);text-align:center}
 </style>
 </head>
 <body>
@@ -572,7 +574,7 @@ const MODS=[
  rod:8,gens:INT_GENS}
 ];
 
-const SOON=[{ano:6,ic:'🧊',nome:'Sólidos geométricos'},{ano:7,ic:'✖️',nome:'Regras de sinais'},{ano:7,ic:'🔤',nome:'Linguagem algébrica'}];
+const SOON=[{ano:7,ic:'✖️',nome:'Regras de sinais'},{ano:7,ic:'🔤',nome:'Linguagem algébrica'}];
 
 
 /* ===== SÓLIDOS GEOMÉTRICOS ===== */
@@ -602,6 +604,70 @@ if(!MODS.some(m=>m.id==='solidos')){
     rod:8,gens:SOLID_GENS})
 }
 
+/* ===== SÓLIDOS 3D COM GEOGEBRA ===== */
+const gContagem=()=>{const n=rnd(3,8),nm=['','','','triangular','quadrangular','pentagonal','hexagonal','heptagonal','octogonal'][n],
+ t=pick(['faces','arestas','vértices']),F=n+2,A=3*n,Vt=2*n;
+ const D={faces:{ok:F,bad:[[n,'contou só as faces laterais','Some também as duas bases.'],[Vt,'confundiu faces com vértices','Vértices são os cantos do sólido.'],[A,'confundiu faces com arestas','Arestas são os segmentos onde duas faces se encontram.']]},
+  arestas:{ok:A,bad:[[Vt,'confundiu arestas com vértices',`Cada base tem ${n} arestas e há ${n} arestas laterais.`],[F,'confundiu arestas com faces','Arestas são os segmentos onde as faces se encontram.'],[n,'contou só as arestas de uma base','São as duas bases mais as arestas laterais.']]},
+  'vértices':{ok:Vt,bad:[[n,'contou só uma base',`Há duas bases, cada uma com ${n} vértices.`],[A,'confundiu vértices com arestas','Vértices são os cantos; arestas são os segmentos.'],[F,'confundiu vértices com faces','Vértices são os pontos onde as arestas se encontram.']]}}[t];
+ return mk({q:`Um prisma de base ${nm} tem quantas ${t}? Gire o sólido no simulador e conte.`,ok:String(D.ok),bad:D.bad.map(b=>[String(b[0]),b[1],b[2]]),fill:()=>String(rnd(2,40)),
+  h:['Gire o sólido e conte com calma, uma base de cada vez.',t==='faces'?`Há ${n} faces laterais e 2 bases.`:t==='arestas'?`Cada base tem ${n} arestas, mais ${n} arestas laterais.`:`Cada base tem ${n} vértices e há 2 bases.`],
+  e:`Prisma ${nm}: ${F} faces, ${A} arestas e ${Vt} vértices.`,s:{tipo:2,n,a:4,c:5}})};
+SOLID_GENS[1].push(gContagem);SOLID_GENS[2].push(gContagem);
+SOLID_GENS[3].push(()=>{const n=rnd(3,8),Vt=2*n,A=3*n,F=n+2;
+ return mk({q:`Um poliedro convexo tem ${Vt} vértices e ${A} arestas. Quantas faces ele tem? (Relação de Euler: V − A + F = 2)`,ok:String(F),
+  bad:[[String(A-Vt),'esqueceu o 2 da relação de Euler','V − A + F = 2, então F = 2 − V + A.'],[String(A+Vt+2),'somou em vez de usar V − A + F = 2','Na relação de Euler, as arestas entram subtraindo.'],[String(Vt+A-2),'trocou os sinais da relação','Isole F em V − A + F = 2.']],
+  fill:()=>String(rnd(4,30)),h:['A relação de Euler é V − A + F = 2.',`Substitua: ${Vt} − ${A} + F = 2. Quanto vale F?`],e:`${Vt} − ${A} + F = 2, então F = 2 − ${Vt} + ${A} = ${F}.`,s:{tipo:2,n,a:4,c:5}})});
+(()=>{const m=MODS.find(x=>x.id==='solidos');if(!m)return;
+ m.gg=true;m.reset={n:3};m.sub='Cubo, prismas e Euler · 3D interativo';
+ m.ctl.push({k:'n',l:'Lados da base (prisma)',min:3,max:8,v:3});
+ const f0=m.fix,i0=m.info;
+ m.fix=v=>{f0(v);v.n=Math.min(8,Math.max(3,Math.round(v.n||3)))};
+ m.info=v=>v.tipo===2?`Prisma de base regular com ${v.n} lados · aresta da base ${v.a} cm · altura ${v.c} cm`:i0(v);
+})();
+
+const GG={ok:false,app:null,key:''};
+function ggCarregar(cb){let feito=false;const fim=r=>{if(!feito){feito=true;cb(r)}};
+ if(window.GGBApplet)return fim(true);
+ const s=document.createElement('script');s.src='https://www.geogebra.org/apps/deployggb.js';
+ s.onload=()=>fim(!!window.GGBApplet);s.onerror=()=>fim(false);document.head.appendChild(s);
+ setTimeout(()=>fim(!!window.GGBApplet),10000)}
+function ggNota(t){const n=$('gg-note');if(n)n.textContent=t}
+function ggIniciar(){
+ GG.ok=false;GG.app=null;GG.key='';const id=cur.id;ggNota('⏳ Carregando o 3D…');
+ ggCarregar(ok=>{
+  const box=$('ggb');if(!cur||cur.id!==id||!box)return;
+  if(!ok){ggNota('📡 3D indisponível agora (sem internet?). Usando o desenho simples.');return}
+  const w=Math.max(280,Math.floor((cv&&cv.getBoundingClientRect().width)||320));
+  try{new GGBApplet({appName:'3d',width:w,height:300,showToolBar:false,showAlgebraInput:false,showMenuBar:false,showResetIcon:false,
+   enableRightClick:false,enableLabelDrags:false,showZoomButtons:false,language:'pt',
+   appletOnLoad:api=>{if(!cur||cur.id!==id)return;GG.app=api;GG.ok=true;box.style.cssText='';cv.style.display='none';
+    ggNota('🧊 Arraste para girar o sólido · role (ou use dois dedos) para aproximar.');desenhar()}},true).inject('ggb')}
+  catch(e){ggNota('📡 3D indisponível. Usando o desenho simples.')}
+ });
+}
+function ggCena(v){
+ const g=GG.app;if(!g)return;const key=[v.tipo,v.a,v.b,v.c,v.n].join();if(key===GG.key)return;
+ try{
+  const n=v.n||3;let pts,h;
+  if(v.tipo===0){pts=[[0,0],[v.a,0],[v.a,v.a],[0,v.a]];h=v.a}
+  else if(v.tipo===1){pts=[[0,0],[v.a,0],[v.a,v.b],[0,v.b]];h=v.c}
+  else{const R=v.a/(2*Math.sin(Math.PI/n));pts=Array.from({length:n},(_,i)=>[R*Math.cos(2*Math.PI*i/n),R*Math.sin(2*Math.PI*i/n)]);h=v.c}
+  const f=x=>(+x).toFixed(3),xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),lo=Math.min(0,...xs,...ys)-1,hi=Math.max(...xs,...ys,h)+1;
+  if(g.exists('base'))g.deleteObject('base');
+  g.evalCommand('base=Polygon('+pts.map(p=>`(${f(p[0])},${f(p[1])},0)`).join(',')+')');
+  g.evalCommand(`solido=Prism(base,${h})`);
+  g.getAllObjectNames().forEach(nm=>{const t=String(g.getObjectType(nm));
+   try{g.setLabelVisible(nm,false);
+    if(/point/i.test(t)){g.setColor(nm,'#0f172a');g.setPointSize(nm,3)}
+    else if(/segment/i.test(t)){g.setColor(nm,'#0f172a');g.setLineThickness(nm,4)}
+    else if(/polygon|polyhedron/i.test(t)){g.setColor(nm,'#e69f00');g.setFilling(nm,.35)}}catch(e){}});
+  try{g.evalCommand('ShowAxes(3,false)');g.evalCommand('ShowGrid(3,false)')}catch(e){}
+  try{g.setCoordSystem(lo,hi,lo,hi,Math.min(-1,lo),hi)}catch(e){}
+  GG.key=key;
+ }catch(e){console.warn('GeoGebra:',e)}
+}
+
 /* ===== TELA INICIAL ===== */
 function home(){
   cur=null;try{if('speechSynthesis' in window)window.speechSynthesis.cancel()}catch(e){}
@@ -618,11 +684,11 @@ function home(){
 
 /* ===== LABORATÓRIO ===== */
 let cv,cx,W,H;
-function abrir(id){
+function abrir(id){GG.ok=false;GG.app=null;
   cur=MODS.find(m=>m.id===id);qi=0;V={};cur.ctl.forEach(c=>V[c.k]=c.v);
   niv=cur.gens?(S.niv[cur.id]||1):1;seqOk=0;seqErr=0;ultG=-1;sessErr={};
   $('main').innerHTML=`<div class="lab">
-   <section class="box" aria-label="Simulador"><h2>${cur.ic} Simulador: ${cur.nome}</h2><canvas id="cv" role="img" aria-label="Simulador visual de ${cur.nome}"></canvas>
+   <section class="box" aria-label="Simulador"><h2>${cur.ic} Simulador: ${cur.nome}</h2><canvas id="cv" role="img" aria-label="Simulador visual de ${cur.nome}"></canvas>${cur.gg?'<div id="ggb" class="ggbbox" style="position:absolute;visibility:hidden"></div><p id="gg-note" class="gg-note" aria-live="polite"></p>':''}
     <div class="info" id="info" aria-live="polite"></div>
     ${cur.ctl.map(c=>`<div class="sl"><label for="r_${c.k}"><span>${c.l}</span><span id="o_${c.k}"></span></label><input type="range" id="r_${c.k}" min="${c.min}" max="${c.max}" value="${c.v}" oninput="mexer()"></div>`).join('')}
    </section>
@@ -630,7 +696,7 @@ function abrir(id){
     <p class="qt" id="qt"></p><div class="opts" id="qo"></div><div class="fb" id="fb" role="status" aria-live="polite"></div>
     <div style="display:flex;gap:.6rem"><button class="btn" onclick="ler()" aria-label="Ler a questão em voz alta">🔊</button><button class="go" id="nx" style="flex:1" onclick="prox()" disabled>Próxima questão ➔</button></div>
    </section></div>`;
-  cv=$('cv');cx=cv.getContext('2d');ajustar();questao();
+  cv=$('cv');cx=cv.getContext('2d');ajustar();questao();if(cur.gg)ggIniciar();
 }
 function ajustar(){if(!cv)return;const d=devicePixelRatio||1,r=cv.getBoundingClientRect();W=r.width;H=260;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0);desenhar()}
 addEventListener('resize',ajustar);
@@ -640,9 +706,10 @@ function cores(){const g=getComputedStyle(document.body),f=n=>g.getPropertyValue
 function desenhar(){
   if(!cur)return;if(cur.fix)cur.fix(V);
   cur.ctl.forEach(c=>{$('r_'+c.k).value=V[c.k];$('o_'+c.k).textContent=V[c.k]+(c.u||'')});$('info').textContent=cur.info(V);
+  if(cur.gg&&GG.ok){ggCena(V);return}
   cx.clearRect(0,0,W,H);cur.draw(cx,V,W,H,cores());
 }
-function ajustarSim(s){Object.assign(V,s);desenhar()}
+function ajustarSim(s){Object.assign(V,(cur&&cur.reset)||{},s);desenhar()}
 
 /* ===== QUESTÕES ===== */
 const total=()=>cur.gens?(cur.rod||8):cur.qs.length;
