@@ -68,6 +68,8 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
 .modal-bio{text-align:left;font-size:0.9rem;color:var(--tx);line-height:1.5}
 
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+#mlExtras input:not([hidden]),#mlExtras select{width:100%;padding:.65rem;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx)}.mlFilters{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem}.mlActions{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}.mlTable{overflow-x:auto}.mlTable table{width:100%;border-collapse:collapse;font-size:.85rem}.mlTable th,.mlTable td{padding:.65rem;text-align:left;border-bottom:1px solid var(--bd);vertical-align:top}.mlTable th{background:var(--cv)}#mlReport{display:flex;flex-direction:column;gap:1rem}#mlReport ul{padding-left:1.2rem}#mlExtras p{line-height:1.6}@media print{header,footer,#creditosModal,main> :not(#mlExtras),#mlExtras> :not(#mlReport),.mlPagination{display:none!important}body,main,#mlExtras{display:block!important;background:#fff!important;color:#000!important;max-width:none!important;padding:0!important;border:0!important}#mlReport *{color:#000!important;background:#fff!important}table{font-size:9pt!important}thead{display:table-header-group}tr{break-inside:avoid}}
 </style>
 </head>
 <body>
@@ -122,8 +124,12 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
 <script>
 /* ===== ESTADO E PROGRESSO ===== */
 let S={xp:0,done:{},niv:{},err:{},cnt:{},au:{m:0,s:1},streak:1,lastLogin:null};
-try{S=Object.assign(S,JSON.parse(localStorage.getItem('mathlab')||'{}'))}catch(e){}
-const save=()=>{try{localStorage.setItem('mathlab',JSON.stringify(S))}catch(e){}};
+let storageOK=false,storageError='',storageTime='';
+try{const raw=localStorage.getItem('mathlab');if(raw){const parsed=JSON.parse(raw);if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw Error('Estado inválido');S=Object.assign(S,parsed)}}catch(e){storageError='Não foi possível ler os dados: '+e.message}
+S.au=Object.assign({m:0,s:1},S.au||{});
+for(const key of ['done','niv','err','cnt'])if(!S[key]||typeof S[key]!=='object')S[key]={};
+function storageStatus(){const el=document.getElementById('mlStorage');if(el){el.textContent=storageOK?'✓ Gravação local verificada às '+storageTime+' · '+(S.hist||[]).length+' respostas.':'⚠ Dados apenas nesta sessão: '+storageError+' Faça um backup JSON.';el.style.color=storageOK?'var(--gr)':'var(--rd)'}}
+const save=()=>{try{const text=JSON.stringify(S);localStorage.setItem('mathlab',text);if(localStorage.getItem('mathlab')!==text)throw Error('A leitura não confirmou a gravação');storageOK=true;storageTime=new Date().toLocaleTimeString('pt-BR');storageError='';storageStatus();return true}catch(e){storageOK=false;storageError=e.message;storageStatus();return false}};
 let combo=0,fs=1,cur=null,qi=0,tries=0,locked=false,V={};
 let Q=null,niv=1,seqOk=0,seqErr=0,ultG=-1,sessErr={};
 const $=id=>document.getElementById(id);
@@ -506,7 +512,7 @@ const SOON=[{ano:6,ic:'🧊',nome:'Sólidos geométricos'},{ano:7,ic:'✖️',no
 
 /* ===== TELA INICIAL ===== */
 function home(){
-  cur=null;speechSynthesis&&speechSynthesis.cancel();
+  cur=null;cv=null;if(window.speechSynthesis)window.speechSynthesis.cancel();
   let h='<h1 style="font-size:1.6rem">Escolha um assunto</h1>';
   [6,7].forEach(a=>{
     h+=`<h2 class="t">${a}º ano</h2><div class="cards">`;
@@ -539,21 +545,11 @@ addEventListener('resize',ajustar);
 function mexer(){cur.ctl.forEach(c=>V[c.k]=+$('r_'+c.k).value);desenhar()}
 function cores(){const g=getComputedStyle(document.body),f=n=>g.getPropertyValue(n).trim();
   return{t:f('--tx'),m:f('--mu'),a:f('--gold'),b:f('--gold2'),c1:f('--cy'),c2:f('--pk'),pk:f('--pk'),gr:f('--gr'),f:'rgba(230,159,0,.3)'}}
-
-function desenhar() {
-  if (!cur) return;
-  if (cur.fix) cur.fix(V);
-
-  cur.ctl.forEach(c => {
-    $('r_' + c.k).value = V[c.k];
-    $('o_' + c.k).textContent = V[c.k] + (c.u || '');
-  });
-
-  $('info').textContent = cur.info(V);
-  cx.clearRect(0, 0, W, H);
-  cur.draw(cx, V, W, H, cores());
+function desenhar(){
+  if(!cur)return;if(cur.fix)cur.fix(V);
+  cur.ctl.forEach(c=>{$('r_'+c.k).value=V[c.k];$('o_'+c.k).textContent=V[c.k]+(c.u||'')});$('info').textContent=cur.info(V);
+  cx.clearRect(0,0,W,H);cur.draw(cx,V,W,H,cores());
 }
-
 function ajustarSim(s){Object.assign(V,s);desenhar()}
 
 /* ===== QUESTÕES ===== */
@@ -914,223 +910,95 @@ for (let i = SOON.length - 1; i >= 0; i--) {
   }
 }
 
-/* Histórico detalhado de respostas */
-const respOriginal = resp;
 
-resp = function(i, botao) {
-  const questaoAtual = Q;
-  const moduloAtual = cur ? cur.id : '';
-  const estudante = (S.student || '').trim();
-  const acertou = !!questaoAtual && i === questaoAtual.c;
-
-  respOriginal(i, botao);
-
-  if (!questaoAtual || !estudante) {
-    return;
-  }
-
-  S.hist.push({
-    data: dataLocal(),
-    estudante,
-    modulo: moduloAtual,
-    questao: questaoAtual.q,
-    resposta: questaoAtual.o[i],
-    acertou,
-    nivel: niv,
-    erro: acertou ? '' :
-      (questaoAtual.tg && questaoAtual.tg[i]) || 'Resposta incorreta'
-  });
-
-  /* Limite de segurança para não crescer indefinidamente */
-  if (S.hist.length > 10000) {
-    S.hist = S.hist.slice(-10000);
-  }
-
+/* Relatório docente v2: registros por tentativa e backup explícito. */
+function escHtml(valor){return String(valor??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+const mlId=()=>window.crypto?.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+let questionId='',questionStart=0;
+const questaoOriginal=questao;
+questao=function(){questaoOriginal();questionId=mlId();questionStart=Date.now()};
+const respOriginal=resp;
+resp=function(i,botao){
+  if(locked||!Q||!cur||!Number.isInteger(i)||i<0||i>=Q.o.length||botao?.disabled)return;
+  const q=Q,modulo=cur.id,nivel=niv,tentativa=tries+1,xpAntes=S.xp;
+  const acertou=i===q.c;
+  respOriginal(i,botao);
+  S.hist.push({id:mlId(),questaoId:questionId,data:dataLocal(),horario:new Date().toISOString(),estudante:(S.student||'').trim()||'Não identificado',turma:S.turma||'',modulo,questao:q.q,resposta:q.o[i],correta:q.o[q.c],acertou,nivel,tentativa,tempoSegundos:Math.round((Date.now()-questionStart)/1000),xpGanho:S.xp-xpAntes,erro:acertou?'':q.tg?.[i]||'Resposta incorreta'});
   save();
 };
-
-/* Identificação do estudante e painel docente */
-const homeOriginal = home;
-
-home = function() {
+const homeOriginal=home;
+home=function(){
   homeOriginal();
-
-  const main = $('main');
-  if (!main || $('mlExtras')) return;
-
-  const extras = document.createElement('section');
-  extras.id = 'mlExtras';
-  extras.className = 'box';
-  extras.style.marginTop = '1.5rem';
-
-  extras.innerHTML = `
-    <h2>👩‍🏫 Identificação e acompanhamento</h2>
-
-    <label for="mlStudent">Nome do estudante</label>
-    <input id="mlStudent" maxlength="100"
-      placeholder="Digite o nome do estudante"
-      value="${(S.student || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}"
-      style="padding:.7rem;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx)">
-
-    <button class="go" id="mlSaveStudent">Salvar identificação</button>
-
-    <h2 style="margin-top:1rem">📊 Painel do professor</h2>
-
-    <div class="sl">
-      <label for="mlFilterStudent">Estudante</label>
-      <input id="mlFilterStudent" placeholder="Todos os estudantes">
-    </div>
-
-    <div class="sl">
-      <label for="mlFilterModule">Módulo</label>
-      <select id="mlFilterModule"
-        style="width:100%;padding:.6rem;background:var(--card);color:var(--tx)">
-        <option value="">Todos os módulos</option>
-        ${MODS.map(m => `<option value="${m.id}">${m.nome}</option>`).join('')}
-      </select>
-    </div>
-
-    <div class="sl">
-      <label for="mlStart">Data inicial</label>
-      <input type="date" id="mlStart">
-    </div>
-
-    <div class="sl">
-      <label for="mlEnd">Data final</label>
-      <input type="date" id="mlEnd">
-    </div>
-
-    <button class="go" id="mlFilter">Aplicar filtros</button>
-    <button class="btn" id="mlCsv">Exportar CSV</button>
-
-    <div id="mlReport" aria-live="polite"></div>
-  `;
-
-  main.appendChild(extras);
-
-  $('mlSaveStudent').onclick = () => {
-    S.student = $('mlStudent').value.trim();
-    save();
-    alert(S.student
-      ? 'Identificação salva neste navegador.'
-      : 'O nome foi removido.');
-  };
-
-  $('mlFilter').onclick = renderRelatorio;
-  $('mlCsv').onclick = exportarRelatorio;
-
-  renderRelatorio();
+  const section=document.createElement('section');section.className='box';section.id='mlExtras';section.style.marginTop='1.5rem';
+  section.innerHTML=`<h2>👩‍🏫 Identificação e painel do professor</h2>
+    <p id="mlStorage" role="status"></p>
+    <p>O progresso (XP e níveis) continua compartilhado neste navegador. O histórico distingue nome e turma. Este painel não possui senha nem sincronização.</p>
+    <p>${location.protocol==='file:'?'⚠ Arquivo aberto diretamente: a persistência pode variar. Use backup JSON antes de mover ou substituir o HTML.':'Dados locais deste endereço e navegador; use backup para transferir.'}</p>
+    <label for="mlStudent">Nome ou código do estudante</label><input id="mlStudent" maxlength="100" value="${escHtml(S.student)}" placeholder="Sem nome, as respostas serão registradas como Não identificado">
+    <label for="mlClass">Turma</label><input id="mlClass" maxlength="60" value="${escHtml(S.turma||'')}">
+    <button class="go" id="mlSaveStudent">Salvar identificação</button><p id="mlIdentityStatus" role="status"></p>
+    <h2>📊 Relatório</h2><div class="mlFilters">
+    <label>Estudante<input id="mlFilterStudent" placeholder="Todos"></label>
+    <label>Turma<input id="mlFilterClass" placeholder="Todas"></label>
+    <label>Módulo<select id="mlFilterModule"><option value="">Todos</option>${MODS.map(m=>`<option value="${m.id}">${escHtml(m.nome)}</option>`).join('')}</select></label>
+    <label>Data inicial<input id="mlStart" type="date"></label><label>Data final<input id="mlEnd" type="date"></label></div>
+    <div class="mlActions"><button class="go" id="mlFilter">Aplicar filtros</button><button class="btn" id="mlClear">Limpar filtros</button><button class="btn" id="mlCsv">Exportar CSV filtrado</button><button class="btn" id="mlPrint">Imprimir / salvar PDF</button><button class="btn" id="mlBackup">Baixar backup completo JSON</button><button class="btn" id="mlRestore">Restaurar backup</button><input type="file" id="mlImport" accept=".json,application/json" hidden></div>
+    <div id="mlReport" aria-live="polite"></div>`;
+  $('main').appendChild(section);
+  $('mlSaveStudent').onclick=()=>{S.student=$('mlStudent').value.trim();S.turma=$('mlClass').value.trim();const ok=save();$('mlIdentityStatus').textContent=ok?'Identificação salva e gravação local verificada.':'Identificação ativa nesta sessão; falha na gravação. Baixe um backup.'};
+  $('mlFilter').onclick=renderRelatorio;$('mlCsv').onclick=exportarRelatorio;
+  $('mlClear').onclick=()=>{['mlFilterStudent','mlFilterClass','mlFilterModule','mlStart','mlEnd'].forEach(id=>$(id).value='');renderRelatorio()};
+  $('mlPrint').onclick=()=>{renderRelatorio();window.print()};
+  $('mlBackup').onclick=()=>downloadFile(JSON.stringify({app:'MathLab',version:2,exportado:new Date().toISOString(),state:S},null,2),'application/json','mathlab-backup-'+dataLocal()+'.json');
+  $('mlRestore').onclick=()=>$('mlImport').click();$('mlImport').onchange=importarBackup;
+  storageStatus();renderRelatorio();
 };
-
-function registrosFiltrados() {
-  const estudante = ($('mlFilterStudent')?.value || '')
-    .trim().toLocaleLowerCase('pt-BR');
-  const modulo = $('mlFilterModule')?.value || '';
-  const inicio = $('mlStart')?.value || '';
-  const fim = $('mlEnd')?.value || '';
-
-  return S.hist.filter(r =>
-    (!estudante || r.estudante.toLocaleLowerCase('pt-BR').includes(estudante)) &&
-    (!modulo || r.modulo === modulo) &&
-    (!inicio || r.data >= inicio) &&
-    (!fim || r.data <= fim)
-  );
+function registrosFiltrados(){
+  const student=($('mlFilterStudent')?.value||'').trim().toLocaleLowerCase('pt-BR'),turma=($('mlFilterClass')?.value||'').trim().toLocaleLowerCase('pt-BR');
+  const mod=$('mlFilterModule')?.value||'',ini=$('mlStart')?.value||'',fim=$('mlEnd')?.value||'';
+  if(ini&&fim&&ini>fim)throw Error('A data inicial deve ser anterior ou igual à final.');
+  return S.hist.filter(r=>(!student||String(r.estudante||'Não identificado').toLocaleLowerCase('pt-BR').includes(student))&&(!turma||String(r.turma||'').toLocaleLowerCase('pt-BR').includes(turma))&&(!mod||r.modulo===mod)&&(!ini||r.data>=ini)&&(!fim||r.data<=fim));
 }
-
-function renderRelatorio() {
-  const alvo = $('mlReport');
-  if (!alvo) return;
-
-  const registros = registrosFiltrados();
-  const acertos = registros.filter(r => r.acertou).length;
-  const erros = registros.length - acertos;
-  const percentual = registros.length
-    ? Math.round(100 * acertos / registros.length)
-    : 0;
-
-  const estudantes = [...new Set(registros.map(r => r.estudante))];
-
-  alvo.innerHTML = `
-    <p style="margin:.8rem 0;line-height:1.8">
-      <b>Estudantes:</b> ${estudantes.length}<br>
-      <b>Respostas registradas:</b> ${registros.length}<br>
-      <b>Acertos:</b> ${acertos}<br>
-      <b>Respostas incorretas:</b> ${erros}<br>
-      <b>Percentual de acerto:</b> ${percentual}%
-    </p>
-    <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Estudante</th>
-            <th>Módulo</th>
-            <th>Resultado</th>
-            <th>Erro identificado</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${registros.slice(-100).reverse().map(r => `
-            <tr>
-              <td>${r.data}</td>
-              <td>${escHtml(r.estudante)}</td>
-              <td>${escHtml(nomeModulo(r.modulo))}</td>
-              <td>${r.acertou ? 'Acerto' : 'Erro'}</td>
-              <td>${escHtml(r.erro || '—')}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-    <p style="color:var(--mu);margin-top:.5rem">
-      Exibindo até 100 respostas recentes. O histórico completo pode ser exportado.
-    </p>
-  `;
+function metricas(rs){const modernas=rs.filter(r=>r.questaoId);const qs=new Set(modernas.map(r=>r.questaoId));const first=modernas.filter(r=>r.tentativa===1);return {n:rs.length,ok:rs.filter(r=>r.acertou).length,qs:qs.size,first:first.length,firstOK:first.filter(r=>r.acertou).length,legacy:rs.length-modernas.length}}
+let reportPage=0;
+function renderRelatorio(reset=true){
+  if(reset)reportPage=0;
+  const el=$('mlReport');if(!el)return;
+  let rs;try{rs=registrosFiltrados()}catch(e){el.textContent=e.message;return}
+  const m=metricas(rs),pct=(n,d)=>d?Math.round(n*100/d)+'%':'—';
+  const groups=new Map();rs.forEach(r=>{const key=JSON.stringify([r.estudante,r.turma,r.modulo]);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(r)});
+  const errors={};rs.filter(r=>!r.acertou).forEach(r=>{const key=r.erro||'Resposta incorreta';errors[key]=(errors[key]||0)+1});
+  reportPage=Math.min(reportPage,Math.max(0,Math.ceil(rs.length/100)-1));
+  const page=[...rs].reverse().slice(reportPage*100,reportPage*100+100);
+  el.innerHTML=`<h3>Resumo do filtro</h3><p>${new Set(rs.map(r=>r.estudante)).size} identificações · ${m.n} tentativas · ${m.ok} respostas certas · ${m.n-m.ok} respostas incorretas.<br>Acerto por tentativa: ${pct(m.ok,m.n)}. Questões iniciadas (registros novos): ${m.qs}. Acerto na primeira tentativa: ${pct(m.firstOK,m.first)} (${m.firstOK}/${m.first}).</p>
+  <p>Uma questão pode ter várias tentativas. O percentual por tentativa não é uma nota de avaliação. ${m.legacy?'Há '+m.legacy+' registros antigos sem identificação única de questão; eles não entram no indicador de primeira tentativa.':''}</p>
+  <h3>Por estudante, turma e módulo</h3><div class="mlTable"><table><thead><tr><th>Estudante</th><th>Turma</th><th>Módulo</th><th>Tentativas</th><th>Acertos</th><th>1ª tentativa</th></tr></thead><tbody>${[...groups.values()].map(rows=>{const a=rows[0],g=metricas(rows);return `<tr><td>${escHtml(a.estudante)}</td><td>${escHtml(a.turma||'—')}</td><td>${escHtml(nomeModulo(a.modulo))}</td><td>${g.n}</td><td>${g.ok}</td><td>${pct(g.firstOK,g.first)}</td></tr>`}).join('')}</tbody></table></div>
+  <h3>Dificuldades registradas</h3><ul>${Object.entries(errors).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([e,n])=>`<li>${escHtml(e)}: ${n} tentativa(s) incorreta(s)</li>`).join('')||'<li>Nenhum erro no filtro atual.</li>'}</ul>
+  <h3>Histórico detalhado</h3>${!rs.length?'<p>Nenhum registro encontrado. Resolva um desafio ou revise os filtros. Respostas não registradas na versão antiga não podem ser reconstruídas.</p>':''}
+  <div class="mlTable"><table><thead><tr><th>Data</th><th>Estudante / turma</th><th>Módulo / nível</th><th>Questão</th><th>Resposta / correta</th><th>Resultado</th><th>Erro</th></tr></thead><tbody>${page.map(r=>`<tr><td>${escHtml(r.data)}</td><td>${escHtml(r.estudante)}<br>${escHtml(r.turma||'')}</td><td>${escHtml(nomeModulo(r.modulo))}<br>${escHtml(r.nivel)}</td><td>${escHtml(r.questao)}</td><td>${escHtml(r.resposta)}<br>Correta: ${escHtml(r.correta||'Não disponível')}</td><td>${r.acertou?'Acerto':'Erro'}<br>Tentativa: ${escHtml(r.tentativa||'—')}</td><td>${escHtml(r.erro||'—')}</td></tr>`).join('')}</tbody></table></div>
+  <div class="mlActions mlPagination"><button class="btn" id="mlPrev" ${reportPage===0?'disabled':''}>Anterior</button><span>Página ${reportPage+1} de ${Math.max(1,Math.ceil(rs.length/100))} · 100 registros por página</span><button class="btn" id="mlNext" ${(reportPage+1)*100>=rs.length?'disabled':''}>Próxima</button></div><p>CSV exporta todos os registros filtrados. Impressão inclui apenas a página atual do histórico detalhado.</p>`;
+  $('mlPrev').onclick=()=>{reportPage--;renderRelatorio(false)};$('mlNext').onclick=()=>{reportPage++;renderRelatorio(false)};
 }
-
-function escHtml(valor) {
-  return String(valor ?? '').replace(/[&<>"']/g, c => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  })[c]);
+function downloadFile(text,type,name){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+function exportarRelatorio(){let rs;try{rs=registrosFiltrados()}catch(e){alert(e.message);return}if(!rs.length){alert('Nenhum registro para exportar.');return}
+ const cols=['id','data','horario','estudante','turma','modulo','questaoId','questao','resposta','correta','acertou','nivel','tentativa','tempoSegundos','xpGanho','erro'];
+ const cell=v=>{let t=String(v??'');if(/^[=+\-@\t\r]/.test(t))t="'"+t;return '"'+t.replace(/"/g,'""')+'"'};
+ downloadFile('\uFEFF'+[cols.join(';'),...rs.map(r=>cols.map(c=>cell(c==='modulo'?nomeModulo(r[c]):r[c])).join(';'))].join('\r\n'),'text/csv;charset=utf-8','mathlab-relatorio-'+dataLocal()+'.csv');
 }
-
-function exportarRelatorio() {
-  const registros = registrosFiltrados();
-  if (!registros.length) {
-    alert('Não há registros para exportar com os filtros selecionados.');
-    return;
-  }
-
-  const colunas = [
-    'data', 'estudante', 'modulo', 'questao',
-    'resposta', 'acertou', 'nivel', 'erro'
-  ];
-
-  const csv = [
-    colunas.join(';'),
-    ...registros.map(r => colunas.map(c =>
-      `"${String(c === 'modulo' ? nomeModulo(r[c]) : r[c] ?? '')
-        .replace(/"/g, '""')}"`
-    ).join(';'))
-  ].join('\r\n');
-
-  const blob = new Blob(
-    ['\uFEFF' + csv],
-    { type: 'text/csv;charset=utf-8;' }
-  );
-
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `mathlab-relatorio-${dataLocal()}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
+async function importarBackup(event){
+ const file=event.target.files[0];if(!file)return;
+ try{if(file.size>25*1024*1024)throw Error('Arquivo maior que 25 MB.');const obj=JSON.parse(await file.text());const state=obj.app==='MathLab'?obj.state:obj;
+ if(!state||typeof state!=='object'||Array.isArray(state)||!Array.isArray(state.hist)||!Number.isFinite(state.xp)||state.xp<0)throw Error('Backup inválido.');
+ for(const r of state.hist)if(!r||typeof r.data!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(r.data)||typeof r.estudante!=='string'||typeof r.modulo!=='string'||typeof r.acertou!=='boolean')throw Error('Histórico inválido.');
+ for(const k of ['done','niv','err','cnt'])if(!state[k]||typeof state[k]!=='object'||Array.isArray(state[k]))throw Error('Progresso inválido: '+k);
+ if(!confirm('Restaurar '+state.hist.length+' respostas e substituir TODO o progresso atual? Faça um backup atual antes.'))return;
+ S={xp:0,done:{},niv:{},err:{},cnt:{},au:{m:0,s:1},...state};S.au=Object.assign({m:0,s:1},S.au||{});S.student=String(S.student||'');S.turma=String(S.turma||'');
+ save();fs=Number(S.fs)||1;document.documentElement.style.setProperty('--fs',fs+'rem');tema(['light','contrast'].includes(S.tema)?S.tema:'dark');musica(!!S.au.m);stats();home();ui();
+ alert(storageOK?'Backup restaurado e salvo localmente.':'Backup restaurado somente na sessão. A gravação local falhou.');
+ }catch(e){alert('Não foi possível restaurar: '+e.message)}finally{event.target.value=''}
 }
-
+zerar=function(){if(confirm('Apagar TODO o progresso, identificação e histórico local? Baixe um backup antes.')){try{localStorage.removeItem('mathlab')}catch(e){alert('Falha ao apagar: '+e.message);return}location.reload()}};
+save();
 if(S.fs){fs=S.fs;document.documentElement.style.setProperty('--fs',fs+'rem')}
 if(S.tema)tema(S.tema);
 stats();home();ui();
