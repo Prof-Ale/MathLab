@@ -50,7 +50,7 @@ Não há dependências, build ou instalação. É um único arquivo estático.
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/SEU-USUARIO/mathlab.git
+   git clone https://github.com/Prof-Ale/mathlab.git
    cd mathlab
    ```
 2. Abra o `index.html` no navegador (duplo clique) ou, se preferir, use um servidor local:
