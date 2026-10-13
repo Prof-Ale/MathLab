@@ -49,10 +49,24 @@ body.theme-contrast .fb,body.theme-contrast .fb.ok,body.theme-contrast .fb.no{co
 .go:disabled{opacity:.4;cursor:default}
 footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1rem;margin-top:2rem;color:#f8fafc}
 .ft{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
-.tc{display:flex;align-items:center;gap:1rem}
+.tc{display:flex;align-items:center;gap:1rem;cursor:pointer;padding:.4rem .8rem;border-radius:12px;transition:transform .2s,background .2s}
+.tc:hover{background:rgba(255,255,255,.05);transform:scale(1.02)}
 .tc img{width:70px;height:70px;border-radius:50%;border:2px solid var(--gold);object-fit:cover;background:#000}
 .tc h4{color:var(--gold2)}.tc p{font-size:.8rem;color:var(--cy);font-weight:700}.tc span,.fq{font-size:.8rem;color:#94a3b8}
 .fq{text-align:right}
+
+/* Modal de Créditos */
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);display:flex;justify-content:center;align-items:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .3s ease;padding:1rem}
+.modal-overlay.active{opacity:1;pointer-events:auto}
+.modal-card{background:var(--card);border:2px solid var(--gold);border-radius:20px;padding:1.8rem;max-width:440px;width:100%;text-align:center;position:relative;box-shadow:0 10px 30px rgba(0,0,0,0.6);transform:translateY(20px);transition:transform .3s ease}
+.modal-overlay.active .modal-card{transform:translateY(0)}
+.modal-close{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--tx);font-size:1.8rem;font-weight:bold;cursor:pointer;line-height:1}
+.modal-close:hover{color:var(--gold)}
+.modal-foto{width:140px;height:140px;border-radius:50%;border:3px solid var(--gold);object-fit:cover;margin-bottom:0.8rem;box-shadow:0 4px 15px rgba(230,159,0,0.3)}
+.modal-card h3{color:var(--gold2);font-size:1.4rem;margin-bottom:0.2rem}
+.modal-sub{font-size:0.85rem;color:var(--cy);font-weight:700;margin-bottom:0.8rem}
+.modal-bio{text-align:left;font-size:0.9rem;color:var(--tx);line-height:1.5}
+
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -62,7 +76,7 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
     <img src="https://lh3.googleusercontent.com/d/1M7CCspb4ZrbdILayyqNUhmqN1SyW9H1c" alt="" onerror="this.style.display='none'">MathLab
   </button>
   <div class="status" aria-live="polite">
-    <span>⚡ <b id="xp">0</b> XP</span><span>🔥 <b id="cb">0</b></span><span id="bg">📐 Iniciante</span>
+    <span>⚡ <b id="xp">0</b> XP</span><span title="Ofensiva diária de estudo">🔥 <b id="cb">0</b></span><span id="bg">📐 Iniciante</span>
   </div>
   <div class="tools">
     <button class="btn" onclick="fonte(1)" aria-label="Aumentar fonte">A+</button>
@@ -79,27 +93,53 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
 
 <footer>
   <div class="ft">
-    <div class="tc">
+    <div class="tc" onclick="abrirCreditos()" role="button" tabindex="0" aria-label="Ver créditos do projeto e ampliar imagem">
       <img src="https://lh3.googleusercontent.com/d/1V9pEWzeeHIoNNreWR3CFhyENKkv7Kgrp" alt="Prof. Alê Chocolate" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=AleChocolate'">
-      <div><h4>Prof. Alê Chocolate</h4><p>Ensinar • Investigar • Incluir • Transformar</p><span>🐶 Mascotes: Oreo & Julieta</span></div>
+      <div><h4>Prof. Alê Chocolate 🔍</h4><p>Ensinar • Investigar • Incluir • Transformar</p><span>🐶 Mascotes: Oreo & Julieta</span></div>
     </div>
     <div class="fq"><p>☕ <em>"Café, Matemática, Planos, Projetos, Vida."</em></p><p><b>MathLab • Matemática em Investigação</b></p></div>
   </div>
 </footer>
 
+<!-- Modal de Créditos -->
+<div id="creditosModal" class="modal-overlay" onclick="fecharCreditos(event)" aria-hidden="true">
+  <div class="modal-card">
+    <button class="modal-close" onclick="fecharCreditos(null, true)" aria-label="Fechar créditos">&times;</button>
+    <img src="https://lh3.googleusercontent.com/d/1V9pEWzeeHIoNNreWR3CFhyENKkv7Kgrp" alt="Prof. Alê Chocolate, Oreo e Julieta" class="modal-foto" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=AleChocolate'">
+    <h3>Prof. Alê Chocolate</h3>
+    <p class="modal-sub">Ensinar • Investigar • Incluir • Transformar</p>
+    <div class="modal-bio">
+      <p>🐶 <strong>Mascotes especiais:</strong> Oreo & Julieta</p>
+      <p>☕ <em>"Café, Matemática, Planos, Projetos, Vida."</em></p>
+      <hr style="border:0; border-top:1px solid var(--bd); margin:0.8rem 0;">
+      <p style="font-size:0.88rem; color:var(--mu);">
+        O <strong>MathLab</strong> é um laboratório interativo desenvolvido para estimular o aprendizado investigador, a autonomia e a inclusão visual no ensino fundamental de Matemática.
+      </p>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ===== ESTADO E PROGRESSO (localStorage com proteção) ===== */
-let S={xp:0,done:{},niv:{},err:{},cnt:{},au:{m:0,s:1}};
+let S={xp:0,done:{},niv:{},err:{},cnt:{},au:{m:0,s:1},streak:1,lastLogin:null};
 try{S=Object.assign(S,JSON.parse(localStorage.getItem('mathlab')||'{}'))}catch(e){}
 const save=()=>{try{localStorage.setItem('mathlab',JSON.stringify(S))}catch(e){}};
 let combo=0,fs=1,cur=null,qi=0,tries=0,locked=false,V={};
 let Q=null,niv=1,seqOk=0,seqErr=0,ultG=-1,sessErr={};
 const $=id=>document.getElementById(id);
 
-/* ===== GERADORES DE QUESTÕES =====
-   Cada gerador sorteia números, calcula a resposta certa e monta os distratores
-   a partir de erros típicos. tag = nome do erro (vai para o diagnóstico),
-   mensagem = o que o aluno lê quando cai naquela alternativa. */
+function checarStreak(){
+  const hoje=new Date().toDateString();
+  if(S.lastLogin!==hoje){
+    const ontem=new Date(Date.now()-86400000).toDateString();
+    if(S.lastLogin===ontem){S.streak=(S.streak||0)+1;}
+    else{S.streak=1;}
+    S.lastLogin=hoje;save();
+  }
+}
+checarStreak();
+
+/* ===== GERADORES DE QUESTÕES ===== */
 const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 const pick=a=>a[rnd(0,a.length-1)];
 const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
@@ -109,7 +149,7 @@ const eqF=(n,d)=>F(n,d)===`${n}/${d}`?'':` = ${F(n,d)}`;
 function mk(o){
   const seen=new Set([o.ok]),bad=[];
   ((o.bad||[]).length>3?shuf([...o.bad]):(o.bad||[])).forEach(b=>{if(!seen.has(b[0])&&bad.length<3){seen.add(b[0]);bad.push({t:b[0],tag:b[1],m:b[2]})}});
-  const fill=o.fill||(()=>String(rnd(1,99)));let g=0;
+  const fill=o.fill||(()=>String(rnd(-20,50)));let g=0;
   while(bad.length<3&&g++<80){const t=fill();if(!seen.has(t)){seen.add(t);bad.push({t})}}
   const A=shuf([{t:o.ok,ok:1},...bad]);
   return{q:o.q,o:A.map(x=>x.t),c:A.findIndex(x=>x.ok),tg:A.map(x=>x.tag||null),ms:A.map(x=>x.m||null),h:o.h,e:o.e,s:o.s};
@@ -118,7 +158,6 @@ const NOMES=['Ana','Bruno','Carla','Davi','Elisa','Felipe'];
 
 const FRA_GENS={
 1:[
- /* Nível 1A: o que significam numerador e denominador */
  ()=>{const d=rnd(2,12),n=rnd(1,d-1),num=Math.random()<.5;
   const outras=['O resultado da divisão','Quantos inteiros existem','O tamanho de cada parte'];
   return num
@@ -130,14 +169,12 @@ const FRA_GENS={
      bad:[['Quantas partes estão pintadas','trocou numerador por denominador','Quantas partes estão pintadas é o numerador, o número de cima.'],[outras[0],'não ligou a fração às partes do todo'],[outras[1],'não ligou a fração às partes do todo']],
      h:['Observe a barra: quantas divisões ela tem no total?','O denominador conta o total de partes iguais.'],
      e:`O denominador ${d} mostra em quantas partes iguais o inteiro foi dividido.`,s:{n,d}})},
- /* Nível 1B: ler a fração a partir da figura */
  ()=>{const d=rnd(3,12),n=rnd(1,d-1);
   return mk({q:`Uma barra foi dividida em ${d} partes iguais e ${n} foram pintadas. Que fração representa a parte pintada?`,ok:`${n}/${d}`,
    bad:[[`${d}/${n}`,'inverteu numerador e denominador','O numerador é a parte pintada e o denominador é o total de partes.'],[`${n}/${d-n}`,'comparou pintado com não pintado','O denominador é o total de partes, não só as que sobraram.'],[`${d-n}/${d}`,'representou a parte não pintada','Essa é a parte que ficou sem pintar.']],
    fill:()=>`${rnd(1,d)}/${d}`,
    h:['Monte a fração no simulador e conte as partes pintadas e o total.','Escreva as pintadas em cima e o total embaixo.'],
    e:`${n} partes pintadas de ${d} no total: ${n}/${d}.`,s:{n,d}})},
- /* Nível 1C: fração equivalente */
  ()=>{const d=rnd(2,6),n=rnd(1,d-1),m=rnd(2,4);
   return mk({q:`Qual fração é equivalente a ${n}/${d}?`,ok:`${n*m}/${d*m}`,
    bad:[[`${n+m}/${d+m}`,'somou em vez de multiplicar','Para manter o valor, multiplique (não some) em cima e embaixo.'],[`${n*m}/${d}`,'multiplicou só o numerador','Multiplicar só o numerador muda o valor. É preciso multiplicar os dois termos.'],[`${n}/${d*m}`,'multiplicou só o denominador','Multiplicar só o denominador muda o valor da fração.']],
@@ -145,21 +182,18 @@ const FRA_GENS={
    e:`${n}/${d} = ${n*m}/${d*m}, pois multiplicamos em cima e embaixo por ${m}.`,s:{n,d}})}
 ],
 2:[
- /* Nível 2A: soma com mesmo denominador */
  ()=>{const d=rnd(4,12),a=rnd(1,d-2),b=rnd(1,d-a-1);
   return mk({q:`Quanto é ${a}/${d} + ${b}/${d}?`,ok:`${a+b}/${d}`,
    bad:[[`${a+b}/${2*d}`,'somou os denominadores','Quando os denominadores são iguais, o denominador se mantém.'],[`${a*b}/${d}`,'multiplicou os numeradores','Na soma, os numeradores são somados.'],[`${Math.abs(a-b)}/${d}`,'subtraiu em vez de somar','A operação é uma soma: some os numeradores.']],
    fill:()=>`${rnd(1,d)}/${d}`,
    h:['Os denominadores são iguais: o que acontece com o denominador na soma?','Some só os numeradores e mantenha o denominador.'],
    e:`${a}/${d} + ${b}/${d} = ${a+b}/${d}. O denominador se mantém.`,s:{n:a+b,d}})},
- /* Nível 2B: fração de uma quantidade */
  ()=>{const d=rnd(2,10),n=rnd(1,d-1),k=rnd(2,9),N=d*k;
   return mk({q:`Quanto é ${n}/${d} de ${N}?`,ok:String(n*k),
    bad:[[String(k),'só dividiu o total',`Você dividiu ${N} por ${d}, mas ainda falta pegar ${n} partes.`],[String(n*N),'só multiplicou pelo numerador',`Antes de multiplicar por ${n}, é preciso dividir ${N} em ${d} partes iguais.`],[String(N-n*k),'calculou o que sobra','Esse valor é a parte que não foi pega.']],
    fill:()=>String(rnd(1,N)),
    h:[`Primeiro divida ${N} em ${d} partes iguais.`,`Cada parte vale ${k}. Agora pegue ${n} partes.`],
    e:`${N} ÷ ${d} = ${k} e ${k} × ${n} = ${n*k}.`,s:{n,d}})},
- /* Nível 2C: comparar frações com denominadores diferentes */
  ()=>{let a,b,c,d;
   do{b=rnd(2,8);d=rnd(2,8);a=rnd(1,b-1);c=rnd(1,d-1)}while(b===d||a*d===c*b);
   const p=`${a}/${b}`,r=`${c}/${d}`,gr=a*d>c*b?p:r,pe=gr===p?r:p,D=b*d;
@@ -169,21 +203,18 @@ const FRA_GENS={
    e:`${p} = ${a*d}/${D} e ${r} = ${c*b}/${D}. Logo, ${gr} é maior.`,s:{n:a,d:b}})}
 ],
 3:[
- /* Nível 3A: soma em que um denominador é múltiplo do outro */
  ()=>{const b=rnd(2,4),m=rnd(2,3),d=b*m,a=rnd(1,b-1),c=rnd(1,d-a*m-1),n=a*m+c;
   return mk({q:`Quanto é ${a}/${b} + ${c}/${d}?`,ok:F(n,d),
    bad:[[F(a+c,b+d),'somou numerador com numerador e denominador com denominador','Não se somam os denominadores. Primeiro coloque as frações no mesmo denominador.'],[F(a+c,d),'somou sem igualar os denominadores',`Antes de somar, ${a}/${b} precisa virar ${a*m}/${d}.`],[F(a+c,b),'somou sem igualar os denominadores',`Antes de somar, ${c}/${d} e ${a}/${b} precisam ter o mesmo denominador.`]],
    fill:()=>F(rnd(1,d-1),d),
    h:[`Coloque as frações no mesmo denominador: ${a}/${b} = ${a*m}/${d}.`,`Agora some os numeradores: ${a*m} + ${c} = ${n}.`],
    e:`${a}/${b} = ${a*m}/${d}. Então ${a*m}/${d} + ${c}/${d} = ${n}/${d}${eqF(n,d)}.`,s:{n,d}})},
- /* Nível 3B: problema do dia a dia (o que sobrou) */
  ()=>{const d=rnd(6,12),a=rnd(1,d-2),b=rnd(1,d-a-1),[n1,n2]=shuf([...NOMES]).slice(0,2),obj=pick(['pizza','barra de chocolate','torta']),r=d-a-b;
   return mk({q:`${n1} comeu ${a}/${d} de uma ${obj} e ${n2} comeu ${b}/${d}. Que fração da ${obj} sobrou?`,ok:F(r,d),
    bad:[[F(a+b,d),'respondeu o que foi comido, não o que sobrou','Essa fração é o que os dois comeram juntos. A pergunta pede o que sobrou.'],[F(d-a,d),'descontou só uma das partes',`Você tirou só a parte de ${n1}. Falta tirar a de ${n2}.`],[F(d-b,d),'descontou só uma das partes',`Você tirou só a parte de ${n2}. Falta tirar a de ${n1}.`]],
    fill:()=>F(rnd(1,d-1),d),
    h:['Primeiro some o que foi comido.',`Comeram ${a+b}/${d}. O inteiro é ${d}/${d}. Tire o que foi comido.`],
    e:`Comeram ${a}/${d} + ${b}/${d} = ${a+b}/${d}. Sobrou ${d}/${d} − ${a+b}/${d} = ${r}/${d}${eqF(r,d)}.`,s:{n:r,d}})},
- /* Nível 3C: simplificar até a forma irredutível */
  ()=>{const d0=rnd(2,6);let n0;do{n0=rnd(1,d0-1)}while(mdc(n0,d0)!==1);
   const g=rnd(2,Math.floor(12/d0)),p=n0*g,q=d0*g,sp=[2,3,5].find(x=>g%x===0),comp=sp!==g;
   const parou=comp?[`${p/sp}/${q/sp}`,'parou antes de simplificar tudo','Ainda dá para simplificar mais. Divida pelo maior divisor comum.']:[`${p+g}/${q+g}`,'somou em vez de dividir','Simplificar é dividir os dois termos pelo mesmo número, não somar.'];
@@ -200,20 +231,17 @@ const DEF_ANG={agudo:'Um ângulo agudo mede menos de 90°.',reto:'Um ângulo ret
 const valAng=t=>t==='agudo'?rnd(5,85):t==='obtuso'?rnd(95,175):t==='reto'?90:180;
 const ANG_GENS={
 1:[
- /* 1A: classificar pela medida */
  ()=>{const tipo=pick(['agudo','reto','obtuso','raso']),d=valAng(tipo);
   const why={agudo:`${d}° é menor que 90°, então o ângulo é agudo.`,reto:`${d}° é exatamente 90°, então o ângulo é reto.`,obtuso:`${d}° está entre 90° e 180°, então o ângulo é obtuso.`,raso:`${d}° é exatamente 180°, então o ângulo é raso.`};
   return mk({q:`Um ângulo mede ${d}°. Como ele é classificado?`,ok:`Ângulo ${tipo}`,
    bad:['agudo','reto','obtuso','raso'].filter(x=>x!==tipo).map(x=>[`Ângulo ${x}`,`confundiu ${tipo} com ${x}`,`${DEF_ANG[x]} Compare com os ${d}° do simulador.`]),
    h:['Compare a medida com 90° e com 180° usando o simulador.','Menos de 90°: agudo. Exatamente 90°: reto. Entre 90° e 180°: obtuso. Exatamente 180°: raso.'],
    e:why[tipo],s:{d}})},
- /* 1B: qual destes é agudo ou obtuso */
  ()=>{const alvo=pick(['agudo','obtuso']),ok=valAng(alvo),outros=alvo==='agudo'?['obtuso','reto','raso']:['agudo','reto','raso'];
   return mk({q:`Qual destes ângulos é ${alvo}?`,ok:gr(ok),
    bad:outros.map(t=>{const v=valAng(t);return[gr(v),`confundiu ${alvo} com ${t}`,`${gr(v)} é um ângulo ${t}, e não ${alvo}.`]}),
    h:['O simulador mostra um ângulo reto (90°). Compare cada alternativa com ele.',alvo==='agudo'?'Agudo é menor que 90°.':'Obtuso é maior que 90° e menor que 180°.'],
    e:`${gr(ok)} ${alvo==='agudo'?'é menor que 90°':'está entre 90° e 180°'}, então é ${alvo}.`,s:{d:90}})},
- /* 1C: ponteiro do relógio */
  ()=>{const n=rnd(1,11),ok=30*n;
   return mk({q:`O ponteiro das horas de um relógio sai do 12 e vai até o ${n}. Quantos graus ele girou?`,ok:gr(ok),
    bad:[[gr(360-ok),'contou o giro pelo lado oposto','Esse é o giro que falta para completar a volta.'],
@@ -225,7 +253,6 @@ const ANG_GENS={
    e:`Cada hora vale 30°. Então ${n} × 30° = ${ok}°.`,s:{d:ok}})}
 ],
 2:[
- /* 2A: complementar */
  ()=>{let x;do{x=rnd(5,85)}while(x===45);const ok=90-x;
   return mk({q:`Um ângulo mede ${x}°. Quanto mede o seu complementar?`,ok:gr(ok),
    bad:[[gr(180-x),'confundiu complementar com suplementar','Complementares somam 90°. Os que somam 180° são os suplementares.'],
@@ -234,7 +261,6 @@ const ANG_GENS={
         [gr(360-x),'completou até a volta inteira','Complementares completam 90°, e não 360°.']],
    fill:()=>gr(rnd(5,175)),
    h:['Complementares somam 90°.',`Calcule 90° − ${x}°.`],e:`${x}° + ${ok}° = 90°. Logo, o complementar mede ${ok}°.`,s:{d:x}})},
- /* 2B: suplementar */
  ()=>{let x;do{x=rnd(10,170)}while(x===90||x===135);const ok=180-x;
   const bad=[[gr(360-x),'completou até a volta inteira','Suplementares completam 180°, e não 360°.'],
              [gr(180+x),'somou em vez de subtrair',`Calcule quanto falta para 180°: 180° − ${x}°.`],
@@ -244,7 +270,6 @@ const ANG_GENS={
   return mk({q:`Um ângulo mede ${x}°. Quanto mede o seu suplementar?`,ok:gr(ok),bad,
    fill:()=>gr(rnd(5,175)),
    h:['Suplementares somam 180°, uma meia volta.',`Calcule 180° − ${x}°.`],e:`${x}° + ${ok}° = 180°. Logo, o suplementar mede ${ok}°.`,s:{d:x}})},
- /* 2C: qual par é complementar ou suplementar */
  ()=>{const S=pick([90,180]),outro=S===90?180:90,nome=S===90?'complementares':'suplementares',nomeO=S===90?'suplementares':'complementares';
   const par=(a,b)=>a<=b?`${a}° e ${b}°`:`${b}° e ${a}°`;
   const soma=T=>{const u=rnd(10,T-10);return par(u,T-u)};
@@ -259,7 +284,6 @@ const ANG_GENS={
    e:`${a}° + ${S-a}° = ${S}°, então são ${nome}.`,s:{d:a}})}
 ],
 3:[
- /* 3A: triângulo, dois ângulos conhecidos */
  ()=>{let A,B;do{A=rnd(20,100);B=rnd(20,100)}while(A+B<50||A+B>160);const ok=180-A-B;
   return mk({q:`Em um triângulo, dois ângulos medem ${A}° e ${B}°. Quanto mede o terceiro?`,ok:gr(ok),
    bad:[[gr(A+B),'somou os dois ângulos e parou',`${A}° + ${B}° = ${A+B}°. Ainda falta completar até 180°.`],
@@ -268,7 +292,6 @@ const ANG_GENS={
    fill:()=>gr(rnd(10,170)),
    h:['Os ângulos internos de um triângulo somam 180°.',`Some ${A}° + ${B}° e veja quanto falta para 180°.`],
    e:`${A}° + ${B}° = ${A+B}° e 180° − ${A+B}° = ${ok}°.`,s:{d:A}})},
- /* 3B: triângulo isósceles */
  ()=>{let X;do{X=2*rnd(10,70)}while(X===60);const base=(180-X)/2;
   const bad=[[gr(180-X),'esqueceu de dividir por 2',`${180-X}° é a soma dos dois ângulos da base. Cada um mede a metade.`],
              [gr(X/2),'dividiu o ângulo do topo por 2','Primeiro tire o ângulo do topo de 180°, depois divida o que sobrou.'],
@@ -278,7 +301,6 @@ const ANG_GENS={
    fill:()=>gr(rnd(10,85)),
    h:['Os dois ângulos da base são iguais.',`Faça (180° − ${X}°) ÷ 2.`],
    e:`180° − ${X}° = ${180-X}° e ${180-X}° ÷ 2 = ${base}°.`,s:{d:X}})},
- /* 3C: triângulo retângulo */
  ()=>{let x;do{x=rnd(10,80)}while(x===45);const ok=90-x;
   return mk({q:`Em um triângulo retângulo, um dos ângulos agudos mede ${x}°. Quanto mede o outro ângulo agudo?`,ok:gr(ok),
    bad:[[gr(180-x),'usou 180° sem descontar o ângulo reto','Um dos ângulos já mede 90°. Os outros dois somam só 90°.'],
@@ -289,13 +311,10 @@ const ANG_GENS={
    e:`Em um triângulo retângulo, os dois agudos somam 90°. Então 90° − ${x}° = ${ok}°.`,s:{d:x}})}
 ]};
 
-/* ===== GERADORES: EQUAÇÃO DO 1º GRAU (balança) =====
-   Estado do simulador: n blocos de x e a unidades no prato esquerdo, b unidades no direito,
-   t unidades retiradas dos dois pratos. Limites: n 1 a 4, a 0 a 10, b 1 a 24. */
+/* ===== GERADORES: EQUAÇÃO DO 1º GRAU ===== */
 const reais=n=>`R$ ${n}`;
 const EQ_GENS={
 1:[
- /* 1A: x + a = b */
  ()=>{const a=rnd(1,9),x=rnd(0,Math.min(12,20-a)),b=a+x;
   return mk({q:`Resolva: x + ${a} = ${b}.`,ok:String(x),
    bad:[[String(a+b),'somou em vez de subtrair',`Para tirar o ${a} do lado esquerdo, tire ${a} dos dois pratos: ${b} − ${a}.`],
@@ -304,7 +323,6 @@ const EQ_GENS={
         [String(a),'repetiu um dos números da equação','O valor de x é o que sobra depois de tirar a mesma quantidade dos dois pratos.']],
    h:['Tire a mesma quantidade dos dois pratos com o controle "Tirar".',`Calcule ${b} − ${a}.`],
    e:`Tirando ${a} dos dois lados, sobra x = ${b} − ${a} = ${x}.`,s:{n:1,a,b,t:0}})},
- /* 1B: x = n é solução? */
  ()=>{const a=rnd(1,9),b=rnd(a+1,20),verdade=Math.random()<.5,n=verdade?b-a:Math.max(0,b-a+pick([-2,-1,1,2])),soma=n+a;
   const s2=soma+1===b?soma-1:soma+1;
   const q=`x = ${n} é solução de x + ${a} = ${b}? Substitua e confira.`,h=[`Troque x por ${n} e calcule ${n} + ${a}.`,`Compare o resultado com ${b}.`],s={n:1,a,b,t:0};
@@ -319,17 +337,15 @@ const EQ_GENS={
           [`Não, pois ${n} + ${a} = ${s2}, e não ${b}`,'chegou à conclusão certa com a conta errada',`A conta correta é ${n} + ${a} = ${soma}.`],
           ['Não dá para saber','achou que não dá para conferir',`Dá sim: troque x por ${n} e faça a conta.`]],
      h,e:`${n} + ${a} = ${soma}, que não é ${b}. Então x = ${n} não é solução.`,s})},
- /* 1C: manter a balança em equilíbrio */
  ()=>{const T=rnd(2,8),tirar=Math.random()<.5,Verbo=tirar?'Tirar':'Colocar',Contra=tirar?'Colocar':'Tirar',loc=tirar?'do':'no',locC=tirar?'no':'do',a=rnd(T,10),b=rnd(a,20);
   return mk({q:`Para manter a balança equilibrada, se eu ${Verbo.toLowerCase()} ${T} unidades de um prato, o que devo fazer?`,ok:`${Verbo} ${T} ${loc} outro prato também`,
    bad:[['Nada, a balança continua equilibrada','não percebeu que a balança desequilibra','Ao mexer em um prato só, ele fica mais leve ou mais pesado que o outro.'],
         [`${Contra} ${T} ${locC} outro prato`,'fez a operação contrária no outro prato','Para manter o equilíbrio, a operação precisa ser a mesma nos dois pratos.'],
         [`${Verbo} ${Math.ceil(T/2)} ${loc} outro prato`,'operou uma quantidade diferente nos dois pratos',`A quantidade também precisa ser igual: ${T}.`]],
-   h:['Mexa no controle "Tirar" e veja o que acontece com a balança.','O que se faz de um lado deve ser feito do outro.'],
+   h:['Mexa no controle "Tirar" e veja o que acontece com a balança.','O que se faz de um lado se faz do outro.'],
    e:'Operações iguais nos dois pratos mantêm a igualdade.',s:{n:1,a,b,t:0}})}
 ],
 2:[
- /* 2A: kx = b */
  ()=>{const k=rnd(2,4),x=rnd(1,Math.min(9,Math.floor(24/k))),b=k*x;
   return mk({q:`Na balança, ${k}x = ${b}. Quanto vale x?`,ok:String(x),
    bad:[[String(b-k),'subtraiu em vez de dividir',`${k}x quer dizer ${k} vezes x. O contrário da multiplicação é a divisão.`],
@@ -339,7 +355,6 @@ const EQ_GENS={
    fill:()=>String(rnd(1,30)),
    h:[`Os ${k} blocos x pesam ${b} juntos. Divida ${b} em ${k} grupos iguais.`,`Calcule ${b} ÷ ${k}.`],
    e:`${k}x = ${b}, então x = ${b} ÷ ${k} = ${x}.`,s:{n:k,a:0,b,t:0}})},
- /* 2B: qual operação isola o x */
  ()=>{const k=rnd(2,4),x=rnd(1,Math.min(9,Math.floor(24/k))),b=k*x;
   return mk({q:`Para isolar o x em ${k}x = ${b}, o que faço nos dois lados?`,ok:`Divido os dois lados por ${k}`,
    bad:[[`Subtraio ${k} dos dois lados`,'usou a operação errada (subtração)',`Subtrair ${k} não desfaz a multiplicação por ${k}.`],
@@ -347,7 +362,6 @@ const EQ_GENS={
         [`Divido só o lado direito por ${k}`,'operou só em um dos lados','A mesma operação precisa ser feita nos dois lados para a igualdade continuar valendo.']],
    h:[`${k}x é ${k} vezes x. Qual operação desfaz uma multiplicação?`,'Lembre da balança: o que se faz de um lado se faz do outro.'],
    e:`Dividindo os dois lados por ${k}, sobra x = ${b} ÷ ${k} = ${x}.`,s:{n:k,a:0,b,t:0}})},
- /* 2C: situação do dia a dia */
  ()=>{const [pl,sing,obj,Qt]=pick([['sacos','saco','bolinhas','Quantas'],['caixas','caixa','lápis','Quantos'],['pacotes','pacote','figurinhas','Quantas'],['bandejas','bandeja','pães','Quantos']]);
   const k=rnd(2,4),x=rnd(2,Math.min(8,Math.floor(24/k))),b=k*x;
   return mk({q:`${k} ${pl} iguais têm ${b} ${obj} no total. ${Qt} ${obj} há em cada ${sing}?`,ok:String(x),
@@ -359,7 +373,6 @@ const EQ_GENS={
    e:`${b} ÷ ${k} = ${x} ${obj} em cada ${sing}.`,s:{n:k,a:0,b,t:0}})}
 ],
 3:[
- /* 3A: kx + a = c */
  ()=>{const k=rnd(2,4),a=rnd(1,10),x=rnd(1,Math.min(9,Math.floor((24-a)/k))),c=k*x+a;
   const bad=[[String(c-a),`esqueceu de dividir por ${k}`,`Tirando ${a} dos dois lados sobra ${k}x = ${c-a}. Ainda falta dividir por ${k}.`],
              [String((c-a)*k),'multiplicou em vez de dividir',`Para desfazer a multiplicação por ${k}, divida em vez de multiplicar.`],
@@ -370,7 +383,6 @@ const EQ_GENS={
    fill:()=>String(rnd(1,30)),
    h:[`Primeiro tire ${a} dos dois pratos com o controle "Tirar".`,`Sobra ${k}x = ${c-a}. Divida ${c-a} em ${k} grupos iguais.`],
    e:`${c} − ${a} = ${c-a}, então ${k}x = ${c-a} e x = ${c-a} ÷ ${k} = ${x}.`,s:{n:k,a,b:c,t:0}})},
- /* 3B: que equação sobra depois de tirar a dos dois lados */
  ()=>{const k=rnd(2,4),a=rnd(1,10),x=rnd(1,Math.min(9,Math.floor((24-a)/k))),c=k*x+a;
   return mk({q:`Em ${k}x + ${a} = ${c}, tiro ${a} dos dois lados. Que equação sobra?`,ok:`${k}x = ${c-a}`,
    bad:[[`${k}x = ${c+a}`,'somou em vez de tirar',`Tirar ${a} do lado direito é subtrair: ${c} − ${a}.`],
@@ -378,7 +390,6 @@ const EQ_GENS={
         [`${k}x = ${c}`,'tirou só do lado esquerdo',`O ${a} também precisa sair do lado direito.`]],
    h:[`Use o controle "Tirar" e tire ${a} dos dois pratos.`,'A mesma quantidade sai dos dois lados.'],
    e:`${k}x + ${a} − ${a} = ${k}x e ${c} − ${a} = ${c-a}. Sobra ${k}x = ${c-a}.`,s:{n:k,a,b:c,t:0}})},
- /* 3C: situação do dia a dia */
  ()=>{const [pl,sing,extra,pergunta]=pick([['cadernos','caderno','uma caneta','Quanto custa cada caderno?'],['pastéis','pastel','um suco','Quanto custa cada pastel?'],['ingressos','ingresso','uma pipoca','Quanto custa cada ingresso?']]);
   const nome=pick(NOMES),k=rnd(2,4),a=rnd(1,10),x=rnd(1,Math.min(9,Math.floor((24-a)/k))),c=k*x+a;
   const bad=[[reais(c-a),`esqueceu de dividir por ${k}`,`Tirando os ${a} reais sobram ${c-a} reais para os ${k} ${pl}. Ainda falta dividir por ${k}.`],
@@ -392,9 +403,19 @@ const EQ_GENS={
    e:`Tirando os ${a} reais de ${extra}, sobram ${c-a} reais para os ${k} ${pl}. ${c-a} ÷ ${k} = ${x}.`,s:{n:k,a,b:c,t:0}})}
 ]};
 
-/* ===== MÓDULOS (cada assunto = um objeto) =====
-   Para criar um novo assunto: copie um objeto e ajuste ctl, draw e info.
-   Questões fixas: use qs. Questões sorteadas por nível: use gens (veja Frações). */
+/* ===== GERADORES: NÚMEROS INTEIROS ===== */
+const INT_GENS={
+1:[
+ ()=>{const a=rnd(-10,10),b=rnd(-10,10),res=a+b;
+  return mk({q:`Quanto é (${a}) + (${b})?`,ok:String(res),
+   bad:[[String(Math.abs(a)+Math.abs(b)),'somou sem olhar os sinais','Atenção aos sinais dos números!'],
+        [String(a-b),'subtraiu em vez de somar','Lembre-se da adição na reta numérica.'],
+        [String(-(a+b)),'inverteu o sinal do resultado','Verifique o sinal do número de maior valor absoluto.']],
+   h:['Desloque-se na reta numérica: esquerda para negativos, direita para positivos.'],
+   e:`(${a}) + (${b}) = ${res}.`,s:{pos:res}})}
+]};
+
+/* ===== MÓDULOS ===== */
 const MODS=[
 {id:'fra',ano:6,ic:'🍕',nome:'Frações',sub:'Barras, pizzas, equivalência e operações',
  ctl:[{k:'n',l:'Numerador (partes pintadas)',min:0,max:12,v:3},{k:'d',l:'Denominador (partes iguais)',min:1,max:12,v:8}],
@@ -432,9 +453,27 @@ const MODS=[
   for(let i=0;i<v.a-v.t;i++)slot(L,i+off,k.a);
   if(grupos){const per=Rt/n,rg=Math.ceil(per/cols);for(let gi=0;gi<n;gi++)for(let j=0;j<per;j++)cel(R,gi*rg+Math.floor(j/cols),j%cols,gi%2?k.a:k.c1)}else for(let i=0;i<Rt;i++)slot(R,i,k.c1);
   if(grupos){c.fillStyle=k.m;c.font='bold 13px sans-serif';c.textAlign='center';c.fillText(`${n} grupos de ${Rt/n}: cada x vale ${Rt/n}`,W/2,by+92);c.textAlign='left'}},
- rod:8,gens:EQ_GENS}
+ rod:8,gens:EQ_GENS},
+
+{id:'int',ano:7,ic:'➖',nome:'Números inteiros',sub:'Adição, subtração e a reta numérica',
+ ctl:[{k:'pos',l:'Posição na Reta',min:-20,max:20,v:0}],
+ info:v=>`Posição atual na Reta Numérica: ${v.pos > 0 ? '+'+v.pos : v.pos}`,
+ draw(c,v,W,H,k){
+  const y=H/2, cx=W/2, range=20, step=(W-60)/(range*2);
+  c.strokeStyle=k.t;c.lineWidth=3;c.beginPath();c.moveTo(20,y);c.lineTo(W-20,y);c.stroke();
+  for(let i=-range;i<=range;i+=2){
+    const px=cx+i*step;c.beginPath();c.moveTo(px,y-6);c.lineTo(px,y+6);c.stroke();
+    if(i%4===0){c.fillStyle=k.m;c.font='11px sans-serif';c.textAlign='center';c.fillText(i>0?'+'+i:i,px,y+22);}
+  }
+  const curX=cx+v.pos*step;
+  c.strokeStyle=k.a;c.lineWidth=2;c.beginPath();c.moveTo(cx,y);c.lineTo(curX,y);c.stroke();
+  c.fillStyle=v.pos>=0?k.gr:k.c2;c.beginPath();c.arc(curX,y,10,0,Math.PI*2);c.fill();
+  c.fillStyle='#fff';c.font='bold 12px sans-serif';c.textAlign='center';c.fillText(v.pos,curX,y-14);c.textAlign='left';
+ },
+ rod:8,gens:INT_GENS}
 ];
-const SOON=[{ano:6,ic:'🧊',nome:'Sólidos geométricos'},{ano:7,ic:'➖',nome:'Números inteiros'},{ano:7,ic:'✖️',nome:'Regras de sinais'},{ano:7,ic:'🔤',nome:'Linguagem algébrica'}];
+
+const SOON=[{ano:6,ic:'🧊',nome:'Sólidos geométricos'},{ano:7,ic:'✖️',nome:'Regras de sinais'},{ano:7,ic:'🔤',nome:'Linguagem algébrica'}];
 
 /* ===== TELA INICIAL ===== */
 function home(){
@@ -470,18 +509,15 @@ function ajustar(){if(!cv)return;const d=devicePixelRatio||1,r=cv.getBoundingCli
 addEventListener('resize',ajustar);
 function mexer(){cur.ctl.forEach(c=>V[c.k]=+$('r_'+c.k).value);desenhar()}
 function cores(){const g=getComputedStyle(document.body),f=n=>g.getPropertyValue(n).trim();
-  return{t:f('--tx'),m:f('--mu'),a:f('--gold'),b:f('--gold2'),c1:f('--cy'),c2:f('--pk'),pk:f('--pk'),f:'rgba(230,159,0,.3)'}}
+  return{t:f('--tx'),m:f('--mu'),a:f('--gold'),b:f('--gold2'),c1:f('--cy'),c2:f('--pk'),pk:f('--pk'),gr:f('--gr'),f:'rgba(230,159,0,.3)'}}
 function desenhar(){
   if(!cur)return;if(cur.fix)cur.fix(V);
-  cur.ctl.forEach(c=>{$('r_'+c.k).value=V[c.k];$('o_'+c.k).textContent=V[c.k]+(c.u||'')});
-  $('info').textContent=cur.info(V);
+  cur.ctl.forEach(c=>{$('r_'+c.k).value=V[c.k];$('o_'+c.k).textContent=V[c.k]+(c.u\vert{}\vert{}'')});$('info').textContent=cur.info(V);
   cx.clearRect(0,0,W,H);cur.draw(cx,V,W,H,cores());
 }
 function ajustarSim(s){Object.assign(V,s);desenhar()}
 
-/* ===== QUESTÕES =====
-   Assuntos com gens sorteiam a questão do nível atual. Três acertos de primeira sobem o nível.
-   Duas questões seguidas com erro descem um nível. Assuntos com qs seguem a lista fixa. */
+/* ===== QUESTÕES ===== */
 const total=()=>cur.gens?(cur.rod||8):cur.qs.length;
 function sorteia(){
   const L=cur.gens[niv];let i;
@@ -531,9 +567,19 @@ function prox(){
 function ler(){if(!cur||!Q||!speechSynthesis)return;speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(Q.q+'. '+Q.o.map((o,i)=>'Alternativa '+'ABCD'[i]+': '+o).join('. '));u.lang='pt-BR';speechSynthesis.speak(u)}
 
-/* ===== ÁUDIO (sintetizado no navegador, sem arquivos) =====
-   Os navegadores só liberam som depois de um toque do aluno, por isso nada toca sozinho.
-   Música desligada por padrão, para não surpreender a sala. Efeitos ligados. */
+/* ===== MODAL DE CRÉDITOS ===== */
+function abrirCreditos(){
+  const m=$('creditosModal');
+  if(m){m.classList.add('active');m.setAttribute('aria-hidden','false');if(typeof som==='function')som('tic');}
+}
+function fecharCreditos(e,forcar=false){
+  const m=$('creditosModal');
+  if(!m)return;
+  if(forcar||(e&&e.target===m)){m.classList.remove('active');m.setAttribute('aria-hidden','true');if(typeof som==='function')som('tic');}
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharCreditos(null,true)});
+
+/* ===== ÁUDIO ===== */
 let AC=null,mg=null,sg=null,mt=null,mstep=0,mnext=0;
 const ACORDES=[[130.81,[261.63,329.63,392]],[110,[220,261.63,329.63]],[87.31,[174.61,261.63,349.23]],[98,[196,246.94,392]]];
 const ARP=[0,1,2,1,0,1,2,1];
@@ -569,7 +615,7 @@ function ui(){const m=$('bm'),s=$('bs');if(!m||!s)return;
 document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidden)AC.suspend();else if(S.au.m||S.au.s)AC.resume()});
 
 /* ===== STATUS, TEMA E FONTE ===== */
-function stats(){$('xp').textContent=S.xp;$('cb').textContent=combo;
+function stats(){$('xp').textContent=S.xp;$('cb').textContent=S.streak||1;
   $('bg').textContent=S.xp>=900?'👑 Mestre Supremo':S.xp>=500?'🏆 Mestre da Matemática':S.xp>=200?'⭐ Detetive':'📐 Iniciante'}
 function fonte(d){fs=Math.min(1.3,Math.max(.8,fs+d*.1));document.documentElement.style.setProperty('--fs',fs+'rem')}
 function tema(m){document.body.classList.remove('theme-light','theme-contrast');if(m!=='dark')document.body.classList.add('theme-'+m);desenhar()}
