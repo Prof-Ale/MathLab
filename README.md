@@ -4,7 +4,7 @@ Site educacional de Matemática para o Ensino Fundamental, criado pelo **Prof. A
 
 > *Ensinar • Investigar • Incluir • Transformar*
 
-**Demo:** [`https://SEU-SITE.netlify.app` (troque pelo endereço real)](https://sites.google.com/prof.educacao.sp.gov.br/mathlab-7ano-prof-alechocolate/in%C3%ADcio)
+**Demo:** [https://sites.google.com/prof.educacao.sp.gov.br/mathlab-7ano-prof-alechocolate/in%C3%ADcio]
 
 ---
 
