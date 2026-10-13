@@ -18,7 +18,7 @@ header{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:3px 
 .status{display:flex;gap:.9rem;background:rgba(0,0,0,.4);padding:.4rem 1rem;border-radius:50px;border:1px solid var(--bd);font-weight:800;font-size:.9rem}
 .tools{display:flex;gap:.4rem}
 .btn{background:rgba(255,255,255,.1);color:inherit;border:1px solid var(--bd);padding:.4rem .7rem;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem}
-.btn:hover{background:var(--gold);color:#000}
+.btn:hover,.btn[aria-pressed=true]{background:var(--gold);color:#000}
 main{flex:1;width:100%;max-width:1400px;margin:0 auto;padding:1.5rem 1rem}
 h2.t{color:var(--gold2);font-size:1.3rem;border-bottom:2px solid var(--bd);padding-bottom:.5rem;margin:1rem 0}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem}
@@ -70,6 +70,8 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
     <button class="btn" onclick="tema('light')" aria-label="Modo claro">☀️</button>
     <button class="btn" onclick="tema('dark')" aria-label="Modo noturno">🌙</button>
     <button class="btn" onclick="tema('contrast')" aria-label="Alto contraste">◐</button>
+    <button class="btn" id="bm" onclick="musica(!S.au.m)" aria-pressed="false" aria-label="Música de fundo" title="Ligar a música">🎵</button>
+    <button class="btn" id="bs" onclick="efeitos(!S.au.s)" aria-pressed="true" aria-label="Efeitos sonoros" title="Desligar os efeitos sonoros">🔊</button>
   </div>
 </header>
 
@@ -87,7 +89,7 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
 
 <script>
 /* ===== ESTADO E PROGRESSO (localStorage com proteção) ===== */
-let S={xp:0,done:{},niv:{},err:{},cnt:{}};
+let S={xp:0,done:{},niv:{},err:{},cnt:{},au:{m:0,s:1}};
 try{S=Object.assign(S,JSON.parse(localStorage.getItem('mathlab')||'{}'))}catch(e){}
 const save=()=>{try{localStorage.setItem('mathlab',JSON.stringify(S))}catch(e){}};
 let combo=0,fs=1,cur=null,qi=0,tries=0,locked=false,V={};
@@ -106,7 +108,7 @@ const F=(n,d)=>{const g=mdc(n,d)||1;return d/g===1?String(n/g):`${n/g}/${d/g}`};
 const eqF=(n,d)=>F(n,d)===`${n}/${d}`?'':` = ${F(n,d)}`;
 function mk(o){
   const seen=new Set([o.ok]),bad=[];
-  (o.bad||[]).forEach(b=>{if(!seen.has(b[0])&&bad.length<3){seen.add(b[0]);bad.push({t:b[0],tag:b[1],m:b[2]})}});
+  ((o.bad||[]).length>3?shuf([...o.bad]):(o.bad||[])).forEach(b=>{if(!seen.has(b[0])&&bad.length<3){seen.add(b[0]);bad.push({t:b[0],tag:b[1],m:b[2]})}});
   const fill=o.fill||(()=>String(rnd(1,99)));let g=0;
   while(bad.length<3&&g++<80){const t=fill();if(!seen.has(t)){seen.add(t);bad.push({t})}}
   const A=shuf([{t:o.ok,ok:1},...bad]);
@@ -192,6 +194,204 @@ const FRA_GENS={
    e:`O maior divisor comum de ${p} e ${q} é ${g}. ${p} ÷ ${g} = ${n0} e ${q} ÷ ${g} = ${d0}.`,s:{n:p,d:q}})}
 ]};
 
+/* ===== GERADORES: ÂNGULOS ===== */
+const gr=n=>`${n}°`;
+const DEF_ANG={agudo:'Um ângulo agudo mede menos de 90°.',reto:'Um ângulo reto mede exatamente 90°.',obtuso:'Um ângulo obtuso fica entre 90° e 180°.',raso:'Um ângulo raso mede exatamente 180°.'};
+const valAng=t=>t==='agudo'?rnd(5,85):t==='obtuso'?rnd(95,175):t==='reto'?90:180;
+const ANG_GENS={
+1:[
+ /* 1A: classificar pela medida */
+ ()=>{const tipo=pick(['agudo','reto','obtuso','raso']),d=valAng(tipo);
+  const why={agudo:`${d}° é menor que 90°, então o ângulo é agudo.`,reto:`${d}° é exatamente 90°, então o ângulo é reto.`,obtuso:`${d}° está entre 90° e 180°, então o ângulo é obtuso.`,raso:`${d}° é exatamente 180°, então o ângulo é raso.`};
+  return mk({q:`Um ângulo mede ${d}°. Como ele é classificado?`,ok:`Ângulo ${tipo}`,
+   bad:['agudo','reto','obtuso','raso'].filter(x=>x!==tipo).map(x=>[`Ângulo ${x}`,`confundiu ${tipo} com ${x}`,`${DEF_ANG[x]} Compare com os ${d}° do simulador.`]),
+   h:['Compare a medida com 90° e com 180° usando o simulador.','Menos de 90°: agudo. Exatamente 90°: reto. Entre 90° e 180°: obtuso. Exatamente 180°: raso.'],
+   e:why[tipo],s:{d}})},
+ /* 1B: qual destes é agudo ou obtuso */
+ ()=>{const alvo=pick(['agudo','obtuso']),ok=valAng(alvo),outros=alvo==='agudo'?['obtuso','reto','raso']:['agudo','reto','raso'];
+  return mk({q:`Qual destes ângulos é ${alvo}?`,ok:gr(ok),
+   bad:outros.map(t=>{const v=valAng(t);return[gr(v),`confundiu ${alvo} com ${t}`,`${gr(v)} é um ângulo ${t}, e não ${alvo}.`]}),
+   h:['O simulador mostra um ângulo reto (90°). Compare cada alternativa com ele.',alvo==='agudo'?'Agudo é menor que 90°.':'Obtuso é maior que 90° e menor que 180°.'],
+   e:`${gr(ok)} ${alvo==='agudo'?'é menor que 90°':'está entre 90° e 180°'}, então é ${alvo}.`,s:{d:90}})},
+ /* 1C: ponteiro do relógio */
+ ()=>{const n=rnd(1,11),ok=30*n;
+  return mk({q:`O ponteiro das horas de um relógio sai do 12 e vai até o ${n}. Quantos graus ele girou?`,ok:gr(ok),
+   bad:[[gr(360-ok),'contou o giro pelo lado oposto','Esse é o giro que falta para completar a volta.'],
+        [gr(12*n),'confundiu as 12 horas com 12 graus por hora','Uma volta completa tem 360°. Dividida em 12 horas, cada hora vale 30°.'],
+        [gr(10*n),'dividiu a volta em 36 partes em vez de 12','Cada hora vale 360° ÷ 12, que é 30°.'],
+        [gr(15*n),'usou 15° por hora','Cada hora vale 30°, e não 15°.']],
+   fill:()=>gr(rnd(1,36)*10),
+   h:['Uma volta completa tem 360° e o relógio tem 12 horas.','Cada hora vale 360° ÷ 12 = 30°. Multiplique pelo número de horas.'],
+   e:`Cada hora vale 30°. Então ${n} × 30° = ${ok}°.`,s:{d:ok}})}
+],
+2:[
+ /* 2A: complementar */
+ ()=>{let x;do{x=rnd(5,85)}while(x===45);const ok=90-x;
+  return mk({q:`Um ângulo mede ${x}°. Quanto mede o seu complementar?`,ok:gr(ok),
+   bad:[[gr(180-x),'confundiu complementar com suplementar','Complementares somam 90°. Os que somam 180° são os suplementares.'],
+        [gr(x),'repetiu o próprio ângulo','O complementar é o que falta para chegar a 90°, e não o mesmo ângulo.'],
+        [gr(90+x),'somou em vez de subtrair',`Calcule quanto falta para 90°: 90° − ${x}°.`],
+        [gr(360-x),'completou até a volta inteira','Complementares completam 90°, e não 360°.']],
+   fill:()=>gr(rnd(5,175)),
+   h:['Complementares somam 90°.',`Calcule 90° − ${x}°.`],e:`${x}° + ${ok}° = 90°. Logo, o complementar mede ${ok}°.`,s:{d:x}})},
+ /* 2B: suplementar */
+ ()=>{let x;do{x=rnd(10,170)}while(x===90||x===135);const ok=180-x;
+  const bad=[[gr(360-x),'completou até a volta inteira','Suplementares completam 180°, e não 360°.'],
+             [gr(180+x),'somou em vez de subtrair',`Calcule quanto falta para 180°: 180° − ${x}°.`],
+             [gr(x),'repetiu o próprio ângulo','O suplementar é o que falta para chegar a 180°.']];
+  bad.unshift(x<90?[gr(90-x),'confundiu suplementar com complementar','Suplementares somam 180°. Os que somam 90° são os complementares.']
+                  :[gr(x-90),'subtraiu 90° em vez de completar 180°','Suplementares somam 180°, e não 90°.']);
+  return mk({q:`Um ângulo mede ${x}°. Quanto mede o seu suplementar?`,ok:gr(ok),bad,
+   fill:()=>gr(rnd(5,175)),
+   h:['Suplementares somam 180°, uma meia volta.',`Calcule 180° − ${x}°.`],e:`${x}° + ${ok}° = 180°. Logo, o suplementar mede ${ok}°.`,s:{d:x}})},
+ /* 2C: qual par é complementar ou suplementar */
+ ()=>{const S=pick([90,180]),outro=S===90?180:90,nome=S===90?'complementares':'suplementares',nomeO=S===90?'suplementares':'complementares';
+  const par=(a,b)=>a<=b?`${a}° e ${b}°`:`${b}° e ${a}°`;
+  const soma=T=>{const u=rnd(10,T-10);return par(u,T-u)};
+  const a=S===90?rnd(10,80):rnd(20,160),ok=par(a,S-a);
+  return mk({q:`Qual destes pares forma ângulos ${nome}?`,ok,
+   bad:[[soma(outro),`confundiu ${nome} com ${nomeO}`,`Esse par soma ${outro}°, então são ${nomeO}.`],
+        [soma(360),'achou que os ângulos completam a volta inteira','Esse par soma 360°.'],
+        [soma(S+10),'somou aproximadamente, sem conferir o total exato',`Esse par soma ${S+10}°, e não ${S}°.`],
+        [soma(S-10),'somou aproximadamente, sem conferir o total exato',`Esse par soma ${S-10}°, e não ${S}°.`]],
+   fill:()=>soma(rnd(60,300)),
+   h:[`${nome[0].toUpperCase()+nome.slice(1)} somam ${S}°. Some os dois ângulos de cada par.`,`Procure o par em que a soma dá exatamente ${S}°.`],
+   e:`${a}° + ${S-a}° = ${S}°, então são ${nome}.`,s:{d:a}})}
+],
+3:[
+ /* 3A: triângulo, dois ângulos conhecidos */
+ ()=>{let A,B;do{A=rnd(20,100);B=rnd(20,100)}while(A+B<50||A+B>160);const ok=180-A-B;
+  return mk({q:`Em um triângulo, dois ângulos medem ${A}° e ${B}°. Quanto mede o terceiro?`,ok:gr(ok),
+   bad:[[gr(A+B),'somou os dois ângulos e parou',`${A}° + ${B}° = ${A+B}°. Ainda falta completar até 180°.`],
+        [gr(180-A),'tirou só um dos ângulos',`Você tirou ${A}° de 180°, mas falta tirar também ${B}°.`],
+        [gr(360-A-B),'usou 360° no lugar de 180°','A soma dos ângulos internos de um triângulo é 180°, e não 360°.']],
+   fill:()=>gr(rnd(10,170)),
+   h:['Os ângulos internos de um triângulo somam 180°.',`Some ${A}° + ${B}° e veja quanto falta para 180°.`],
+   e:`${A}° + ${B}° = ${A+B}° e 180° − ${A+B}° = ${ok}°.`,s:{d:A}})},
+ /* 3B: triângulo isósceles */
+ ()=>{let X;do{X=2*rnd(10,70)}while(X===60);const base=(180-X)/2;
+  const bad=[[gr(180-X),'esqueceu de dividir por 2',`${180-X}° é a soma dos dois ângulos da base. Cada um mede a metade.`],
+             [gr(X/2),'dividiu o ângulo do topo por 2','Primeiro tire o ângulo do topo de 180°, depois divida o que sobrou.'],
+             [gr((360-X)/2),'usou 360° no lugar de 180°','A soma dos ângulos internos de um triângulo é 180°.']];
+  if(X<90)bad.push([gr(90-X),'tirou o topo de 90° em vez de 180°','O triângulo todo soma 180°, e não 90°.']);
+  return mk({q:`Em um triângulo isósceles, o ângulo do topo mede ${X}°. Quanto mede cada ângulo da base?`,ok:gr(base),bad,
+   fill:()=>gr(rnd(10,85)),
+   h:['Os dois ângulos da base são iguais.',`Faça (180° − ${X}°) ÷ 2.`],
+   e:`180° − ${X}° = ${180-X}° e ${180-X}° ÷ 2 = ${base}°.`,s:{d:X}})},
+ /* 3C: triângulo retângulo */
+ ()=>{let x;do{x=rnd(10,80)}while(x===45);const ok=90-x;
+  return mk({q:`Em um triângulo retângulo, um dos ângulos agudos mede ${x}°. Quanto mede o outro ângulo agudo?`,ok:gr(ok),
+   bad:[[gr(180-x),'usou 180° sem descontar o ângulo reto','Um dos ângulos já mede 90°. Os outros dois somam só 90°.'],
+        [gr(90+x),'somou em vez de subtrair',`Calcule quanto falta para 90°: 90° − ${x}°.`],
+        [gr(x),'repetiu o ângulo dado','Os dois agudos somam 90°, então só seriam iguais se medissem 45° cada.']],
+   fill:()=>gr(rnd(5,175)),
+   h:['O triângulo retângulo tem um ângulo de 90°. Os outros dois somam 90°.',`Calcule 90° − ${x}°.`],
+   e:`Em um triângulo retângulo, os dois agudos somam 90°. Então 90° − ${x}° = ${ok}°.`,s:{d:x}})}
+]};
+
+/* ===== GERADORES: EQUAÇÃO DO 1º GRAU (balança) =====
+   Estado do simulador: n blocos de x e a unidades no prato esquerdo, b unidades no direito,
+   t unidades retiradas dos dois pratos. Limites: n 1 a 4, a 0 a 10, b 1 a 24. */
+const reais=n=>`R$ ${n}`;
+const EQ_GENS={
+1:[
+ /* 1A: x + a = b */
+ ()=>{const a=rnd(1,9),x=rnd(0,Math.min(12,20-a)),b=a+x;
+  return mk({q:`Resolva: x + ${a} = ${b}.`,ok:String(x),
+   bad:[[String(a+b),'somou em vez de subtrair',`Para tirar o ${a} do lado esquerdo, tire ${a} dos dois pratos: ${b} − ${a}.`],
+        [String(b),'ignorou o número que acompanha o x',`O ${a} também faz parte do prato. É preciso tirar ${a} dos dois lados.`],
+        [String(x+1),'errou a conta da subtração',`Confira a conta: ${b} − ${a} é igual a quanto?`],
+        [String(a),'repetiu um dos números da equação','O valor de x é o que sobra depois de tirar a mesma quantidade dos dois pratos.']],
+   h:['Tire a mesma quantidade dos dois pratos com o controle "Tirar".',`Calcule ${b} − ${a}.`],
+   e:`Tirando ${a} dos dois lados, sobra x = ${b} − ${a} = ${x}.`,s:{n:1,a,b,t:0}})},
+ /* 1B: x = n é solução? */
+ ()=>{const a=rnd(1,9),b=rnd(a+1,20),verdade=Math.random()<.5,n=verdade?b-a:Math.max(0,b-a+pick([-2,-1,1,2])),soma=n+a;
+  const s2=soma+1===b?soma-1:soma+1;
+  const q=`x = ${n} é solução de x + ${a} = ${b}? Substitua e confira.`,h=[`Troque x por ${n} e calcule ${n} + ${a}.`,`Compare o resultado com ${b}.`],s={n:1,a,b,t:0};
+  return verdade
+   ?mk({q,ok:`Sim, pois ${n} + ${a} = ${b}`,
+     bad:[[`Não, pois ${n} + ${a} = ${b+1}`,'errou a soma ao conferir',`${n} + ${a} é ${b}, então a igualdade é verdadeira.`],
+          [`Não, pois ${n} + ${a} = ${b-1}`,'errou a soma ao conferir',`${n} + ${a} é ${b}, então a igualdade é verdadeira.`],
+          ['Não dá para saber','achou que não dá para conferir',`Dá sim: troque x por ${n} e faça a conta.`]],
+     h,e:`${n} + ${a} = ${b}, então a igualdade é verdadeira e x = ${n} é solução.`,s})
+   :mk({q,ok:`Não, pois ${n} + ${a} = ${soma}, e não ${b}`,
+     bad:[[`Sim, pois ${n} + ${a} = ${b}`,'não conferiu a igualdade ao substituir',`${n} + ${a} é ${soma}, e não ${b}.`],
+          [`Não, pois ${n} + ${a} = ${s2}, e não ${b}`,'chegou à conclusão certa com a conta errada',`A conta correta é ${n} + ${a} = ${soma}.`],
+          ['Não dá para saber','achou que não dá para conferir',`Dá sim: troque x por ${n} e faça a conta.`]],
+     h,e:`${n} + ${a} = ${soma}, que não é ${b}. Então x = ${n} não é solução.`,s})},
+ /* 1C: manter a balança em equilíbrio */
+ ()=>{const T=rnd(2,8),tirar=Math.random()<.5,Verbo=tirar?'Tirar':'Colocar',Contra=tirar?'Colocar':'Tirar',loc=tirar?'do':'no',locC=tirar?'no':'do',a=rnd(T,10),b=rnd(a,20);
+  return mk({q:`Para manter a balança equilibrada, se eu ${Verbo.toLowerCase()} ${T} unidades de um prato, o que devo fazer?`,ok:`${Verbo} ${T} ${loc} outro prato também`,
+   bad:[['Nada, a balança continua equilibrada','não percebeu que a balança desequilibra','Ao mexer em um prato só, ele fica mais leve ou mais pesado que o outro.'],
+        [`${Contra} ${T} ${locC} outro prato`,'fez a operação contrária no outro prato','Para manter o equilíbrio, a operação precisa ser a mesma nos dois pratos.'],
+        [`${Verbo} ${Math.ceil(T/2)} ${loc} outro prato`,'operou uma quantidade diferente nos dois pratos',`A quantidade também precisa ser igual: ${T}.`]],
+   h:['Mexa no controle "Tirar" e veja o que acontece com a balança.','O que se faz de um lado deve ser feito do outro.'],
+   e:'Operações iguais nos dois pratos mantêm a igualdade.',s:{n:1,a,b,t:0}})}
+],
+2:[
+ /* 2A: kx = b */
+ ()=>{const k=rnd(2,4),x=rnd(1,Math.min(9,Math.floor(24/k))),b=k*x;
+  return mk({q:`Na balança, ${k}x = ${b}. Quanto vale x?`,ok:String(x),
+   bad:[[String(b-k),'subtraiu em vez de dividir',`${k}x quer dizer ${k} vezes x. O contrário da multiplicação é a divisão.`],
+        [String(b*k),'multiplicou em vez de dividir',`${k}x já é uma multiplicação. Para achar x, é preciso dividir.`],
+        [String(b+k),'somou em vez de dividir',`${k}x quer dizer ${k} vezes x. O contrário da multiplicação é a divisão.`],
+        [String(k),'repetiu o número que acompanha o x','O número que acompanha o x diz quantas vezes ele aparece. O valor de x é o tamanho de cada bloco.']],
+   fill:()=>String(rnd(1,30)),
+   h:[`Os ${k} blocos x pesam ${b} juntos. Divida ${b} em ${k} grupos iguais.`,`Calcule ${b} ÷ ${k}.`],
+   e:`${k}x = ${b}, então x = ${b} ÷ ${k} = ${x}.`,s:{n:k,a:0,b,t:0}})},
+ /* 2B: qual operação isola o x */
+ ()=>{const k=rnd(2,4),x=rnd(1,Math.min(9,Math.floor(24/k))),b=k*x;
+  return mk({q:`Para isolar o x em ${k}x = ${b}, o que faço nos dois lados?`,ok:`Divido os dois lados por ${k}`,
+   bad:[[`Subtraio ${k} dos dois lados`,'usou a operação errada (subtração)',`Subtrair ${k} não desfaz a multiplicação por ${k}.`],
+        [`Multiplico os dois lados por ${k}`,'multiplicou em vez de dividir',`${k}x já está multiplicado por ${k}. Multiplicar de novo afasta o x da resposta.`],
+        [`Divido só o lado direito por ${k}`,'operou só em um dos lados','A mesma operação precisa ser feita nos dois lados para a igualdade continuar valendo.']],
+   h:[`${k}x é ${k} vezes x. Qual operação desfaz uma multiplicação?`,'Lembre da balança: o que se faz de um lado se faz do outro.'],
+   e:`Dividindo os dois lados por ${k}, sobra x = ${b} ÷ ${k} = ${x}.`,s:{n:k,a:0,b,t:0}})},
+ /* 2C: situação do dia a dia */
+ ()=>{const [pl,sing,obj,Qt]=pick([['sacos','saco','bolinhas','Quantas'],['caixas','caixa','lápis','Quantos'],['pacotes','pacote','figurinhas','Quantas'],['bandejas','bandeja','pães','Quantos']]);
+  const k=rnd(2,4),x=rnd(2,Math.min(8,Math.floor(24/k))),b=k*x;
+  return mk({q:`${k} ${pl} iguais têm ${b} ${obj} no total. ${Qt} ${obj} há em cada ${sing}?`,ok:String(x),
+   bad:[[String(b-k),'subtraiu em vez de dividir',`Repartir em ${k} partes iguais é uma divisão.`],
+        [String(b*k),'multiplicou em vez de dividir',`Repartir ${b} em ${k} partes iguais é uma divisão, e não uma multiplicação.`],
+        [String(b+k),'somou em vez de dividir',`Repartir em ${k} partes iguais é uma divisão.`]],
+   fill:()=>String(rnd(1,30)),
+   h:[`Monte ${k}x = ${b} na balança. Cada bloco x é um ${sing}.`,`Divida ${b} em ${k} grupos iguais.`],
+   e:`${b} ÷ ${k} = ${x} ${obj} em cada ${sing}.`,s:{n:k,a:0,b,t:0}})}
+],
+3:[
+ /* 3A: kx + a = c */
+ ()=>{const k=rnd(2,4),a=rnd(1,10),x=rnd(1,Math.min(9,Math.floor((24-a)/k))),c=k*x+a;
+  const bad=[[String(c-a),`esqueceu de dividir por ${k}`,`Tirando ${a} dos dois lados sobra ${k}x = ${c-a}. Ainda falta dividir por ${k}.`],
+             [String((c-a)*k),'multiplicou em vez de dividir',`Para desfazer a multiplicação por ${k}, divida em vez de multiplicar.`],
+             [String(x+1),'errou uma das contas',`Confira as contas: ${c} − ${a} = ${c-a} e depois ${c-a} ÷ ${k}.`]];
+  if(c%k===0&&c/k-a>=0)bad.push([String(c/k-a),'dividiu só um dos termos',`Dividir só o ${c} não basta. Tire ${a} dos dois lados e depois divida o que sobrou por ${k}.`]);
+  if((c+a)%k===0)bad.push([String((c+a)/k),'somou em vez de subtrair',`O ${a} está sendo somado, então ele sai com subtração, e não com soma.`]);
+  return mk({q:`Resolva: ${k}x + ${a} = ${c}.`,ok:String(x),bad:shuf(bad),
+   fill:()=>String(rnd(1,30)),
+   h:[`Primeiro tire ${a} dos dois pratos com o controle "Tirar".`,`Sobra ${k}x = ${c-a}. Divida ${c-a} em ${k} grupos iguais.`],
+   e:`${c} − ${a} = ${c-a}, então ${k}x = ${c-a} e x = ${c-a} ÷ ${k} = ${x}.`,s:{n:k,a,b:c,t:0}})},
+ /* 3B: que equação sobra depois de tirar a dos dois lados */
+ ()=>{const k=rnd(2,4),a=rnd(1,10),x=rnd(1,Math.min(9,Math.floor((24-a)/k))),c=k*x+a;
+  return mk({q:`Em ${k}x + ${a} = ${c}, tiro ${a} dos dois lados. Que equação sobra?`,ok:`${k}x = ${c-a}`,
+   bad:[[`${k}x = ${c+a}`,'somou em vez de tirar',`Tirar ${a} do lado direito é subtrair: ${c} − ${a}.`],
+        [`${k}x + ${a} = ${c-a}`,'tirou só do lado direito',`O ${a} também precisa sair do lado esquerdo.`],
+        [`${k}x = ${c}`,'tirou só do lado esquerdo',`O ${a} também precisa sair do lado direito.`]],
+   h:[`Use o controle "Tirar" e tire ${a} dos dois pratos.`,'A mesma quantidade sai dos dois lados.'],
+   e:`${k}x + ${a} − ${a} = ${k}x e ${c} − ${a} = ${c-a}. Sobra ${k}x = ${c-a}.`,s:{n:k,a,b:c,t:0}})},
+ /* 3C: situação do dia a dia */
+ ()=>{const [pl,sing,extra,pergunta]=pick([['cadernos','caderno','uma caneta','Quanto custa cada caderno?'],['pastéis','pastel','um suco','Quanto custa cada pastel?'],['ingressos','ingresso','uma pipoca','Quanto custa cada ingresso?']]);
+  const nome=pick(NOMES),k=rnd(2,4),a=rnd(1,10),x=rnd(1,Math.min(9,Math.floor((24-a)/k))),c=k*x+a;
+  const bad=[[reais(c-a),`esqueceu de dividir por ${k}`,`Tirando os ${a} reais sobram ${c-a} reais para os ${k} ${pl}. Ainda falta dividir por ${k}.`],
+             [reais((c-a)*k),'multiplicou em vez de dividir',`O valor de ${k} ${pl} foi repartido em ${k} partes iguais, o que é uma divisão.`],
+             [reais(x+1),'errou uma das contas',`Confira as contas: ${c} − ${a} = ${c-a} e depois ${c-a} ÷ ${k}.`]];
+  if(c%k===0&&c/k-a>=0)bad.push([reais(c/k-a),'dividiu só um dos termos',`Dividir só o total não basta. Tire ${a} reais antes e divida o que sobrou por ${k}.`]);
+  if((c+a)%k===0)bad.push([reais((c+a)/k),'somou em vez de subtrair',`Os ${a} reais já estão incluídos no total, então saem com subtração.`]);
+  return mk({q:`${nome} comprou ${k} ${pl} iguais e ${extra} de ${a} reais. Pagou ${c} reais no total. ${pergunta}`,ok:reais(x),bad:shuf(bad),
+   fill:()=>reais(rnd(1,30)),
+   h:[`Monte ${k}x + ${a} = ${c} na balança. Cada bloco x é o preço de um ${sing}.`,`Tire ${a} dos dois pratos e divida o que sobrar em ${k} grupos iguais.`],
+   e:`Tirando os ${a} reais de ${extra}, sobram ${c-a} reais para os ${k} ${pl}. ${c-a} ÷ ${k} = ${x}.`,s:{n:k,a,b:c,t:0}})}
+]};
+
 /* ===== MÓDULOS (cada assunto = um objeto) =====
    Para criar um novo assunto: copie um objeto e ajuste ctl, draw e info.
    Questões fixas: use qs. Questões sorteadas por nível: use gens (veja Frações). */
@@ -215,30 +415,24 @@ const MODS=[
   c.lineWidth=4;c.strokeStyle=k.c1;c.beginPath();c.moveTo(x,y);c.lineTo(x+r+14,y);c.stroke();
   c.strokeStyle=k.c2;c.beginPath();c.moveTo(x,y);c.lineTo(x+(r+14)*Math.cos(a),y+(r+14)*Math.sin(a));c.stroke();
   c.fillStyle=k.t;c.font='bold 16px sans-serif';c.fillText(v.d+'°',x+62*Math.cos(a/2)-12,y+62*Math.sin(a/2))},
- qs:[
- {q:'Dois ângulos são complementares quando somam:',o:['90°','180°','360°','45°'],c:0,h:['Pense no canto de uma folha (ângulo reto).','Observe o ângulo reto no simulador: quanto ele mede?'],e:'Complementares somam 90° (ex.: 30° + 60°).',s:{d:90}},
- {q:'Um ângulo mede 70°. Quanto mede o seu suplementar?',o:['20°','110°','90°','130°'],c:1,h:['Suplementares somam uma meia volta.','Calcule 180° − 70°.'],e:'180° − 70° = 110°.',s:{d:70}},
- {q:'Em um triângulo, dois ângulos medem 50° e 60°. Quanto mede o terceiro?',o:['60°','70°','80°','90°'],c:1,h:['A soma dos ângulos internos de um triângulo é constante.','Some 50° + 60° e complete até 180°.'],e:'50° + 60° = 110° e 180° − 110° = 70°.',s:{d:50}},
- {q:'Um ângulo de 135° é classificado como:',o:['Agudo','Obtuso','Reto','Raso'],c:1,h:['Compare 135° com 90° e com 180° usando o simulador.','Está entre 90° e 180°.'],e:'Entre 90° e 180°, o ângulo é obtuso.',s:{d:135}},
- {q:'Em um triângulo isósceles, o ângulo do topo mede 80°. Quanto mede cada ângulo da base?',o:['40°','50°','60°','100°'],c:1,h:['Os dois ângulos da base são iguais.','Faça (180° − 80°) ÷ 2.'],e:'180° − 80° = 100° e 100° ÷ 2 = 50°.',s:{d:80}}]},
+ rod:8,gens:ANG_GENS},
 
-{id:'eq',ano:7,ic:'⚖️',nome:'Equação do 1º grau',sub:'A balança de dois pratos',
- ctl:[{k:'a',l:'Unidades somadas ao x (a)',min:1,max:10,v:5},{k:'b',l:'Total do outro prato (b)',min:1,max:20,v:12},{k:'t',l:'Tirar dos DOIS pratos',min:0,max:10,v:0}],
+{id:'eq',ano:7,ic:'⚖️',nome:'Equação do 1º grau',sub:'A balança: x + a = b, ax = b e ax + b = c',
+ ctl:[{k:'n',l:'Blocos de x (n)',min:1,max:4,v:1},{k:'a',l:'Unidades somadas ao x (a)',min:0,max:10,v:5},{k:'b',l:'Total do outro prato (b)',min:1,max:24,v:12},{k:'t',l:'Tirar dos DOIS pratos',min:0,max:10,v:0}],
  fix:v=>{v.b=Math.max(v.b,v.a);v.t=Math.min(v.t,v.a)},
- info:v=>`x + ${v.a-v.t} = ${v.b-v.t}`+(v.t===v.a?`  →  x = ${v.b-v.a}`:''),
- draw(c,v,W,H,k){const by=150,s=16,g=2,cols=7,L=W*.27,R=W*.73;
+ info:v=>{const n=v.n,xs=n>1?n+'x':'x',L=v.a-v.t,R=v.b-v.t;
+  if(v.t===v.a&&v.a>0){if(n===1)return `x = ${R}`;const q=R/n;return `${n}x = ${R}  →  x = `+(Number.isInteger(q)?`${R} ÷ ${n} = ${q}`:`${R}/${n}`)}
+  return `${xs}${L>0?' + '+L:''} = ${R}`},
+ draw(c,v,W,H,k){const by=150,s=16,g=2,cols=7,pw=cols*(s+g),L=W*.27,R=W*.73,xb=26,xg=2,n=v.n;
   c.strokeStyle=k.t;c.lineWidth=4;c.beginPath();c.moveTo(W*.1,by);c.lineTo(W*.9,by);c.stroke();
   c.fillStyle=k.t;c.beginPath();c.moveTo(W/2,by);c.lineTo(W/2-20,by+70);c.lineTo(W/2+20,by+70);c.fill();
-  const put=(cx,i,col)=>{const x=cx-(cols*(s+g))/2+(i%cols)*(s+g),y=by-6-s-Math.floor(i/cols)*(s+g);c.fillStyle=col;c.fillRect(x,y,s,s)};
-  const xs=cols*(s+g)/2;c.fillStyle=k.pk;c.fillRect(L-xs,by-6-34,34,34);c.fillStyle='#fff';c.font='bold 18px sans-serif';c.fillText('x',L-xs+12,by-14);
-  for(let i=0;i<v.a-v.t;i++)put(L,i+2,k.a);
-  for(let i=0;i<v.b-v.t;i++)put(R,i,k.c1)},
- qs:[
- {q:'Na balança, x + 5 = 12. Quanto vale x?',o:['5','7','12','17'],c:1,h:['Tire as 5 unidades dos dois pratos com o controle "Tirar".','Calcule 12 − 5.'],e:'Tirando 5 dos dois lados, sobra x = 7.',s:{a:5,b:12,t:0}},
- {q:'Para manter a balança equilibrada, se tirar 4 unidades de um prato, o que devo fazer?',o:['Nada','Tirar 4 do outro prato também','Colocar 4 no outro prato','Tirar 2 de cada lado'],c:1,h:['Mexa no controle "Tirar" e veja a balança.','O que se faz de um lado deve ser feito do outro.'],e:'Operações iguais nos dois lados mantêm a igualdade.',s:{a:6,b:10,t:0}},
- {q:'Resolva: x + 3 = 11.',o:['14','8','7','9'],c:1,h:['Elimine as 3 unidades dos dois lados.','Calcule 11 − 3.'],e:'x = 11 − 3 = 8.',s:{a:3,b:11,t:0}},
- {q:'x = 9 é solução de x + 6 = 15? (substitua x)',o:['Sim, pois 9 + 6 = 15','Não, pois 9 + 6 = 14','Não, pois 9 + 6 = 16','Não dá para saber'],c:0,h:['Troque x por 9 e calcule.','9 + 6 resulta em quanto?'],e:'9 + 6 = 15, então a igualdade é verdadeira.',s:{a:6,b:15,t:0}},
- {q:'Resolva: x + 7 = 7.',o:['14','7','1','0'],c:3,h:['Tire 7 dos dois pratos.','Quanto sobra do lado direito?'],e:'7 − 7 = 0, logo x = 0.',s:{a:7,b:7,t:0}}]}
+  const cel=(cx,r,q,col)=>{const x=cx-pw/2+q*(s+g),y=by-6-s-r*(s+g)-(r>0?8:0);c.fillStyle=col;c.fillRect(x,y,s,s)},slot=(cx,i,col)=>cel(cx,Math.floor(i/cols),i%cols,col);
+  for(let j=0;j<n;j++){const x0=L-pw/2+j*(xb+xg),y0=by-6-xb;c.fillStyle=k.pk;c.fillRect(x0,y0,xb,xb);c.fillStyle='#fff';c.font='bold 16px sans-serif';c.fillText('x',x0+8,y0+19)}
+  const off=Math.ceil(n*(xb+xg)/(s+g)),Rt=v.b-v.t,grupos=v.t===v.a&&v.a>0&&n>1&&Rt%n===0;
+  for(let i=0;i<v.a-v.t;i++)slot(L,i+off,k.a);
+  if(grupos){const per=Rt/n,rg=Math.ceil(per/cols);for(let gi=0;gi<n;gi++)for(let j=0;j<per;j++)cel(R,gi*rg+Math.floor(j/cols),j%cols,gi%2?k.a:k.c1)}else for(let i=0;i<Rt;i++)slot(R,i,k.c1);
+  if(grupos){c.fillStyle=k.m;c.font='bold 13px sans-serif';c.textAlign='center';c.fillText(`${n} grupos de ${Rt/n}: cada x vale ${Rt/n}`,W/2,by+92);c.textAlign='left'}},
+ rod:8,gens:EQ_GENS}
 ];
 const SOON=[{ano:6,ic:'🧊',nome:'Sólidos geométricos'},{ano:7,ic:'➖',nome:'Números inteiros'},{ano:7,ic:'✖️',nome:'Regras de sinais'},{ano:7,ic:'🔤',nome:'Linguagem algébrica'}];
 
@@ -314,13 +508,13 @@ function resp(i,b){
       else{seqOk=0;seqErr++;if(seqErr>=2&&niv>1){niv--;seqErr=0;ultG=-1;extra=` Vamos reforçar o nível ${niv}.`}}
       S.niv[cur.id]=niv;
     }else{(S.done[cur.id]=S.done[cur.id]||[])[qi]=true}
-    fb.className='fb ok';fb.textContent=`✅ ${q.e} (+${ganho} XP)${extra}`;$('nx').disabled=false;
+    fb.className='fb ok';fb.textContent=`✅ ${q.e} (+${ganho} XP)${extra}`;$('nx').disabled=false;som(extra.includes('Subiu')?'up':'ok');
   }else{
     b.disabled=true;combo=0;
     const tg=q.tg&&q.tg[i],ms=q.ms&&q.ms[i];
     if(tg&&cur.gens){const E=(S.err[cur.id]=S.err[cur.id]||{});E[tg]=(E[tg]||0)+1;sessErr[tg]=(sessErr[tg]||0)+1}
     const dica=q.h[Math.min(tries,q.h.length-1)];
-    fb.className='fb no';fb.textContent='❌ '+(ms?ms+(tries>0?' Dica: '+dica:''):'Dica: '+dica);tries++;
+    fb.className='fb no';fb.textContent='❌ '+(ms?ms+(tries>0?' Dica: '+dica:''):'Dica: '+dica);tries++;som('no');
   }
   save();stats();
 }
@@ -332,10 +526,47 @@ function prox(){
     t+=` Nível atual: ${niv}.`+(top?` Erro mais frequente nesta rodada: ${top[0]}.`:' Nenhum erro típico nesta rodada.');
     $('nx').textContent='Nova rodada';$('nx').onclick=()=>abrir(cur.id);
   }else{$('nx').textContent='Voltar ao início';$('nx').onclick=home}
-  $('qt').textContent=t;$('qo').innerHTML='';$('fb').className='fb';$('qc').textContent='Fim';
+  $('qt').textContent=t;$('qo').innerHTML='';$('fb').className='fb';$('qc').textContent='Fim';som('fim');
 }
 function ler(){if(!cur||!Q||!speechSynthesis)return;speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(Q.q+'. '+Q.o.map((o,i)=>'Alternativa '+'ABCD'[i]+': '+o).join('. '));u.lang='pt-BR';speechSynthesis.speak(u)}
+
+/* ===== ÁUDIO (sintetizado no navegador, sem arquivos) =====
+   Os navegadores só liberam som depois de um toque do aluno, por isso nada toca sozinho.
+   Música desligada por padrão, para não surpreender a sala. Efeitos ligados. */
+let AC=null,mg=null,sg=null,mt=null,mstep=0,mnext=0;
+const ACORDES=[[130.81,[261.63,329.63,392]],[110,[220,261.63,329.63]],[87.31,[174.61,261.63,349.23]],[98,[196,246.94,392]]];
+const ARP=[0,1,2,1,0,1,2,1];
+function ac(){
+  if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;
+    try{AC=new C();mg=AC.createGain();mg.gain.value=.1;mg.connect(AC.destination);sg=AC.createGain();sg.gain.value=.2;sg.connect(AC.destination)}catch(e){AC=null;return null}}
+  if(AC.state==='suspended')AC.resume();
+  return AC}
+function tom(f,t0,dur,tipo,vol,dest){const o=AC.createOscillator(),g=AC.createGain();o.type=tipo;o.frequency.value=f;
+  g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  o.connect(g);g.connect(dest);o.start(t0);o.stop(t0+dur+.05)}
+function som(n){if(!S.au.s||!ac())return;const t=AC.currentTime+.01;
+  if(n==='ok'){tom(523.25,t,.16,'triangle',.5,sg);tom(783.99,t+.11,.3,'triangle',.5,sg)}
+  else if(n==='no'){tom(196,t,.25,'triangle',.5,sg);tom(155.56,t+.13,.35,'triangle',.5,sg)}
+  else if(n==='up'){[523.25,659.25,783.99,1046.5].forEach((f,i)=>tom(f,t+i*.09,.3,'triangle',.5,sg))}
+  else if(n==='fim'){[523.25,659.25,783.99,659.25,1046.5].forEach((f,i)=>tom(f,t+i*.12,.4,'triangle',.5,sg))}
+  else if(n==='tic')tom(880,t,.06,'triangle',.4,sg)}
+function agenda(){if(!S.au.m||!AC)return;
+  while(mnext<AC.currentTime+.6){const ch=ACORDES[Math.floor(mstep/8)%4],i=mstep%8;
+    if(i===0)tom(ch[0],mnext,2.8,'sine',.9,mg);
+    tom(ch[1][ARP[i]],mnext,.55,'triangle',.45,mg);
+    mnext+=.36;mstep++}}
+function musica(on){
+  if(on&&!ac()){S.au.m=0;ui();return}
+  S.au.m=on?1:0;save();ui();
+  if(on){mg.gain.setTargetAtTime(.1,AC.currentTime,.05);mnext=AC.currentTime+.1;mstep=0;clearInterval(mt);mt=setInterval(agenda,150);agenda()}
+  else{clearInterval(mt);mt=null;if(AC)mg.gain.setTargetAtTime(0,AC.currentTime,.05)}}
+function efeitos(on){S.au.s=on?1:0;save();ui();if(on)som('tic')}
+function ui(){const m=$('bm'),s=$('bs');if(!m||!s)return;
+  m.setAttribute('aria-pressed',S.au.m?'true':'false');s.setAttribute('aria-pressed',S.au.s?'true':'false');
+  m.title=S.au.m?'Desligar a música':'Ligar a música';s.title=S.au.s?'Desligar os efeitos sonoros':'Ligar os efeitos sonoros'}
+['pointerdown','keydown'].forEach(e=>addEventListener(e,()=>{if(S.au.m&&!mt)musica(true)}));
+document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidden)AC.suspend();else if(S.au.m||S.au.s)AC.resume()});
 
 /* ===== STATUS, TEMA E FONTE ===== */
 function stats(){$('xp').textContent=S.xp;$('cb').textContent=combo;
@@ -343,7 +574,7 @@ function stats(){$('xp').textContent=S.xp;$('cb').textContent=combo;
 function fonte(d){fs=Math.min(1.3,Math.max(.8,fs+d*.1));document.documentElement.style.setProperty('--fs',fs+'rem')}
 function tema(m){document.body.classList.remove('theme-light','theme-contrast');if(m!=='dark')document.body.classList.add('theme-'+m);desenhar()}
 
-stats();home();
+stats();home();ui();
 </script>
 </body>
 </html>
