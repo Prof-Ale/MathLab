@@ -93,7 +93,7 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
 
 <footer>
   <div class="ft">
-    <div class="tc" onclick="abrirCreditos()" role="button" tabindex="0" aria-label="Ver créditos do projeto e ampliar imagem">
+    <div class="tc" onclick="abrirCreditos()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();abrirCreditos()}" role="button" tabindex="0" aria-label="Ver créditos do projeto e ampliar imagem">
       <img src="https://lh3.googleusercontent.com/d/1V9pEWzeeHIoNNreWR3CFhyENKkv7Kgrp" alt="Prof. Alê Chocolate" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=AleChocolate'">
       <div><h4>Prof. Alê Chocolate 🔍</h4><p>Ensinar • Investigar • Incluir • Transformar</p><span>🐶 Mascotes: Oreo & Julieta</span></div>
     </div>
@@ -404,16 +404,44 @@ const EQ_GENS={
 ]};
 
 /* ===== GERADORES: NÚMEROS INTEIROS ===== */
+const pn=n=>n<0?`(${n})`:String(n);
+const rs=n=>n<0?`−R$ ${-n}`:`R$ ${n}`;
 const INT_GENS={
 1:[
  ()=>{const a=rnd(-10,10),b=rnd(-10,10),res=a+b;
-  const strA=a<0?`(${a})`:String(a), strB=b<0?`(${b})`:String(b);
-  return mk({q:`Quanto é ${strA} + ${strB}?`,ok:String(res),
-   bad:[[String(Math.abs(a)+Math.abs(b)),'somou sem olhar os sinais','Atenção aos sinais dos números!'],
-        [String(a-b),'subtraiu em vez de somar','Lembre-se da adição na reta numérica.'],
-        [String(-(a+b)),'inverteu o sinal do resultado','Verifique o sinal do número de maior valor absoluto.']],
-   h:['Desloque-se na reta numérica: esquerda para negativos, direita para positivos.'],
-   e:`${strA} + ${strB} = ${res}.`,s:{pos:res}})}
+  return mk({q:`Quanto é ${pn(a)} + ${pn(b)}?`,ok:String(res),
+   bad:[[String(Math.abs(a)+Math.abs(b)),'somou sem olhar os sinais','Atenção aos sinais: números negativos ficam à esquerda do zero na reta.'],
+        [String(a-b),'subtraiu em vez de somar',`A operação é uma soma. Parta de ${a} e ande ${Math.abs(b)} casas ${b<0?'para a esquerda':'para a direita'}.`],
+        [String(-res),'inverteu o sinal do resultado','Confira para que lado você andou na reta.']],
+   h:[`O simulador já está em ${a}. Some ${pn(b)} a esse valor.`,`Ande ${Math.abs(b)} casas ${b<0?'para a esquerda (somar negativo)':'para a direita (somar positivo)'}.`],
+   e:`${pn(a)} + ${pn(b)} = ${res}.`,s:{pos:a}})}
+],
+2:[
+ ()=>{const a=rnd(-10,10),b=rnd(-10,10),res=a-b;
+  return mk({q:`Quanto é ${pn(a)} − ${pn(b)}?`,ok:String(res),
+   bad:[[String(a+b),'somou em vez de subtrair','A operação é uma subtração.'],
+        [String(b-a),'inverteu a ordem da subtração',`A conta é ${a} − ${pn(b)}, e não ${b} − ${pn(a)}.`],
+        [String(-(a+b)),'trocou o sinal e somou','Subtrair um número é somar o seu oposto.']],
+   h:['Subtrair um número é o mesmo que somar o seu oposto.',`${pn(a)} − ${pn(b)} = ${a} + ${pn(-b)}. Agora ande essa quantidade na reta.`],
+   e:`${pn(a)} − ${pn(b)} = ${a} ${b<0?'+':'−'} ${Math.abs(b)} = ${res}.`,s:{pos:a}})}
+],
+3:[
+ ()=>{const t=rnd(-5,10),d=rnd(3,15),res=t-d;
+  return mk({q:`A temperatura estava em ${t}°C e caiu ${d}°C. Qual é a nova temperatura?`,ok:`${res}°C`,
+   bad:[[`${t+d}°C`,'somou em vez de descontar a queda','Uma queda de temperatura faz o valor diminuir.'],
+        [`${d-t}°C`,'inverteu a ordem da subtração',`A queda é descontada da temperatura inicial: ${t} − ${d}.`],
+        [`${-(t+d)}°C`,'trocou o sinal e somou',`Parta de ${t} e ande para a esquerda.`]],
+   fill:()=>`${rnd(-20,20)}°C`,
+   h:['Uma queda é um movimento para a esquerda na reta.',`Parta de ${t} e ande ${d} casas para a esquerda.`],
+   e:`${t} − ${d} = ${res}. A nova temperatura é ${res}°C.`,s:{pos:t}})},
+ ()=>{const a=rnd(1,15),b=rnd(1,15),res=b-a,nome=pick(NOMES);
+  return mk({q:`${nome} estava devendo R$ ${a} (saldo de −${a}) e depositou R$ ${b}. Qual é o novo saldo?`,ok:rs(res),
+   bad:[[rs(a+b),'somou os valores como se fossem positivos','A dívida é um valor negativo e o depósito é positivo.'],
+        [rs(a-b),'inverteu o sinal do resultado',`O saldo é −${a} + ${b}. Confira o sinal.`],
+        [rs(-(a+b)),'somou a dívida com o depósito','O depósito reduz a dívida, e não aumenta.']],
+   fill:()=>rs(rnd(-20,20)),
+   h:[`Dívida é negativa: o saldo começa em −${a}. O simulador já está lá.`,`Depositar é andar ${b} casas para a direita.`],
+   e:`−${a} + ${b} = ${res}.`,s:{pos:-a}})}
 ]};
 
 /* ===== MÓDULOS ===== */
@@ -486,7 +514,7 @@ function home(){
         prog=m.gens?`Nível ${S.niv[m.id]||1} de 3 · ${S.cnt[m.id]||0} resolvidas`:`${d}/${m.qs.length} questões ${d===m.qs.length?'⭐':''}`;
       h+=`<button class="mod" onclick="abrir('${m.id}')"><span class="ic">${m.ic}</span><b>${m.nome}</b><small>${m.sub}</small><small>${prog}</small></button>`});
     SOON.filter(m=>m.ano===a).forEach(m=>h+=`<div class="mod soon"><span class="ic">${m.ic}</span><b>${m.nome}</b><small>Em breve</small></div>`);
-    h+='</div>'});
+    h+='</div>'});h+=rodapeHome();
   $('main').innerHTML=h;
 }
 
@@ -513,7 +541,7 @@ function cores(){const g=getComputedStyle(document.body),f=n=>g.getPropertyValue
   return{t:f('--tx'),m:f('--mu'),a:f('--gold'),b:f('--gold2'),c1:f('--cy'),c2:f('--pk'),pk:f('--pk'),gr:f('--gr'),f:'rgba(230,159,0,.3)'}}
 function desenhar(){
   if(!cur)return;if(cur.fix)cur.fix(V);
-  cur.ctl.forEach(c=>{$('r_'+c.k).value=V[c.k];$('o_'+c.k).textContent=V[c.k]+(c.u||'')});$('info').textContent=cur.info(V);
+  cur.ctl.forEach(c=>{$('r_'+c.k).value=V[c.k];$('o_'+c.k).textContent=V[c.k]+(c.u\vert{}\vert{}'')});$('info').textContent=cur.info(V);
   cx.clearRect(0,0,W,H);cur.draw(cx,V,W,H,cores());
 }
 function ajustarSim(s){Object.assign(V,s);desenhar()}
@@ -521,12 +549,12 @@ function ajustarSim(s){Object.assign(V,s);desenhar()}
 /* ===== QUESTÕES ===== */
 const total=()=>cur.gens?(cur.rod||8):cur.qs.length;
 function sorteia(){
-  const L=cur.gens[niv];let i;
+  const L=cur.gens[niv]||cur.gens[1];let i;
   do{i=rnd(0,L.length-1)}while(L.length>1&&i===ultG);
   ultG=i;return L[i]();
 }
 function questao(){
-  Q=cur.gens?sorteia():cur.qs[qi];tries=0;locked=false;
+  try{Q=cur.gens?sorteia():cur.qs[qi]}catch(e){niv=1;ultG=-1;Q=cur.gens[1][0]()}tries=0;locked=false;
   $('qc').textContent=`Questão ${qi+1} de ${total()}`+(cur.gens?` · Nível ${niv}`:'');$('qt').textContent=Q.q;
   $('fb').className='fb';$('nx').disabled=true;
   $('qo').innerHTML='';
@@ -625,9 +653,476 @@ document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidd
 /* ===== STATUS, TEMA E FONTE ===== */
 function stats(){$('xp').textContent=S.xp;$('cb').textContent=S.streak||1;
   $('bg').textContent=S.xp>=900?'👑 Mestre Supremo':S.xp>=500?'🏆 Mestre da Matemática':S.xp>=200?'⭐ Detetive':'📐 Iniciante'}
-function fonte(d){fs=Math.min(1.3,Math.max(.8,fs+d*.1));document.documentElement.style.setProperty('--fs',fs+'rem')}
-function tema(m){document.body.classList.remove('theme-light','theme-contrast');if(m!=='dark')document.body.classList.add('theme-'+m);desenhar()}
+function fonte(d){fs=Math.min(1.3,Math.max(.8,fs+d*.1));document.documentElement.style.setProperty('--fs',fs+'rem');S.fs=fs;save()}
+function tema(m){document.body.classList.remove('theme-light','theme-contrast');if(m!=='dark')document.body.classList.add('theme-'+m);S.tema=m;save();desenhar()}
 
+/* ===== PAINEL "PARA REFORÇAR" E RESET ===== */
+function rodapeHome(){
+  const L=[];Object.entries(S.err||{}).forEach(([m,o])=>Object.entries(o).forEach(([t,n])=>L.push([m,t,n])));
+  L.sort((a,b)=>b[2]-a[2]);
+  const nomes={fra:'Frações',ang:'Ângulos',eq:'Equações',int:'Inteiros'};
+  let h='<h2 class="t">🔎 Para reforçar</h2>';
+  h+=L.length?'<ul style="line-height:1.8;padding-left:1.2rem">'+L.slice(0,3).map(x=>`<li><b>${nomes[x[0]]||x[0]}</b>: ${x[1]} (${x[2]}×)</li>`).join('')+'</ul>'
+             :'<p style="color:var(--mu)">Resolva alguns desafios e aqui aparecem os erros mais comuns.</p>';
+  return h+'<p style="margin-top:1.2rem"><button class="btn" onclick="zerar()">🗑️ Zerar progresso</button></p>';
+}
+function zerar(){if(confirm('Apagar XP, níveis e histórico de erros neste navegador?')){try{localStorage.removeItem('mathlab')}catch(e){}location.reload()}}
+
+/* =========================================================
+   MATHLAB — EVOLUÇÃO PEDAGÓGICA
+   Histórico local, painel docente, CSV e regras de sinais
+   ========================================================= */
+
+S.hist = Array.isArray(S.hist) ? S.hist : [];
+S.student = S.student || '';
+
+function dataLocal() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function nomeModulo(id) {
+  const m = MODS.find(x => x.id === id);
+  return m ? m.nome : id;
+}
+
+/* Geradores do módulo Regras de sinais */
+const SIGN_GENS = {
+  1: [
+    () => {
+      const a = rnd(1, 12);
+      const b = rnd(1, 12);
+      const negativo = Math.random() < .5;
+      const x = negativo ? -a : a;
+      const y = negativo ? b : -b;
+      const r = x + y;
+
+      return mk({
+        q: `Quanto é ${x} + (${y})?`,
+        ok: String(r),
+        bad: [
+          [String(Math.abs(x) + Math.abs(y)),
+           'ignorou os sinais',
+           'Observe os sinais dos dois números antes de operar.'],
+          [String(-r),
+           'inverteu o sinal',
+           'Confira qual número tem maior valor absoluto.'],
+          [String(x - y),
+           'subtraiu em vez de somar',
+           'A operação apresentada é uma adição.']
+        ],
+        h: [
+          'Na soma de sinais diferentes, compare os valores absolutos.',
+          'Subtraia os valores absolutos e mantenha o sinal do número de maior módulo.'
+        ],
+        e: `${x} + (${y}) = ${r}.`,
+        s: { pos: 0 }
+      });
+    },
+    () => {
+      const a = rnd(1, 12);
+      const b = rnd(1, 12);
+      const x = Math.random() < .5 ? a : -a;
+      const y = Math.random() < .5 ? b : -b;
+      const r = x * y;
+
+      return mk({
+        q: `Quanto é (${x}) × (${y})?`,
+        ok: String(r),
+        bad: [
+          [String(-r),
+           'errou a regra dos sinais',
+           'Sinais iguais produzem resultado positivo; sinais diferentes, negativo.'],
+          [String(x + y),
+           'somou em vez de multiplicar',
+           'Multiplique os valores absolutos e depois determine o sinal.'],
+          [String(Math.abs(r)),
+           'ignorou o sinal',
+           'O sinal do resultado depende dos sinais dos fatores.']
+        ],
+        h: [
+          'Primeiro observe se os sinais são iguais ou diferentes.',
+          'Sinais iguais: positivo. Sinais diferentes: negativo.'
+        ],
+        e: `(${x}) × (${y}) = ${r}.`,
+        s: { pos: 0 }
+      });
+    }
+  ],
+  2: [
+    () => {
+      const a = rnd(2, 12);
+      const b = rnd(2, 12);
+      const x = Math.random() < .5 ? a : -a;
+      const y = Math.random() < .5 ? b : -b;
+      const r = x - y;
+
+      return mk({
+        q: `Quanto é (${x}) − (${y})?`,
+        ok: String(r),
+        bad: [
+          [String(x + y),
+           'não trocou o sinal do subtraendo',
+           'Subtrair um número equivale a somar o seu oposto.'],
+          [String(y - x),
+           'inverteu a ordem',
+           'Mantenha o primeiro número e subtraia o segundo.'],
+          [String(-r),
+           'inverteu o sinal do resultado',
+           'Reescreva a subtração como adição do oposto.']
+        ],
+        h: [
+          'Transforme a subtração em adição do oposto.',
+          `(${x}) − (${y}) = (${x}) + (${-y}).`
+        ],
+        e: `(${x}) − (${y}) = ${x} + (${-y}) = ${r}.`,
+        s: { pos: 0 }
+      });
+    },
+    () => {
+      const a = rnd(2, 12);
+      const b = rnd(2, 12);
+      const x = Math.random() < .5 ? a : -a;
+      const y = Math.random() < .5 ? b : -b;
+      const r = x / y;
+
+      return mk({
+        q: `Quanto é (${x}) ÷ (${y})?`,
+        ok: String(r),
+        bad: [
+          [String(-r),
+           'errou a regra dos sinais',
+           'Sinais iguais produzem quociente positivo; diferentes, negativo.'],
+          [String(x * y),
+           'multiplicou em vez de dividir',
+           'Divida os valores absolutos.'],
+          [String(Math.abs(r)),
+           'ignorou o sinal',
+           'Determine o sinal antes de finalizar a divisão.']
+        ],
+        h: [
+          'Observe se o dividendo e o divisor têm o mesmo sinal.',
+          'Divida os valores absolutos e aplique a regra dos sinais.'
+        ],
+        e: `(${x}) ÷ (${y}) = ${r}.`,
+        s: { pos: 0 }
+      });
+    }
+  ],
+  3: [
+    () => {
+      const a = rnd(2, 9);
+      const b = rnd(2, 9);
+      const c = rnd(2, 5);
+      const x = Math.random() < .5 ? a : -a;
+      const y = Math.random() < .5 ? b : -b;
+      const r = (x * y) + c;
+
+      return mk({
+        q: `Calcule: (${x}) × (${y}) + ${c}.`,
+        ok: String(r),
+        bad: [
+          [String(x * (y + c)),
+           'não respeitou a prioridade das operações',
+           'Faça primeiro a multiplicação.'],
+          [String(-r),
+           'errou o sinal',
+           'Resolva a multiplicação antes de somar.'],
+          [String(Math.abs(x * y) + c),
+           'ignorou o sinal do produto',
+           'O produto pode ser negativo. Preserve seu sinal na soma.']
+        ],
+        h: [
+          'Resolva primeiro a multiplicação.',
+          `Calcule ${x} × (${y}) e depois some ${c}.`
+        ],
+        e: `(${x}) × (${y}) = ${x * y}; depois, ${x * y} + ${c} = ${r}.`,
+        s: { pos: 0 }
+      });
+    }
+  ]
+};
+
+/* Adiciona o novo módulo sem remover os existentes */
+if (!MODS.some(m => m.id === 'sinais')) {
+  MODS.push({
+    id: 'sinais',
+    ano: 7,
+    ic: '✖️',
+    nome: 'Regras de sinais',
+    sub: 'Adição, subtração, multiplicação e divisão',
+    ctl: [{
+      k: 'pos',
+      l: 'Posição de referência na reta',
+      min: -20,
+      max: 20,
+      v: 0
+    }],
+    info: v => `Referência na reta numérica: ${v.pos}`,
+    draw(c, v, W, H, k) {
+      const y = H / 2;
+      const cx = W / 2;
+      const step = (W - 50) / 40;
+
+      c.strokeStyle = k.t;
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(20, y);
+      c.lineTo(W - 20, y);
+      c.stroke();
+
+      for (let n = -20; n <= 20; n += 5) {
+        const px = cx + n * step;
+        c.beginPath();
+        c.moveTo(px, y - 6);
+        c.lineTo(px, y + 6);
+        c.stroke();
+
+        c.fillStyle = k.m;
+        c.font = '11px sans-serif';
+        c.textAlign = 'center';
+        c.fillText(String(n), px, y + 22);
+      }
+
+      const px = cx + v.pos * step;
+      c.fillStyle = v.pos < 0 ? k.c2 : k.gr;
+      c.beginPath();
+      c.arc(px, y, 9, 0, Math.PI * 2);
+      c.fill();
+      c.textAlign = 'left';
+    },
+    rod: 8,
+    gens: SIGN_GENS
+  });
+}
+
+/* Remove o aviso antigo de conteúdo futuro */
+for (let i = SOON.length - 1; i >= 0; i--) {
+  if (SOON[i].nome === 'Regras de sinais') {
+    SOON.splice(i, 1);
+  }
+}
+
+/* Histórico detalhado de respostas */
+const respOriginal = resp;
+
+resp = function(i, botao) {
+  const questaoAtual = Q;
+  const moduloAtual = cur ? cur.id : '';
+  const estudante = (S.student || '').trim();
+  const acertou = !!questaoAtual && i === questaoAtual.c;
+
+  respOriginal(i, botao);
+
+  if (!questaoAtual || !estudante) {
+    return;
+  }
+
+  S.hist.push({
+    data: dataLocal(),
+    estudante,
+    modulo: moduloAtual,
+    questao: questaoAtual.q,
+    resposta: questaoAtual.o[i],
+    acertou,
+    nivel: niv,
+    erro: acertou ? '' :
+      (questaoAtual.tg && questaoAtual.tg[i]) || 'Resposta incorreta'
+  });
+
+  /* Limite de segurança para não crescer indefinidamente */
+  if (S.hist.length > 10000) {
+    S.hist = S.hist.slice(-10000);
+  }
+
+  save();
+};
+
+/* Identificação do estudante e painel docente */
+const homeOriginal = home;
+
+home = function() {
+  homeOriginal();
+
+  const main = $('main');
+  if (!main || $('mlExtras')) return;
+
+  const extras = document.createElement('section');
+  extras.id = 'mlExtras';
+  extras.className = 'box';
+  extras.style.marginTop = '1.5rem';
+
+  extras.innerHTML = `
+    <h2>👩‍🏫 Identificação e acompanhamento</h2>
+
+    <label for="mlStudent">Nome do estudante</label>
+    <input id="mlStudent" maxlength="100"
+      placeholder="Digite o nome do estudante"
+      value="${(S.student || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}"
+      style="padding:.7rem;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx)">
+
+    <button class="go" id="mlSaveStudent">Salvar identificação</button>
+
+    <h2 style="margin-top:1rem">📊 Painel do professor</h2>
+
+    <div class="sl">
+      <label for="mlFilterStudent">Estudante</label>
+      <input id="mlFilterStudent" placeholder="Todos os estudantes">
+    </div>
+
+    <div class="sl">
+      <label for="mlFilterModule">Módulo</label>
+      <select id="mlFilterModule"
+        style="width:100%;padding:.6rem;background:var(--card);color:var(--tx)">
+        <option value="">Todos os módulos</option>
+        ${MODS.map(m => `<option value="${m.id}">${m.nome}</option>`).join('')}
+      </select>
+    </div>
+
+    <div class="sl">
+      <label for="mlStart">Data inicial</label>
+      <input type="date" id="mlStart">
+    </div>
+
+    <div class="sl">
+      <label for="mlEnd">Data final</label>
+      <input type="date" id="mlEnd">
+    </div>
+
+    <button class="go" id="mlFilter">Aplicar filtros</button>
+    <button class="btn" id="mlCsv">Exportar CSV</button>
+
+    <div id="mlReport" aria-live="polite"></div>
+  `;
+
+  main.appendChild(extras);
+
+  $('mlSaveStudent').onclick = () => {
+    S.student = $('mlStudent').value.trim();
+    save();
+    alert(S.student
+      ? 'Identificação salva neste navegador.'
+      : 'O nome foi removido.');
+  };
+
+  $('mlFilter').onclick = renderRelatorio;
+  $('mlCsv').onclick = exportarRelatorio;
+
+  renderRelatorio();
+};
+
+function registrosFiltrados() {
+  const estudante = ($('mlFilterStudent')?.value || '')
+    .trim().toLocaleLowerCase('pt-BR');
+  const modulo = $('mlFilterModule')?.value || '';
+  const inicio = $('mlStart')?.value || '';
+  const fim = $('mlEnd')?.value || '';
+
+  return S.hist.filter(r =>
+    (!estudante || r.estudante.toLocaleLowerCase('pt-BR').includes(estudante)) &&
+    (!modulo || r.modulo === modulo) &&
+    (!inicio || r.data >= inicio) &&
+    (!fim || r.data <= fim)
+  );
+}
+
+function renderRelatorio() {
+  const alvo = $('mlReport');
+  if (!alvo) return;
+
+  const registros = registrosFiltrados();
+  const acertos = registros.filter(r => r.acertou).length;
+  const erros = registros.length - acertos;
+  const percentual = registros.length
+    ? Math.round(100 * acertos / registros.length)
+    : 0;
+
+  const estudantes = [...new Set(registros.map(r => r.estudante))];
+
+  alvo.innerHTML = `
+    <p style="margin:.8rem 0;line-height:1.8">
+      <b>Estudantes:</b> ${estudantes.length}<br>
+      <b>Respostas registradas:</b> ${registros.length}<br>
+      <b>Acertos:</b> ${acertos}<br>
+      <b>Respostas incorretas:</b> ${erros}<br>
+      <b>Percentual de acerto:</b> ${percentual}%
+    </p>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Estudante</th>
+            <th>Módulo</th>
+            <th>Resultado</th>
+            <th>Erro identificado</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${registros.slice(-100).reverse().map(r => `
+            <tr>
+              <td>${r.data}</td>
+              <td>${escHtml(r.estudante)}</td>
+              <td>${escHtml(nomeModulo(r.modulo))}</td>
+              <td>${r.acertou ? 'Acerto' : 'Erro'}</td>
+              <td>${escHtml(r.erro || '—')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--mu);margin-top:.5rem">
+      Exibindo até 100 respostas recentes. O histórico completo pode ser exportado.
+    </p>
+  `;
+}
+
+function escHtml(valor) {
+  return String(valor ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[c]);
+}
+
+function exportarRelatorio() {
+  const registros = registrosFiltrados();
+  if (!registros.length) {
+    alert('Não há registros para exportar com os filtros selecionados.');
+    return;
+  }
+
+  const colunas = [
+    'data', 'estudante', 'modulo', 'questao',
+    'resposta', 'acertou', 'nivel', 'erro'
+  ];
+
+  const csv = [
+    colunas.join(';'),
+    ...registros.map(r => colunas.map(c =>
+      `"${String(c === 'modulo' ? nomeModulo(r[c]) : r[c] ?? '')
+        .replace(/"/g, '""')}"`
+    ).join(';'))
+  ].join('\r\n');
+
+  const blob = new Blob(
+    ['\uFEFF' + csv],
+    { type: 'text/csv;charset=utf-8;' }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `mathlab-relatorio-${dataLocal()}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+if(S.fs){fs=S.fs;document.documentElement.style.setProperty('--fs',fs+'rem')}
+if(S.tema)tema(S.tema);
 stats();home();ui();
 </script>
 </body>
