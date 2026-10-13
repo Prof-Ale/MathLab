@@ -407,12 +407,13 @@ const EQ_GENS={
 const INT_GENS={
 1:[
  ()=>{const a=rnd(-10,10),b=rnd(-10,10),res=a+b;
-  return mk({q:`Quanto é (${a}) + (${b})?`,ok:String(res),
+  const strA=a<0?`(${a})`:String(a), strB=b<0?`(${b})`:String(b);
+  return mk({q:`Quanto é ${strA} + ${strB}?`,ok:String(res),
    bad:[[String(Math.abs(a)+Math.abs(b)),'somou sem olhar os sinais','Atenção aos sinais dos números!'],
         [String(a-b),'subtraiu em vez de somar','Lembre-se da adição na reta numérica.'],
         [String(-(a+b)),'inverteu o sinal do resultado','Verifique o sinal do número de maior valor absoluto.']],
    h:['Desloque-se na reta numérica: esquerda para negativos, direita para positivos.'],
-   e:`(${a}) + (${b}) = ${res}.`,s:{pos:res}})}
+   e:`${strA} + ${strB} = ${res}.`,s:{pos:res}})}
 ]};
 
 /* ===== MÓDULOS ===== */
