@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathLab - Laboratório de Matemática Interativa | Prof. Alê Chocolate</title>
+<style>
+:root{--bg:#070d19;--card:#0f172a;--nav:#0a1325;--tx:#f8fafc;--mu:#94a3b8;--gold:#e69f00;--gold2:#ffb703;--blue:#002855;--cy:#06b6d4;--gr:#10b981;--pk:#ec4899;--rd:#ef4444;--bd:rgba(230,159,0,.3);--cv:#030712;--fs:1rem}
+body.theme-light{--bg:#f1f5f9;--card:#fff;--nav:#002855;--tx:#0f172a;--mu:#475569;--gold:#d97706;--gold2:#b45309;--bd:rgba(217,119,6,.4);--cv:#f8fafc}
+body.theme-contrast{--bg:#000;--card:#111;--nav:#1a1a1a;--tx:#ff0;--mu:#fff;--gold:#ff0;--gold2:#ff0;--cy:#0ff;--gr:#0f0;--bd:#fff;--cv:#000}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+html{font-size:var(--fs)}
+body{background:var(--bg);color:var(--tx);min-height:100vh;display:flex;flex-direction:column;transition:background .3s,color .3s}
+button:focus-visible,input:focus-visible{outline:3px solid var(--cy);outline-offset:2px}
+header{position:sticky;top:0;z-index:10;background:var(--nav);border-bottom:3px solid var(--gold);padding:.6rem 1.2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.8rem;color:#f8fafc}
+.brand{display:flex;align-items:center;gap:.8rem;cursor:pointer;background:none;border:0;color:var(--gold);font-size:1.2rem;font-weight:800}
+.brand img{height:48px;max-width:180px;object-fit:contain}
+.status{display:flex;gap:.9rem;background:rgba(0,0,0,.4);padding:.4rem 1rem;border-radius:50px;border:1px solid var(--bd);font-weight:800;font-size:.9rem}
+.tools{display:flex;gap:.4rem}
+.btn{background:rgba(255,255,255,.1);color:inherit;border:1px solid var(--bd);padding:.4rem .7rem;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem}
+.btn:hover{background:var(--gold);color:#000}
+main{flex:1;width:100%;max-width:1400px;margin:0 auto;padding:1.5rem 1rem}
+h2.t{color:var(--gold2);font-size:1.3rem;border-bottom:2px solid var(--bd);padding-bottom:.5rem;margin:1rem 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem}
+.mod{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:1.2rem;text-align:left;color:var(--tx);cursor:pointer;display:flex;flex-direction:column;gap:.4rem}
+.mod:hover{border-color:var(--gold);transform:translateY(-3px)}
+.mod .ic{font-size:2rem}.mod b{font-size:1.1rem}.mod small{color:var(--mu)}
+.mod.soon{opacity:.55;cursor:default}.mod.soon:hover{transform:none;border-color:var(--bd)}
+.lab{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+@media(max-width:900px){.lab{grid-template-columns:1fr}}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
+.box h2{font-size:1.2rem;color:var(--gold2);display:flex;justify-content:space-between;gap:.5rem}
+canvas{width:100%;height:260px;display:block;background:var(--cv);border:2px solid var(--bd);border-radius:12px}
+.info{text-align:center;font-weight:800;font-size:1.1rem;color:var(--cy);border:1px solid var(--cy);border-radius:8px;padding:.5rem}
+.sl{background:rgba(0,0,0,.2);padding:.8rem 1rem;border-radius:10px}
+.sl label{display:flex;justify-content:space-between;font-weight:700;font-size:.95rem;margin-bottom:.3rem}
+.sl label span+span{color:var(--gold2)}
+input[type=range]{width:100%;accent-color:var(--gold);cursor:pointer}
+.qt{font-size:1.05rem;font-weight:600;line-height:1.5}
+.opts{display:flex;flex-direction:column;gap:.6rem}
+.opt{background:rgba(255,255,255,.05);color:var(--tx);border:1px solid var(--bd);padding:.8rem 1rem;border-radius:10px;cursor:pointer;text-align:left;font-size:.95rem;font-weight:600}
+.opt:hover:not(:disabled){background:rgba(230,159,0,.2);border-color:var(--gold)}
+.opt:disabled{opacity:.5;cursor:default}.opt.ok{border-color:var(--gr);background:rgba(16,185,129,.2);opacity:1}
+.fb{font-weight:700;padding:.8rem;border-radius:8px;text-align:center;display:none}
+.fb.ok{display:block;background:rgba(16,185,129,.2);color:var(--gr);border:1px solid var(--gr)}
+.fb.no{display:block;background:rgba(239,68,68,.2);color:var(--rd);border:1px solid var(--rd)}
+body.theme-contrast .fb,body.theme-contrast .fb.ok,body.theme-contrast .fb.no{color:#fff}
+.go{background:linear-gradient(90deg,var(--blue),var(--gold));color:#fff;border:0;padding:.75rem;border-radius:10px;font-weight:700;cursor:pointer;font-size:.95rem}
+.go:disabled{opacity:.4;cursor:default}
+footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1rem;margin-top:2rem;color:#f8fafc}
+.ft{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+.tc{display:flex;align-items:center;gap:1rem}
+.tc img{width:70px;height:70px;border-radius:50%;border:2px solid var(--gold);object-fit:cover;background:#000}
+.tc h4{color:var(--gold2)}.tc p{font-size:.8rem;color:var(--cy);font-weight:700}.tc span,.fq{font-size:.8rem;color:#94a3b8}
+.fq{text-align:right}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <button class="brand" onclick="home()" aria-label="Voltar ao início">
+    <img src="https://lh3.googleusercontent.com/d/1M7CCspb4ZrbdILayyqNUhmqN1SyW9H1c" alt="" onerror="this.style.display='none'">MathLab
+  </button>
+  <div class="status" aria-live="polite">
+    <span>⚡ <b id="xp">0</b> XP</span><span>🔥 <b id="cb">0</b></span><span id="bg">📐 Iniciante</span>
+  </div>
+  <div class="tools">
+    <button class="btn" onclick="fonte(1)" aria-label="Aumentar fonte">A+</button>
+    <button class="btn" onclick="fonte(-1)" aria-label="Diminuir fonte">A-</button>
+    <button class="btn" onclick="tema('light')" aria-label="Modo claro">☀️</button>
+    <button class="btn" onclick="tema('dark')" aria-label="Modo noturno">🌙</button>
+    <button class="btn" onclick="tema('contrast')" aria-label="Alto contraste">◐</button>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<footer>
+  <div class="ft">
+    <div class="tc">
+      <img src="https://lh3.googleusercontent.com/d/1V9pEWzeeHIoNNreWR3CFhyENKkv7Kgrp" alt="Prof. Alê Chocolate" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=AleChocolate'">
+      <div><h4>Prof. Alê Chocolate</h4><p>Ensinar • Investigar • Incluir • Transformar</p><span>🐶 Mascotes: Oreo & Julieta</span></div>
+    </div>
+    <div class="fq"><p>☕ <em>"Café, Matemática, Planos, Projetos, Vida."</em></p><p><b>MathLab • Matemática em Investigação</b></p></div>
+  </div>
+</footer>
+
+<script>
+/* ===== ESTADO E PROGRESSO (localStorage com proteção) ===== */
+let S={xp:0,done:{},niv:{},err:{},cnt:{}};
+try{S=Object.assign(S,JSON.parse(localStorage.getItem('mathlab')||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem('mathlab',JSON.stringify(S))}catch(e){}};
+let combo=0,fs=1,cur=null,qi=0,tries=0,locked=false,V={};
+let Q=null,niv=1,seqOk=0,seqErr=0,ultG=-1,sessErr={};
+const $=id=>document.getElementById(id);
+
+/* ===== GERADORES DE QUESTÕES =====
+   Cada gerador sorteia números, calcula a resposta certa e monta os distratores
+   a partir de erros típicos. tag = nome do erro (vai para o diagnóstico),
+   mensagem = o que o aluno lê quando cai naquela alternativa. */
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[rnd(0,a.length-1)];
+const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
+const mdc=(a,b)=>b?mdc(b,a%b):a;
+const F=(n,d)=>{const g=mdc(n,d)||1;return d/g===1?String(n/g):`${n/g}/${d/g}`};
+const eqF=(n,d)=>F(n,d)===`${n}/${d}`?'':` = ${F(n,d)}`;
+function mk(o){
+  const seen=new Set([o.ok]),bad=[];
+  (o.bad||[]).forEach(b=>{if(!seen.has(b[0])&&bad.length<3){seen.add(b[0]);bad.push({t:b[0],tag:b[1],m:b[2]})}});
+  const fill=o.fill||(()=>String(rnd(1,99)));let g=0;
+  while(bad.length<3&&g++<80){const t=fill();if(!seen.has(t)){seen.add(t);bad.push({t})}}
+  const A=shuf([{t:o.ok,ok:1},...bad]);
+  return{q:o.q,o:A.map(x=>x.t),c:A.findIndex(x=>x.ok),tg:A.map(x=>x.tag||null),ms:A.map(x=>x.m||null),h:o.h,e:o.e,s:o.s};
+}
+const NOMES=['Ana','Bruno','Carla','Davi','Elisa','Felipe'];
+
+const FRA_GENS={
+1:[
+ /* Nível 1A: o que significam numerador e denominador */
+ ()=>{const d=rnd(2,12),n=rnd(1,d-1),num=Math.random()<.5;
+  const outras=['O resultado da divisão','Quantos inteiros existem','O tamanho de cada parte'];
+  return num
+   ?mk({q:`Na fração ${n}/${d}, o que o numerador ${n} representa?`,ok:'Quantas partes estamos considerando (as pintadas)',
+     bad:[['Em quantas partes iguais o todo foi dividido','trocou numerador por denominador','Essa é a função do denominador, o número de baixo.'],[outras[0],'não ligou a fração às partes do todo'],[outras[1],'não ligou a fração às partes do todo']],
+     h:['Observe a barra e a pizza: quantas partes estão pintadas?','O número de cima conta as partes pintadas. O de baixo, o total de partes.'],
+     e:`No simulador, ${n} partes estão pintadas. O numerador conta as partes consideradas.`,s:{n,d}})
+   :mk({q:`Na fração ${n}/${d}, o que o denominador ${d} representa?`,ok:'Em quantas partes iguais o todo foi dividido',
+     bad:[['Quantas partes estão pintadas','trocou numerador por denominador','Quantas partes estão pintadas é o numerador, o número de cima.'],[outras[0],'não ligou a fração às partes do todo'],[outras[1],'não ligou a fração às partes do todo']],
+     h:['Observe a barra: quantas divisões ela tem no total?','O denominador conta o total de partes iguais.'],
+     e:`O denominador ${d} mostra em quantas partes iguais o inteiro foi dividido.`,s:{n,d}})},
+ /* Nível 1B: ler a fração a partir da figura */
+ ()=>{const d=rnd(3,12),n=rnd(1,d-1);
+  return mk({q:`Uma barra foi dividida em ${d} partes iguais e ${n} foram pintadas. Que fração representa a parte pintada?`,ok:`${n}/${d}`,
+   bad:[[`${d}/${n}`,'inverteu numerador e denominador','O numerador é a parte pintada e o denominador é o total de partes.'],[`${n}/${d-n}`,'comparou pintado com não pintado','O denominador é o total de partes, não só as que sobraram.'],[`${d-n}/${d}`,'representou a parte não pintada','Essa é a parte que ficou sem pintar.']],
+   fill:()=>`${rnd(1,d)}/${d}`,
+   h:['Monte a fração no simulador e conte as partes pintadas e o total.','Escreva as pintadas em cima e o total embaixo.'],
+   e:`${n} partes pintadas de ${d} no total: ${n}/${d}.`,s:{n,d}})},
+ /* Nível 1C: fração equivalente */
+ ()=>{const d=rnd(2,6),n=rnd(1,d-1),m=rnd(2,4);
+  return mk({q:`Qual fração é equivalente a ${n}/${d}?`,ok:`${n*m}/${d*m}`,
+   bad:[[`${n+m}/${d+m}`,'somou em vez de multiplicar','Para manter o valor, multiplique (não some) em cima e embaixo.'],[`${n*m}/${d}`,'multiplicou só o numerador','Multiplicar só o numerador muda o valor. É preciso multiplicar os dois termos.'],[`${n}/${d*m}`,'multiplicou só o denominador','Multiplicar só o denominador muda o valor da fração.']],
+   h:['Mude numerador e denominador no simulador e compare a parte pintada.','Multiplique numerador e denominador pelo mesmo número.'],
+   e:`${n}/${d} = ${n*m}/${d*m}, pois multiplicamos em cima e embaixo por ${m}.`,s:{n,d}})}
+],
+2:[
+ /* Nível 2A: soma com mesmo denominador */
+ ()=>{const d=rnd(4,12),a=rnd(1,d-2),b=rnd(1,d-a-1);
+  return mk({q:`Quanto é ${a}/${d} + ${b}/${d}?`,ok:`${a+b}/${d}`,
+   bad:[[`${a+b}/${2*d}`,'somou os denominadores','Quando os denominadores são iguais, o denominador se mantém.'],[`${a*b}/${d}`,'multiplicou os numeradores','Na soma, os numeradores são somados.'],[`${Math.abs(a-b)}/${d}`,'subtraiu em vez de somar','A operação é uma soma: some os numeradores.']],
+   fill:()=>`${rnd(1,d)}/${d}`,
+   h:['Os denominadores são iguais: o que acontece com o denominador na soma?','Some só os numeradores e mantenha o denominador.'],
+   e:`${a}/${d} + ${b}/${d} = ${a+b}/${d}. O denominador se mantém.`,s:{n:a+b,d}})},
+ /* Nível 2B: fração de uma quantidade */
+ ()=>{const d=rnd(2,10),n=rnd(1,d-1),k=rnd(2,9),N=d*k;
+  return mk({q:`Quanto é ${n}/${d} de ${N}?`,ok:String(n*k),
+   bad:[[String(k),'só dividiu o total',`Você dividiu ${N} por ${d}, mas ainda falta pegar ${n} partes.`],[String(n*N),'só multiplicou pelo numerador',`Antes de multiplicar por ${n}, é preciso dividir ${N} em ${d} partes iguais.`],[String(N-n*k),'calculou o que sobra','Esse valor é a parte que não foi pega.']],
+   fill:()=>String(rnd(1,N)),
+   h:[`Primeiro divida ${N} em ${d} partes iguais.`,`Cada parte vale ${k}. Agora pegue ${n} partes.`],
+   e:`${N} ÷ ${d} = ${k} e ${k} × ${n} = ${n*k}.`,s:{n,d}})},
+ /* Nível 2C: comparar frações com denominadores diferentes */
+ ()=>{let a,b,c,d;
+  do{b=rnd(2,8);d=rnd(2,8);a=rnd(1,b-1);c=rnd(1,d-1)}while(b===d||a*d===c*b);
+  const p=`${a}/${b}`,r=`${c}/${d}`,gr=a*d>c*b?p:r,pe=gr===p?r:p,D=b*d;
+  return mk({q:`Qual fração é maior: ${p} ou ${r}?`,ok:gr,
+   bad:[[pe,'comparou só numeradores ou denominadores',`Compare no mesmo denominador: ${a*d}/${D} e ${c*b}/${D}.`],['São iguais','achou que eram iguais','Elas têm tamanhos diferentes. Compare no mesmo denominador.'],['Não dá para comparar','achou que não dá para comparar','Dá sim: coloque as duas no mesmo denominador.']],
+   h:['Monte cada fração no simulador e compare a parte pintada.',`Use o mesmo denominador: ${a*d}/${D} e ${c*b}/${D}.`],
+   e:`${p} = ${a*d}/${D} e ${r} = ${c*b}/${D}. Logo, ${gr} é maior.`,s:{n:a,d:b}})}
+],
+3:[
+ /* Nível 3A: soma em que um denominador é múltiplo do outro */
+ ()=>{const b=rnd(2,4),m=rnd(2,3),d=b*m,a=rnd(1,b-1),c=rnd(1,d-a*m-1),n=a*m+c;
+  return mk({q:`Quanto é ${a}/${b} + ${c}/${d}?`,ok:F(n,d),
+   bad:[[F(a+c,b+d),'somou numerador com numerador e denominador com denominador','Não se somam os denominadores. Primeiro coloque as frações no mesmo denominador.'],[F(a+c,d),'somou sem igualar os denominadores',`Antes de somar, ${a}/${b} precisa virar ${a*m}/${d}.`],[F(a+c,b),'somou sem igualar os denominadores',`Antes de somar, ${c}/${d} e ${a}/${b} precisam ter o mesmo denominador.`]],
+   fill:()=>F(rnd(1,d-1),d),
+   h:[`Coloque as frações no mesmo denominador: ${a}/${b} = ${a*m}/${d}.`,`Agora some os numeradores: ${a*m} + ${c} = ${n}.`],
+   e:`${a}/${b} = ${a*m}/${d}. Então ${a*m}/${d} + ${c}/${d} = ${n}/${d}${eqF(n,d)}.`,s:{n,d}})},
+ /* Nível 3B: problema do dia a dia (o que sobrou) */
+ ()=>{const d=rnd(6,12),a=rnd(1,d-2),b=rnd(1,d-a-1),[n1,n2]=shuf([...NOMES]).slice(0,2),obj=pick(['pizza','barra de chocolate','torta']),r=d-a-b;
+  return mk({q:`${n1} comeu ${a}/${d} de uma ${obj} e ${n2} comeu ${b}/${d}. Que fração da ${obj} sobrou?`,ok:F(r,d),
+   bad:[[F(a+b,d),'respondeu o que foi comido, não o que sobrou','Essa fração é o que os dois comeram juntos. A pergunta pede o que sobrou.'],[F(d-a,d),'descontou só uma das partes',`Você tirou só a parte de ${n1}. Falta tirar a de ${n2}.`],[F(d-b,d),'descontou só uma das partes',`Você tirou só a parte de ${n2}. Falta tirar a de ${n1}.`]],
+   fill:()=>F(rnd(1,d-1),d),
+   h:['Primeiro some o que foi comido.',`Comeram ${a+b}/${d}. O inteiro é ${d}/${d}. Tire o que foi comido.`],
+   e:`Comeram ${a}/${d} + ${b}/${d} = ${a+b}/${d}. Sobrou ${d}/${d} − ${a+b}/${d} = ${r}/${d}${eqF(r,d)}.`,s:{n:r,d}})},
+ /* Nível 3C: simplificar até a forma irredutível */
+ ()=>{const d0=rnd(2,6);let n0;do{n0=rnd(1,d0-1)}while(mdc(n0,d0)!==1);
+  const g=rnd(2,Math.floor(12/d0)),p=n0*g,q=d0*g,sp=[2,3,5].find(x=>g%x===0),comp=sp!==g;
+  const parou=comp?[`${p/sp}/${q/sp}`,'parou antes de simplificar tudo','Ainda dá para simplificar mais. Divida pelo maior divisor comum.']:[`${p+g}/${q+g}`,'somou em vez de dividir','Simplificar é dividir os dois termos pelo mesmo número, não somar.'];
+  return mk({q:`Qual é a forma mais simples (irredutível) de ${p}/${q}?`,ok:`${n0}/${d0}`,
+   bad:[[`${n0}/${q}`,'simplificou só um dos termos','Para manter o valor, divida numerador e denominador pelo mesmo número.'],[`${p}/${d0}`,'simplificou só um dos termos','Para manter o valor, divida numerador e denominador pelo mesmo número.'],parou],
+   fill:()=>`${rnd(1,d0)}/${rnd(2,12)}`,
+   h:['Procure um número que divida o numerador e o denominador ao mesmo tempo.','Divida os dois pelo maior divisor comum.'],
+   e:`O maior divisor comum de ${p} e ${q} é ${g}. ${p} ÷ ${g} = ${n0} e ${q} ÷ ${g} = ${d0}.`,s:{n:p,d:q}})}
+]};
+
+/* ===== MÓDULOS (cada assunto = um objeto) =====
+   Para criar um novo assunto: copie um objeto e ajuste ctl, draw e info.
+   Questões fixas: use qs. Questões sorteadas por nível: use gens (veja Frações). */
+const MODS=[
+{id:'fra',ano:6,ic:'🍕',nome:'Frações',sub:'Barras, pizzas, equivalência e operações',
+ ctl:[{k:'n',l:'Numerador (partes pintadas)',min:0,max:12,v:3},{k:'d',l:'Denominador (partes iguais)',min:1,max:12,v:8}],
+ fix:v=>{v.n=Math.min(v.n,v.d)},
+ info:v=>`${v.n}/${v.d} = ${(v.n/v.d).toLocaleString('pt-BR',{maximumFractionDigits:3})} = ${(100*v.n/v.d).toLocaleString('pt-BR',{maximumFractionDigits:1})}%`,
+ draw(c,v,W,H,k){const bw=W-40,sw=bw/v.d;
+  for(let i=0;i<v.d;i++){c.fillStyle=i<v.n?k.a:'transparent';c.fillRect(20+i*sw,16,sw,44);c.strokeStyle=k.t;c.lineWidth=2;c.strokeRect(20+i*sw,16,sw,44)}
+  const cx=W/2,cy=160,r=Math.min(80,(W-40)/2);
+  for(let i=0;i<v.d;i++){const a0=-Math.PI/2+i*2*Math.PI/v.d,a1=a0+2*Math.PI/v.d;c.beginPath();c.moveTo(cx,cy);c.arc(cx,cy,r,a0,a1);c.closePath();c.fillStyle=i<v.n?k.b:'transparent';c.fill();c.strokeStyle=k.t;c.lineWidth=2;c.stroke()}},
+ rod:8,gens:FRA_GENS},
+
+{id:'ang',ano:7,ic:'📐',nome:'Ângulos',sub:'Classificação, complementares e triângulos',
+ ctl:[{k:'d',l:'Abertura do ângulo (θ)',min:0,max:360,v:45,u:'°'}],
+ info:v=>{const d=v.d;return d===0?'Ângulo nulo: 0°':d<90?`Ângulo agudo: ${d}° (< 90°)`:d===90?'Ângulo reto: 90°':d<180?`Ângulo obtuso: ${d}° (entre 90° e 180°)`:d===180?'Ângulo raso: 180°':d<360?`Ângulo côncavo: ${d}° (> 180°)`:'Ângulo de giro completo: 360°'},
+ draw(c,v,W,H,k){const x=W/2,y=H*.78,r=Math.min(W*.4,H*.65),a=-v.d*Math.PI/180;
+  c.setLineDash([4,4]);c.strokeStyle=k.m;c.lineWidth=2;c.beginPath();c.arc(x,y,r,Math.PI,0);c.stroke();c.setLineDash([]);
+  c.beginPath();c.moveTo(x,y);c.arc(x,y,44,0,a,true);c.closePath();c.fillStyle=k.f;c.fill();c.strokeStyle=k.a;c.stroke();
+  c.lineWidth=4;c.strokeStyle=k.c1;c.beginPath();c.moveTo(x,y);c.lineTo(x+r+14,y);c.stroke();
+  c.strokeStyle=k.c2;c.beginPath();c.moveTo(x,y);c.lineTo(x+(r+14)*Math.cos(a),y+(r+14)*Math.sin(a));c.stroke();
+  c.fillStyle=k.t;c.font='bold 16px sans-serif';c.fillText(v.d+'°',x+62*Math.cos(a/2)-12,y+62*Math.sin(a/2))},
+ qs:[
+ {q:'Dois ângulos são complementares quando somam:',o:['90°','180°','360°','45°'],c:0,h:['Pense no canto de uma folha (ângulo reto).','Observe o ângulo reto no simulador: quanto ele mede?'],e:'Complementares somam 90° (ex.: 30° + 60°).',s:{d:90}},
+ {q:'Um ângulo mede 70°. Quanto mede o seu suplementar?',o:['20°','110°','90°','130°'],c:1,h:['Suplementares somam uma meia volta.','Calcule 180° − 70°.'],e:'180° − 70° = 110°.',s:{d:70}},
+ {q:'Em um triângulo, dois ângulos medem 50° e 60°. Quanto mede o terceiro?',o:['60°','70°','80°','90°'],c:1,h:['A soma dos ângulos internos de um triângulo é constante.','Some 50° + 60° e complete até 180°.'],e:'50° + 60° = 110° e 180° − 110° = 70°.',s:{d:50}},
+ {q:'Um ângulo de 135° é classificado como:',o:['Agudo','Obtuso','Reto','Raso'],c:1,h:['Compare 135° com 90° e com 180° usando o simulador.','Está entre 90° e 180°.'],e:'Entre 90° e 180°, o ângulo é obtuso.',s:{d:135}},
+ {q:'Em um triângulo isósceles, o ângulo do topo mede 80°. Quanto mede cada ângulo da base?',o:['40°','50°','60°','100°'],c:1,h:['Os dois ângulos da base são iguais.','Faça (180° − 80°) ÷ 2.'],e:'180° − 80° = 100° e 100° ÷ 2 = 50°.',s:{d:80}}]},
+
+{id:'eq',ano:7,ic:'⚖️',nome:'Equação do 1º grau',sub:'A balança de dois pratos',
+ ctl:[{k:'a',l:'Unidades somadas ao x (a)',min:1,max:10,v:5},{k:'b',l:'Total do outro prato (b)',min:1,max:20,v:12},{k:'t',l:'Tirar dos DOIS pratos',min:0,max:10,v:0}],
+ fix:v=>{v.b=Math.max(v.b,v.a);v.t=Math.min(v.t,v.a)},
+ info:v=>`x + ${v.a-v.t} = ${v.b-v.t}`+(v.t===v.a?`  →  x = ${v.b-v.a}`:''),
+ draw(c,v,W,H,k){const by=150,s=16,g=2,cols=7,L=W*.27,R=W*.73;
+  c.strokeStyle=k.t;c.lineWidth=4;c.beginPath();c.moveTo(W*.1,by);c.lineTo(W*.9,by);c.stroke();
+  c.fillStyle=k.t;c.beginPath();c.moveTo(W/2,by);c.lineTo(W/2-20,by+70);c.lineTo(W/2+20,by+70);c.fill();
+  const put=(cx,i,col)=>{const x=cx-(cols*(s+g))/2+(i%cols)*(s+g),y=by-6-s-Math.floor(i/cols)*(s+g);c.fillStyle=col;c.fillRect(x,y,s,s)};
+  const xs=cols*(s+g)/2;c.fillStyle=k.pk;c.fillRect(L-xs,by-6-34,34,34);c.fillStyle='#fff';c.font='bold 18px sans-serif';c.fillText('x',L-xs+12,by-14);
+  for(let i=0;i<v.a-v.t;i++)put(L,i+2,k.a);
+  for(let i=0;i<v.b-v.t;i++)put(R,i,k.c1)},
+ qs:[
+ {q:'Na balança, x + 5 = 12. Quanto vale x?',o:['5','7','12','17'],c:1,h:['Tire as 5 unidades dos dois pratos com o controle "Tirar".','Calcule 12 − 5.'],e:'Tirando 5 dos dois lados, sobra x = 7.',s:{a:5,b:12,t:0}},
+ {q:'Para manter a balança equilibrada, se tirar 4 unidades de um prato, o que devo fazer?',o:['Nada','Tirar 4 do outro prato também','Colocar 4 no outro prato','Tirar 2 de cada lado'],c:1,h:['Mexa no controle "Tirar" e veja a balança.','O que se faz de um lado deve ser feito do outro.'],e:'Operações iguais nos dois lados mantêm a igualdade.',s:{a:6,b:10,t:0}},
+ {q:'Resolva: x + 3 = 11.',o:['14','8','7','9'],c:1,h:['Elimine as 3 unidades dos dois lados.','Calcule 11 − 3.'],e:'x = 11 − 3 = 8.',s:{a:3,b:11,t:0}},
+ {q:'x = 9 é solução de x + 6 = 15? (substitua x)',o:['Sim, pois 9 + 6 = 15','Não, pois 9 + 6 = 14','Não, pois 9 + 6 = 16','Não dá para saber'],c:0,h:['Troque x por 9 e calcule.','9 + 6 resulta em quanto?'],e:'9 + 6 = 15, então a igualdade é verdadeira.',s:{a:6,b:15,t:0}},
+ {q:'Resolva: x + 7 = 7.',o:['14','7','1','0'],c:3,h:['Tire 7 dos dois pratos.','Quanto sobra do lado direito?'],e:'7 − 7 = 0, logo x = 0.',s:{a:7,b:7,t:0}}]}
+];
+const SOON=[{ano:6,ic:'🧊',nome:'Sólidos geométricos'},{ano:7,ic:'➖',nome:'Números inteiros'},{ano:7,ic:'✖️',nome:'Regras de sinais'},{ano:7,ic:'🔤',nome:'Linguagem algébrica'}];
+
+/* ===== TELA INICIAL ===== */
+function home(){
+  cur=null;speechSynthesis&&speechSynthesis.cancel();
+  let h='<h1 style="font-size:1.6rem">Escolha um assunto</h1>';
+  [6,7].forEach(a=>{
+    h+=`<h2 class="t">${a}º ano</h2><div class="cards">`;
+    MODS.filter(m=>m.ano===a).forEach(m=>{const d=(S.done[m.id]||[]).filter(Boolean).length,
+        prog=m.gens?`Nível ${S.niv[m.id]||1} de 3 · ${S.cnt[m.id]||0} resolvidas`:`${d}/${m.qs.length} questões ${d===m.qs.length?'⭐':''}`;
+      h+=`<button class="mod" onclick="abrir('${m.id}')"><span class="ic">${m.ic}</span><b>${m.nome}</b><small>${m.sub}</small><small>${prog}</small></button>`});
+    SOON.filter(m=>m.ano===a).forEach(m=>h+=`<div class="mod soon"><span class="ic">${m.ic}</span><b>${m.nome}</b><small>Em breve</small></div>`);
+    h+='</div>'});
+  $('main').innerHTML=h;
+}
+
+/* ===== LABORATÓRIO ===== */
+let cv,cx,W,H;
+function abrir(id){
+  cur=MODS.find(m=>m.id===id);qi=0;V={};cur.ctl.forEach(c=>V[c.k]=c.v);
+  niv=cur.gens?(S.niv[cur.id]||1):1;seqOk=0;seqErr=0;ultG=-1;sessErr={};
+  $('main').innerHTML=`<div class="lab">
+   <section class="box" aria-label="Simulador"><h2>${cur.ic} Simulador: ${cur.nome}</h2><canvas id="cv" role="img" aria-label="Simulador visual de ${cur.nome}"></canvas>
+    <div class="info" id="info" aria-live="polite"></div>
+    ${cur.ctl.map(c=>`<div class="sl"><label for="r_${c.k}"><span>${c.l}</span><span id="o_${c.k}"></span></label><input type="range" id="r_${c.k}" min="${c.min}" max="${c.max}" value="${c.v}" oninput="mexer()"></div>`).join('')}
+   </section>
+   <section class="box" aria-label="Desafios"><h2><span>🎯 Desafio</span><span id="qc" style="font-size:.9rem;color:var(--mu)"></span></h2>
+    <p class="qt" id="qt"></p><div class="opts" id="qo"></div><div class="fb" id="fb" role="status" aria-live="polite"></div>
+    <div style="display:flex;gap:.6rem"><button class="btn" onclick="ler()" aria-label="Ler a questão em voz alta">🔊</button><button class="go" id="nx" style="flex:1" onclick="prox()" disabled>Próxima questão ➔</button></div>
+   </section></div>`;
+  cv=$('cv');cx=cv.getContext('2d');ajustar();questao();
+}
+function ajustar(){if(!cv)return;const d=devicePixelRatio||1,r=cv.getBoundingClientRect();W=r.width;H=260;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0);desenhar()}
+addEventListener('resize',ajustar);
+function mexer(){cur.ctl.forEach(c=>V[c.k]=+$('r_'+c.k).value);desenhar()}
+function cores(){const g=getComputedStyle(document.body),f=n=>g.getPropertyValue(n).trim();
+  return{t:f('--tx'),m:f('--mu'),a:f('--gold'),b:f('--gold2'),c1:f('--cy'),c2:f('--pk'),pk:f('--pk'),f:'rgba(230,159,0,.3)'}}
+function desenhar(){
+  if(!cur)return;if(cur.fix)cur.fix(V);
+  cur.ctl.forEach(c=>{$('r_'+c.k).value=V[c.k];$('o_'+c.k).textContent=V[c.k]+(c.u||'')});
+  $('info').textContent=cur.info(V);
+  cx.clearRect(0,0,W,H);cur.draw(cx,V,W,H,cores());
+}
+function ajustarSim(s){Object.assign(V,s);desenhar()}
+
+/* ===== QUESTÕES =====
+   Assuntos com gens sorteiam a questão do nível atual. Três acertos de primeira sobem o nível.
+   Duas questões seguidas com erro descem um nível. Assuntos com qs seguem a lista fixa. */
+const total=()=>cur.gens?(cur.rod||8):cur.qs.length;
+function sorteia(){
+  const L=cur.gens[niv];let i;
+  do{i=rnd(0,L.length-1)}while(L.length>1&&i===ultG);
+  ultG=i;return L[i]();
+}
+function questao(){
+  Q=cur.gens?sorteia():cur.qs[qi];tries=0;locked=false;
+  $('qc').textContent=`Questão ${qi+1} de ${total()}`+(cur.gens?` · Nível ${niv}`:'');$('qt').textContent=Q.q;
+  $('fb').className='fb';$('nx').disabled=true;
+  $('qo').innerHTML='';
+  Q.o.forEach((t,i)=>{const b=document.createElement('button');b.className='opt';b.textContent=t;b.onclick=()=>resp(i,b);$('qo').appendChild(b)});
+  ajustarSim(Q.s);
+}
+function resp(i,b){
+  if(locked)return;const q=Q,fb=$('fb');
+  if(i===q.c){
+    locked=true;b.classList.add('ok');[...$('qo').children].forEach(x=>x.disabled=true);
+    const ganho=tries===0?50+(cur.gens?10*(niv-1):0):25;S.xp+=ganho;combo++;
+    let extra='';
+    if(cur.gens){
+      S.cnt[cur.id]=(S.cnt[cur.id]||0)+1;
+      if(tries===0){seqOk++;seqErr=0;if(seqOk>=3&&niv<3){niv++;seqOk=0;ultG=-1;extra=` Subiu para o nível ${niv}!`}}
+      else{seqOk=0;seqErr++;if(seqErr>=2&&niv>1){niv--;seqErr=0;ultG=-1;extra=` Vamos reforçar o nível ${niv}.`}}
+      S.niv[cur.id]=niv;
+    }else{(S.done[cur.id]=S.done[cur.id]||[])[qi]=true}
+    fb.className='fb ok';fb.textContent=`✅ ${q.e} (+${ganho} XP)${extra}`;$('nx').disabled=false;
+  }else{
+    b.disabled=true;combo=0;
+    const tg=q.tg&&q.tg[i],ms=q.ms&&q.ms[i];
+    if(tg&&cur.gens){const E=(S.err[cur.id]=S.err[cur.id]||{});E[tg]=(E[tg]||0)+1;sessErr[tg]=(sessErr[tg]||0)+1}
+    const dica=q.h[Math.min(tries,q.h.length-1)];
+    fb.className='fb no';fb.textContent='❌ '+(ms?ms+(tries>0?' Dica: '+dica:''):'Dica: '+dica);tries++;
+  }
+  save();stats();
+}
+function prox(){
+  if(qi<total()-1){qi++;questao();return}
+  let t=`🎉 Você concluiu ${cur.nome}! Total: ${S.xp} XP.`;
+  if(cur.gens){
+    const top=Object.entries(sessErr).sort((x,y)=>y[1]-x[1])[0];
+    t+=` Nível atual: ${niv}.`+(top?` Erro mais frequente nesta rodada: ${top[0]}.`:' Nenhum erro típico nesta rodada.');
+    $('nx').textContent='Nova rodada';$('nx').onclick=()=>abrir(cur.id);
+  }else{$('nx').textContent='Voltar ao início';$('nx').onclick=home}
+  $('qt').textContent=t;$('qo').innerHTML='';$('fb').className='fb';$('qc').textContent='Fim';
+}
+function ler(){if(!cur||!Q||!speechSynthesis)return;speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(Q.q+'. '+Q.o.map((o,i)=>'Alternativa '+'ABCD'[i]+': '+o).join('. '));u.lang='pt-BR';speechSynthesis.speak(u)}
+
+/* ===== STATUS, TEMA E FONTE ===== */
+function stats(){$('xp').textContent=S.xp;$('cb').textContent=combo;
+  $('bg').textContent=S.xp>=900?'👑 Mestre Supremo':S.xp>=500?'🏆 Mestre da Matemática':S.xp>=200?'⭐ Detetive':'📐 Iniciante'}
+function fonte(d){fs=Math.min(1.3,Math.max(.8,fs+d*.1));document.documentElement.style.setProperty('--fs',fs+'rem')}
+function tema(m){document.body.classList.remove('theme-light','theme-contrast');if(m!=='dark')document.body.classList.add('theme-'+m);desenhar()}
+
+stats();home();
+</script>
+</body>
+</html>
