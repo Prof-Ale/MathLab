@@ -539,11 +539,21 @@ addEventListener('resize',ajustar);
 function mexer(){cur.ctl.forEach(c=>V[c.k]=+$('r_'+c.k).value);desenhar()}
 function cores(){const g=getComputedStyle(document.body),f=n=>g.getPropertyValue(n).trim();
   return{t:f('--tx'),m:f('--mu'),a:f('--gold'),b:f('--gold2'),c1:f('--cy'),c2:f('--pk'),pk:f('--pk'),gr:f('--gr'),f:'rgba(230,159,0,.3)'}}
-function desenhar(){
-  if(!cur)return;if(cur.fix)cur.fix(V);
-  cur.ctl.forEach(c=>{$('r_'+c.k).value=V[c.k];$('o_'+c.k).textContent=V[c.k]+(c.u\vert{}\vert{}'')});$('info').textContent=cur.info(V);
-  cx.clearRect(0,0,W,H);cur.draw(cx,V,W,H,cores());
+
+function desenhar() {
+  if (!cur) return;
+  if (cur.fix) cur.fix(V);
+
+  cur.ctl.forEach(c => {
+    $('r_' + c.k).value = V[c.k];
+    $('o_' + c.k).textContent = V[c.k] + (c.u || '');
+  });
+
+  $('info').textContent = cur.info(V);
+  cx.clearRect(0, 0, W, H);
+  cur.draw(cx, V, W, H, cores());
 }
+
 function ajustarSim(s){Object.assign(V,s);desenhar()}
 
 /* ===== QUESTÕES ===== */
