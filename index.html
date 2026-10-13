@@ -120,7 +120,7 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
 </div>
 
 <script>
-/* ===== ESTADO E PROGRESSO (localStorage com proteção) ===== */
+/* ===== ESTADO E PROGRESSO ===== */
 let S={xp:0,done:{},niv:{},err:{},cnt:{},au:{m:0,s:1},streak:1,lastLogin:null};
 try{S=Object.assign(S,JSON.parse(localStorage.getItem('mathlab')||'{}'))}catch(e){}
 const save=()=>{try{localStorage.setItem('mathlab',JSON.stringify(S))}catch(e){}};
@@ -565,8 +565,15 @@ function prox(){
   }else{$('nx').textContent='Voltar ao início';$('nx').onclick=home}
   $('qt').textContent=t;$('qo').innerHTML='';$('fb').className='fb';$('qc').textContent='Fim';som('fim');
 }
-function ler(){if(!cur||!Q||!speechSynthesis)return;speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(Q.q+'. '+Q.o.map((o,i)=>'Alternativa '+'ABCD'[i]+': '+o).join('. '));u.lang='pt-BR';speechSynthesis.speak(u)}
+function ler(){
+  if(!cur||!Q||!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  let txt = Q.q + '. ';
+  Q.o.forEach((o, i) => { txt += 'Alternativa ' + 'ABCD'[i] + ': ' + o + '. '; });
+  const u = new SpeechSynthesisUtterance(txt);
+  u.lang = 'pt-BR';
+  speechSynthesis.speak(u);
+}
 
 /* ===== MODAL DE CRÉDITOS ===== */
 function abrirCreditos(){
