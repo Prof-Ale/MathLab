@@ -1413,5 +1413,261 @@ if(S.fs){fs=S.fs;document.documentElement.style.setProperty('--fs',fs+'rem')}
 if(S.tema)tema(S.tema);
 stats();home();ui();
 </script>
+  
+<!-- ===== MATHLAB ADA 1 — INTEGRAÇÃO COM O WORKER ===== -->
+<section id="adaPanel" class="box" style="margin:1.5rem 0">
+  <h2>🤖 ADA 1 — Assistente de Diagnóstico e Aprendizagem</h2>
+  <p>
+    Analise os indicadores do histórico para identificar dificuldades,
+    planejar mediações e sugerir intervenções pedagógicas.
+  </p>
+
+  <label for="adaFoco">Foco adicional para a análise (opcional)</label>
+  <textarea id="adaFoco" rows="3" maxlength="1500"
+    placeholder="Ex.: priorize erros de frações e proponha perguntas mediadoras."
+    style="width:100%;padding:.8rem;border-radius:8px;background:var(--bg);color:var(--tx);border:1px solid var(--bd)"></textarea>
+
+  <div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.5rem">
+    <button type="button" class="go" id="adaConsultar">
+      🤖 Consultar ADA
+    </button>
+    <button type="button" class="btn" id="adaCopiar" disabled>
+      📋 Copiar parecer
+    </button>
+  </div>
+
+  <p id="adaStatus" role="status" aria-live="polite"
+     style="margin-top:.7rem;color:var(--mu)"></p>
+
+  <article id="adaResultado" hidden
+    style="white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;padding:1rem;border:1px solid var(--bd);border-radius:12px;background:var(--bg)"></article>
+</section>
+
+<script>
+(() => {
+  'use strict';
+
+  const ADA_ENDPOINT =
+    'https://mathlab-ada.alessandro-barbosa-sp.workers.dev/api/ada';
+
+  const $ada = id => document.getElementById(id);
+  let ultimoParecer = '';
+  let consultando = false;
+
+  function textoSeguro(valor) {
+    return String(valor ?? '').trim();
+  }
+
+  function obterIndicadores() {
+    if (typeof S === 'undefined' || !Array.isArray(S.hist)) {
+      throw new Error(
+        'O histórico do MathLab não está disponível nesta tela.'
+      );
+    }
+
+    // Respeita os filtros do relatório docente, quando disponíveis.
+    const registros = typeof registrosFiltrados === 'function'
+      ? registrosFiltrados()
+      : S.hist;
+
+    if (!registros.length) {
+      throw new Error(
+        'Não há respostas no histórico para analisar. ' +
+        'Registre respostas ou ajuste os filtros do relatório.'
+      );
+    }
+
+    const modulos = {};
+
+    for (const r of registros) {
+      const modulo = textoSeguro(r.modulo) || 'Não identificado';
+
+      if (!modulos[modulo]) {
+        modulos[modulo] = {
+          modulo: typeof nomeModulo === 'function'
+            ? nomeModulo(modulo)
+            : modulo,
+          respostas: 0,
+          acertos: 0,
+          erros: 0,
+          acertosPrimeiraTentativa: 0,
+          errosPorTipo: {},
+          tentativasTotal: 0,
+          tempoTotal: 0,
+          registrosComTempo: 0
+        };
+      }
+
+      const m = modulos[modulo];
+      m.respostas++;
+
+      if (r.acertou) {
+        m.acertos++;
+
+        if (Number(r.tentativa) === 1) {
+          m.acertosPrimeiraTentativa++;
+        }
+      } else {
+        m.erros++;
+
+        const tipo = textoSeguro(r.erro) || 'Erro não classificado';
+        m.errosPorTipo[tipo] = (m.errosPorTipo[tipo] || 0) + 1;
+      }
+
+      m.tentativasTotal += Math.max(1, Number(r.tentativa) || 1);
+
+      if (Number.isFinite(Number(r.tempoSegundos))) {
+        m.tempoTotal += Number(r.tempoSegundos);
+        m.registrosComTempo++;
+      }
+    }
+
+    const total = registros.length;
+    const acertos = registros.filter(r => r.acertou).length;
+    const primeiraTentativa = registros.filter(
+      r => Number(r.tentativa) === 1 && r.acertou
+    ).length;
+
+    const resumoModulos = Object.values(modulos).map(m => ({
+      modulo: m.modulo,
+      respostas: m.respostas,
+      acertos: m.acertos,
+      erros: m.erros,
+      percentualAcerto: Math.round(100 * m.acertos / m.respostas),
+      acertosNaPrimeiraTentativa: m.acertosPrimeiraTentativa,
+      errosFrequentes: Object.entries(m.errosPorTipo)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([tipo, quantidade]) => ({ tipo, quantidade })),
+      mediaTentativas: Number(
+        (m.tentativasTotal / m.respostas).toFixed(2)
+      ),
+      tempoMedioSegundos: m.registrosComTempo
+        ? Math.round(m.tempoTotal / m.registrosComTempo)
+        : null
+    }));
+
+    // Não enviar nome, turma, resposta digitada ou identificador pessoal.
+    return {
+      totalRespostas: total,
+      acertos,
+      erros: total - acertos,
+      percentualAcerto: Math.round(100 * acertos / total),
+      percentualAcertoNaPrimeiraTentativa:
+        Math.round(100 * primeiraTentativa / total),
+      modulos: resumoModulos,
+      observacao:
+        'Dados agregados do histórico local. ' +
+        'A análise não identifica individualmente o estudante.'
+    };
+  }
+
+  function montarPergunta(indicadores, foco) {
+    return [
+      'Você é a ADA 1, assistente pedagógica do MathLab.',
+      'Analise os indicadores agregados abaixo e produza um parecer pedagógico formativo.',
+      '',
+      'Organize a resposta nestas seções:',
+      '1. Síntese do desempenho observado.',
+      '2. Evidências quantitativas dos dados.',
+      '3. Hipóteses pedagógicas provisórias, sem tratar hipóteses como certezas.',
+      '4. Possível Zona de Desenvolvimento Proximal (ZDP).',
+      '5. Perguntas mediadoras que o professor pode fazer.',
+      '6. Intervenções e atividades práticas sugeridas.',
+      '7. Como verificar se houve aprendizagem após a intervenção.',
+      '8. Limites da análise e dados que ainda seriam necessários.',
+      '',
+      'Não invente dados nem atribua características pessoais ao estudante.',
+      'Diferencie evidências observadas de hipóteses.',
+      'Considere que os dados representam apenas as respostas registradas.',
+      'Use linguagem clara, respeitosa e útil ao professor.',
+      '',
+      'INDICADORES:',
+      JSON.stringify(indicadores, null, 2),
+      '',
+      'FOCO ADICIONAL DO PROFESSOR:',
+      foco || 'Nenhum foco adicional informado.'
+    ].join('\n');
+  }
+
+  async function consultarADA() {
+    if (consultando) return;
+
+    const botao = $ada('adaConsultar');
+    const status = $ada('adaStatus');
+    const resultado = $ada('adaResultado');
+    const copiar = $ada('adaCopiar');
+
+    consultando = true;
+    botao.disabled = true;
+    copiar.disabled = true;
+    resultado.hidden = true;
+    status.textContent = '⏳ Calculando indicadores e consultando a ADA…';
+
+    try {
+      const indicadores = obterIndicadores();
+      const foco = textoSeguro($ada('adaFoco').value);
+      const question = montarPergunta(indicadores, foco);
+
+      const resposta = await fetch(ADA_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ question })
+      });
+
+      const dados = await resposta.json().catch(() => ({}));
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados.error || dados.message ||
+          `O Worker respondeu com HTTP ${resposta.status}.`
+        );
+      }
+
+      const conteudo = dados.answer ?? dados.response ?? dados.text;
+
+      if (typeof conteudo !== 'string' || !conteudo.trim()) {
+        throw new Error(
+          'O Worker respondeu, mas não retornou um parecer textual reconhecido.'
+        );
+      }
+
+      ultimoParecer = conteudo.trim();
+      resultado.textContent = ultimoParecer;
+      resultado.hidden = false;
+      copiar.disabled = false;
+      status.textContent =
+        '✅ Parecer recebido. Revise as sugestões antes de aplicá-las.';
+    } catch (erro) {
+      status.textContent =
+        '❌ Não foi possível concluir a consulta: ' +
+        (erro.message || 'erro inesperado') +
+        ' Verifique a conexão e o formato esperado pelo Worker.';
+    } finally {
+      consultando = false;
+      botao.disabled = false;
+    }
+  }
+
+  $ada('adaConsultar').addEventListener('click', consultarADA);
+
+  $ada('adaCopiar').addEventListener('click', async () => {
+    if (!ultimoParecer) return;
+
+    try {
+      await navigator.clipboard.writeText(ultimoParecer);
+      $ada('adaStatus').textContent = '📋 Parecer copiado.';
+    } catch {
+      $ada('adaStatus').textContent =
+        'Não foi possível copiar automaticamente. Selecione o texto do parecer.';
+    }
+  });
+})();
+</script>
+<!-- ===== FIM DA INTEGRAÇÃO ADA 1 ===== -->
+</body>
+</html>
 </body>
 </html>
