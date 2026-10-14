@@ -802,7 +802,7 @@ function resp(i,b){
       else{seqOk=0;seqErr++;if(seqErr>=2&&niv>1){niv--;seqErr=0;ultG=-1;extra=` Vamos reforçar o nível ${niv}.`}}
       S.niv[cur.id]=niv;
     }else{(S.done[cur.id]=S.done[cur.id]||[])[qi]=true}
-    if(cur.gg)$('info').textContent=cur.info(V);fb.className='fb ok';fb.textContent=`✅ ${q.e} (+${ganho} XP)${extra}`;$('nx').disabled=false;som(extra.includes('Subiu')?'up':'ok');
+    if(cur.gg||cur.liveInfo)$('info').textContent=cur.info(V);fb.className='fb ok';fb.textContent=`✅ ${q.e} (+${ganho} XP)${extra}`;$('nx').disabled=false;som(extra.includes('Subiu')?'up':'ok');
   }else{
     b.disabled=true;combo=0;
     const tg=q.tg&&q.tg[i],ms=q.ms&&q.ms[i];
@@ -1171,6 +1171,66 @@ if (!MODS.some(m => m.id === 'sinais')) {
     gens: SIGN_GENS
   });
 }
+
+/* ===== REGRAS DE SINAIS: simulador de saltos na reta + novas questões ===== */
+(()=>{
+const pS=n=>n<0?`(${n})`:String(n),rS=n=>n<0?`−R$ ${-n}`:`R$ ${n}`;
+const nz=()=>pick([-6,-5,-4,-3,-2,2,3,4,5,6]);
+const dif=(n,t,w)=>[String(n),t,w];
+const gOposto=()=>{const n=rnd(2,9),[ex,res]=pick([[`−(−${n})`,n],[`−(+${n})`,-n],[`+(−${n})`,-n],[`−(−(−${n}))`,-n]]);
+ return mk({q:`Quanto é ${ex}?`,ok:String(res),
+  bad:[dif(-res,'errou o sinal ao eliminar os parênteses','Sinal de menos antes do parêntese troca o sinal de quem está dentro.'),dif(n+n,'somou os números','Não há soma aqui: só sinais para interpretar.'),dif(-n*n,'multiplicou os números','Aqui só os sinais mudam; o número continua o mesmo.')],
+  fill:()=>String(rnd(-12,12)),h:['Pense em −( ) como multiplicar por −1.','Dois sinais de menos seguidos se anulam (viram +).'],e:`${ex} = ${res}.`,s:{op:2,a:1,b:1}})};
+const gFatores=()=>{const m=pick([3,4]),k=rnd(1,m),f=shuf(Array.from({length:m},(_,i)=>i<k?-rnd(2,9):rnd(2,9))),ok=k%2?'negativo':'positivo';
+ return mk({q:`Sem calcular o valor, qual é o sinal de ${f.map(pS).join(' × ')}?`,ok,
+  bad:[[ok==='negativo'?'positivo':'negativo','contou errado os fatores negativos','Conte quantos fatores são negativos: par dá positivo, ímpar dá negativo.'],['zero','confundiu com produto nulo','Zero só aparece se um fator for zero.'],['impossível saber','achou que depende dos números','O sinal depende só da quantidade de fatores negativos.']],
+  fill:()=>'depende do valor',h:['Conte quantos fatores são negativos.','Quantidade par: positivo. Quantidade ímpar: negativo.'],e:`Há ${k} fator(es) negativo(s): o produto é ${ok}.`,s:{op:2,a:1,b:1}})};
+const gContexto=()=>{const p=rnd(2,6),k=rnd(2,6),nome=pick(NOMES),t=pick([0,1,2]);
+ if(t===0)return mk({q:`Um submarino desce ${p} m por minuto (variação de −${p} m por minuto). Onde ele estava ${k} minutos atrás, em relação a agora?`,ok:`${p*k} m acima`,
+  bad:[[`${p*k} m abaixo`,'não percebeu que voltar no tempo inverte o sinal',`(−${p}) × (−${k}) = +${p*k}: antes, ele estava mais alto.`],[`${p+k} m acima`,'somou em vez de multiplicar','A variação por minuto se repete em cada minuto: multiplique.'],[`${p+k} m abaixo`,'somou e errou o sinal','Multiplique e analise os sinais.']],
+  fill:()=>`${rnd(2,40)} m acima`,h:['Descer é −; voltar no tempo também é −.','Multiplique (−p) × (−k) e veja o sinal.'],e:`(−${p}) × (−${k}) = +${p*k}, ou seja, ${p*k} m acima.`,s:{op:2,a:1,b:1}});
+ if(t===1)return mk({q:`${nome} tem ${k} dívidas de R$ ${p} cada. Qual é o saldo total?`,ok:rS(-p*k),
+  bad:[[rS(p*k),'ignorou que dívida é negativa','Dívida é valor negativo: o saldo fica abaixo de zero.'],[rS(-(p+k)),'somou em vez de multiplicar','São ${k} dívidas iguais: multiplique.'.replace('${k}',k)],[rS(-p*k+p),'contou uma dívida a menos','Conte todas as dívidas.']],
+  fill:()=>rS(rnd(-60,60)),h:[`Cada dívida é −${p}.`,`Calcule ${k} × (−${p}).`],e:`${k} × (−${p}) = −${p*k}.`,s:{op:2,a:1,b:1}});
+ return mk({q:`Uma dívida de R$ ${p*k} foi dividida igualmente entre ${k} amigos. Qual é o saldo de cada um, como número inteiro?`,ok:rS(-p),
+  bad:[[rS(p),'esqueceu que é dívida','A dívida é negativa: cada saldo fica abaixo de zero.'],[rS(-p*k*k),'multiplicou em vez de dividir','Dividir igualmente é uma divisão.'],[rS(-(p*k-k)),'subtraiu em vez de dividir','Repartir é dividir.']],
+  fill:()=>rS(rnd(-40,40)),h:[`A dívida é −${p*k}.`,`Calcule (−${p*k}) ÷ ${k}.`],e:`(−${p*k}) ÷ ${k} = −${p}.`,s:{op:3,a:1,b:1}})};
+const gPot=()=>{const a=rnd(2,4),e=rnd(2,4),res=(-a)**e;
+ return mk({q:`Quanto é (−${a})^${e}?`,ok:String(res),
+  bad:[[String(-res),'errou o sinal pela paridade do expoente','Expoente par dá positivo; ímpar dá negativo (base negativa).'],[String(-a*e),'multiplicou base por expoente',`${e} é quantas vezes a base se repete na multiplicação.`],[String(e**a),'trocou base e expoente','Confira quem é a base e quem é o expoente.']],
+  fill:()=>String(rnd(-70,70)),h:[`Escreva ${e} fatores iguais a (−${a}) multiplicados.`,'Quantidade par de negativos: positivo; ímpar: negativo.'],e:`(−${a})^${e} = ${res}.`,s:{op:2,a:1,b:1}})};
+SIGN_GENS[1].push(gOposto);SIGN_GENS[2].push(gFatores);SIGN_GENS[3].push(gContexto,gPot);
+const opDe=t=>/produto/.test(t)||/×/.test(t)?2:/÷/.test(t)?3:/[−-]\s*\(/.test(t)||/\s[−-]\s/.test(t)?1:0;
+[1,2,3].forEach(L=>{SIGN_GENS[L]=SIGN_GENS[L].map(fn=>()=>{const q=fn();if(!q.s||q.s.op==null)q.s={op:opDe(q.q),a:1,b:1};return q})});
+const m=MODS.find(x=>x.id==='sinais');if(!m)return;
+const calc=v=>v.op===0?v.a+v.b:v.op===1?v.a-v.b:v.op===2?v.a*v.b:(v.b!==0&&v.a%v.b===0?v.a/v.b:null);
+m.liveInfo=true;m.sub='Saltos na reta: +, −, × e ÷';
+m.ctl=[{k:'op',l:'Operação (0 +  ·  1 −  ·  2 ×  ·  3 ÷)',min:0,max:3,v:2},{k:'a',l:'Primeiro número (a)',min:-6,max:6,v:1},{k:'b',l:'Segundo número (b)',min:-6,max:6,v:1}];
+m.fix=v=>{v.op=Math.min(3,Math.max(0,Math.round(v.op||0)));v.a=Math.round(v.a);v.b=Math.round(v.b)};
+m.info=v=>{const o=['+','−','×','÷'][v.op],r=calc(v),c=`${pS(v.a)} ${o} ${pS(v.b)}`;
+ if(v.op===3&&v.b===0)return `${c} · não existe divisão por zero`;
+ if(r==null)return `${c} · não dá um número inteiro`;
+ if(!locked)return `${c} = ?  ·  monte a conta e observe os saltos na reta`;
+ return `${c} = ${r}`+(v.op>1&&v.a&&v.b?` · sinais ${(v.a<0)===(v.b<0)?'iguais → positivo':'diferentes → negativo'}`:'')};
+m.draw=(c,v,W,H,k)=>{const op=v.op,a=v.a,b=v.b,R=op<2?18:36,y=H*.58,sx=(W-40)/(2*R),X=p=>W/2+p*sx,tk=op<2?3:6;
+ c.strokeStyle=k.t;c.lineWidth=2;c.beginPath();c.moveTo(20,y);c.lineTo(W-20,y);c.stroke();
+ c.fillStyle=k.m;c.font='11px sans-serif';c.textAlign='center';
+ for(let p=-R;p<=R;p+=tk){c.beginPath();c.moveTo(X(p),y-5);c.lineTo(X(p),y+5);c.stroke();c.fillText(p>0?'+'+p:String(p),X(p),y+20)}
+ let st=0,n=0,sb=0,rev=false,fim=0;
+ if(op===0){st=a;n=1;sb=b}else if(op===1){st=a;n=1;sb=-b;rev=true}
+ else if(op===2){n=Math.abs(a);sb=a<0?-b:b;rev=a<0}
+ else if(b!==0&&a%b===0){const q=a/b;n=Math.abs(q);sb=q<0?-b:b;rev=q<0}
+ fim=st+n*sb;
+ c.setLineDash(rev?[5,4]:[]);c.lineWidth=3;c.strokeStyle=sb>=0?k.c1:k.c2;
+ for(let i=0;i<n;i++){const x0=X(st+i*sb),x1=X(st+(i+1)*sb);if(x0===x1)continue;c.beginPath();c.moveTo(x0,y);c.quadraticCurveTo((x0+x1)/2,y-48,x1,y);c.stroke()}
+ c.setLineDash([]);
+ c.fillStyle=k.m;c.beginPath();c.arc(X(st),y,5,0,7);c.fill();
+ c.fillStyle=k.a;c.beginPath();c.arc(X(fim),y,8,0,7);c.fill();
+ c.fillStyle=k.t;c.font='bold 13px sans-serif';c.fillText(locked&&op<3?String(fim):op===3?String(a):'?',X(fim),y-16);
+ c.fillStyle=k.m;c.font='12px sans-serif';
+ c.fillText(['a + b: parta de a e ande b','a − b: parta de a e ande o oposto de b (tracejado)','a × b: |a| saltos de tamanho b'+(a<0?' (tracejado: a < 0)':''),'a ÷ b: quantos saltos de b levam de 0 até a?'][op],W/2,H-12);
+ c.textAlign='left'};
+})();
 
 /* Remove o aviso de "em breve" de todo módulo que já está ativo */
 for (let i = SOON.length - 1; i >= 0; i--) {
