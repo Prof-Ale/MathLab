@@ -1232,6 +1232,64 @@ m.draw=(c,v,W,H,k)=>{const op=v.op,a=v.a,b=v.b,R=op<2?18:36,y=H*.58,sx=(W-40)/(2
  c.textAlign='left'};
 })();
 
+/* ===== LINGUAGEM ALGÉBRICA: máquina de funções com blocos de x ===== */
+const ALG_GENS=(()=>{
+const exA=(n,c,l='x')=>(n===1?l:n+l)+(c>0?` + ${c}`:c<0?` − ${-c}`:''),pA=n=>n<0?`(${n})`:String(n),
+ MU={2:'dobro',3:'triplo',4:'quádruplo',5:'quíntuplo'},E0=()=>`${rnd(2,9)}x + ${rnd(1,9)}`,NUM=()=>String(rnd(-30,60));
+const M=o=>mk({s:{n:1,c:0,x:1},fill:E0,...o});
+const gTraduz1=()=>{const n=rnd(2,5),c=rnd(2,9),t=rnd(0,4),D=[
+ [`o ${MU[n]} de um número`,`${n}x`,[[`x + ${n}`,'trocou multiplicação por soma',`O ${MU[n]} é ${n} vezes o número.`],[`x ÷ ${n}`,'dividiu em vez de multiplicar',`${MU[n]} é multiplicar por ${n}.`],[`${n} − x`,'inverteu e subtraiu',`${MU[n]} é multiplicar por ${n}.`]]],
+ [`um número aumentado de ${c}`,`x + ${c}`,[[`${c}x`,'multiplicou em vez de somar','Aumentar é somar.'],[`x − ${c}`,'usou subtração','Aumentado indica soma.'],[`${c} − x`,'inverteu a operação','Aumentado indica soma.']]],
+ [`um número diminuído de ${c}`,`x − ${c}`,[[`${c} − x`,'inverteu a ordem da subtração',`Tira-se ${c} do número: x − ${c}.`],[`x + ${c}`,'usou soma','Diminuído indica subtração.'],[`${c}x`,'multiplicou em vez de subtrair','Diminuir é subtrair.']]],
+ [`o ${MU[n]} de um número mais ${c}`,`${n}x + ${c}`,[[`${c}x + ${n}`,'trocou coeficiente e constante',`O ${MU[n]} multiplica o número; o ${c} é somado depois.`],[`${n+c}x`,'juntou termos diferentes','Termo com x e número solto não se somam.'],[`${n}(x + ${c})`,'multiplicou também o número somado',`O ${c} só é somado ao resultado.`]]],
+ [`o ${MU[n]} de um número menos ${c}`,`${n}x − ${c}`,[[`${c}x − ${n}`,'trocou coeficiente e constante',`O ${MU[n]} multiplica o número; o ${c} é subtraído depois.`],[`${n+c}x`,'juntou termos diferentes','Termo com x e número solto não se somam.'],[`${n}(x − ${c})`,'multiplicou também o número subtraído',`O ${c} só é tirado do resultado.`]]]][t];
+ return M({q:`Qual expressão representa "${D[0]}"?`,ok:D[1],bad:D[2],h:['Traduza por partes: primeiro o dobro/triplo, depois a soma ou subtração.','Monte as alternativas no simulador (blocos de x e unidades) e compare com a frase.'],e:`"${D[0]}" = ${D[1]}.`})};
+const gCoef=()=>{const n=rnd(2,5),c=rnd(1,9),t=rnd(0,2),N=['coeficiente','variável','termo independente (constante)','expoente'],o=[0,1,2][t],ex=exA(n,c),
+ q=[`Em ${ex}, o número ${n} é chamado de…`,`Em ${ex}, a letra x é chamada de…`,`Em ${ex}, o número ${c} (sem letra) é chamado de…`][t],ok=[N[0],N[1],N[2]][t];
+ return M({q,ok,bad:N.filter(x=>x!==ok).map(x=>[x,'confundiu os nomes das partes da expressão','Coeficiente multiplica a letra; variável é a letra; termo independente não tem letra.']),
+  h:['Observe o simulador: o que são os blocos de x e o que são as unidades soltas?','Coeficiente: número que multiplica x. Termo independente: número sem x.'],e:`${ok} é o nome correto.`,s:{n,c,x:1}})};
+const gValor=neg=>()=>{const n=rnd(2,5),x=neg?-rnd(1,5):rnd(1,8),c=neg?pick([-9,-8,-7,-6,-5,-4,-3,-2,2,3,4,5,6,7,8,9]):rnd(1,9),ok=n*x+c;
+ return M({q:`Se x = ${x}, qual é o valor de ${exA(n,c)}?`,ok:String(ok),fill:NUM,
+  bad:[[String(n+x+c),'somou em vez de multiplicar',`${n}x quer dizer ${n} vezes x.`],[String(n*x-c),'errou o sinal da constante',`Mantenha o sinal do ${c}.`],[String(n*(x+c)),'somou antes de multiplicar','A multiplicação vem antes da soma.'],[String(neg?n*Math.abs(x)+c:Number(''+n+x)+c),neg?'ignorou o sinal de x':'colocou os números lado a lado',neg?'x vale um número negativo.':`${n}x é ${n} vezes x, e não o ${n} ao lado do ${x}.`]],
+  h:['Substitua x pelo valor dado: a multiplicação vem antes da soma.',`Calcule ${n} × ${pA(x)} e depois ${c<0?'subtraia '+(-c):'some '+c}.`],e:`${n} × ${pA(x)} ${c<0?'−':'+'} ${Math.abs(c)} = ${ok}.`,s:{n,c,x:0}})};
+const gTraduz2=()=>{const n=rnd(2,5),a=pick([['sucessor','+'],['antecessor','−']]),s=a[1],ok=`${n}(x ${s} 1)`;
+ return M({q:`Qual expressão representa "o ${MU[n]} do ${a[0]} de um número"?`,ok,
+  bad:[[`${n}x ${s} 1`,'multiplicou só o número, e não o '+a[0],`O ${MU[n]} vale para o ${a[0]} inteiro: use parênteses.`],[`x ${s} ${n}`,'trocou multiplicação por soma/subtração',`${MU[n]} é multiplicar por ${n}.`],[`${n} ${s} x`,'inverteu a ordem',`Primeiro ache o ${a[0]} do número.`]],
+  h:[`Primeiro escreva o ${a[0]} do número: x ${s} 1.`,`Depois multiplique esse resultado por ${n}: use parênteses.`],e:`O ${a[0]} é x ${s} 1; o ${MU[n]} dele é ${ok}.`})};
+const gSimp=()=>{const a=rnd(3,8),b=rnd(2,a-1),c=rnd(1,6),d=rnd(1,6),t=rnd(0,2);
+ if(t===0)return M({q:`Simplifique: ${a}x + ${b}x`,ok:`${a+b}x`,bad:[[`${a+b}x²`,'multiplicou as variáveis','Somar x com x dá mais x, e não x².'],[`${a*b}x`,'multiplicou os coeficientes','Em termos semelhantes, somam-se os coeficientes.'],[`${a+b}`,'esqueceu a variável','O x continua na resposta.']],h:['São termos semelhantes (os dois têm x).','Some os coeficientes e mantenha o x.'],e:`${a}x + ${b}x = ${a+b}x.`});
+ if(t===1)return M({q:`Simplifique: ${a}x − ${b}x`,ok:exA(a-b,0),bad:[[`${a+b}x`,'somou em vez de subtrair','A operação é uma subtração.'],[`${a-b}`,'esqueceu a variável','O x continua na resposta.'],[`${a*b}x`,'multiplicou os coeficientes','Em termos semelhantes, operam-se os coeficientes.']],h:['São termos semelhantes (os dois têm x).','Subtraia os coeficientes e mantenha o x.'],e:`${a}x − ${b}x = ${exA(a-b,0)}.`});
+ return M({q:`Simplifique: ${a}x + ${c} + ${b}x + ${d}`,ok:`${a+b}x + ${c+d}`,bad:[[`${a+b+c+d}x`,'juntou todos os termos em um só','Termos com x e números soltos não se somam.'],[`${a+b}x + ${c*d}`,'multiplicou os números soltos','Os números soltos também são somados.'],[`${a+b+c+d}`,'esqueceu a variável','Os termos com x continuam com x.']],h:['Agrupe os termos com x e os números soltos.',`Some ${a}x + ${b}x e depois ${c} + ${d}.`],e:`${a}x + ${b}x = ${a+b}x e ${c} + ${d} = ${c+d}.`})};
+const gContexto=()=>{const n=rnd(2,5),c=rnd(2,9),k=rnd(2,9),t=rnd(0,2),
+ C=[['Uma corrida de táxi custa R$ '+c+' de bandeirada mais R$ '+n+' por km.','km','p'],['Uma bicicleta alugada custa R$ '+c+' de taxa mais R$ '+n+' por hora.','horas','p'],['Uma academia cobra R$ '+c+' de matrícula mais R$ '+n+' por aula.','aulas','p']][t],ver=Math.random()<.5;
+ if(ver)return M({q:`${C[0]} Qual expressão dá o preço p para x ${C[1]}?`,ok:`${n}x + ${c}`,bad:[[`${c}x + ${n}`,'trocou o valor fixo e o variável',`O R$ ${n} se repete a cada ${C[1].replace(/s$/,'')}; o R$ ${c} é cobrado uma vez.`],[`${n+c}x`,'aplicou tudo a cada unidade','O valor fixo é cobrado uma só vez.'],[`${n}x − ${c}`,'usou subtração','O valor fixo é somado ao total.']],h:['O que se repete multiplica x; o que é cobrado uma só vez é somado.','Teste um valor de x no simulador para conferir.'],e:`Preço = ${n} × x + ${c}.`});
+ return M({q:`${C[0]} Quanto se paga por ${k} ${C[1]}?`,ok:String(n*k+c),fill:NUM,bad:[[String((n+c)*k),'aplicou o valor fixo em todas as unidades','O valor fixo é cobrado uma só vez.'],[String(n*k),'esqueceu o valor fixo','Some também o valor cobrado uma vez.'],[String(n+c+k),'somou tudo','O valor por unidade se repete: multiplique.']],h:[`Escreva a expressão: ${n}x + ${c}.`,`Troque x por ${k} e calcule.`],e:`${n} × ${k} + ${c} = ${n*k+c}.`,s:{n,c,x:0}})};
+const gPalitos=()=>{const q=Math.random()<.5,m=q?3:2,nome=q?'quadrados':'triângulos',ver=Math.random()<.5,k=rnd(4,9);
+ if(ver)return M({q:`Com palitos, formamos ${nome} lado a lado (vizinhos dividem um palito). Qual expressão dá o número de palitos para n ${nome}?`,ok:`${m}n + 1`,bad:[[`${m+1}n`,`contou ${m+1} palitos para cada figura`,'Figuras vizinhas dividem um palito.'],[`${m}n`,'esqueceu o palito do começo',`Cada figura nova acrescenta ${m} palitos, mas a primeira precisa de 1 a mais.`],[`n + ${m}`,'somou em vez de multiplicar',`Cada figura nova acrescenta ${m} palitos.`]],h:['Desenhe 1, 2 e 3 figuras e conte os palitos de cada uma.',`Cada figura nova acrescenta ${m} palitos.`],e:`Palitos = ${m}n + 1.`});
+ return M({q:`Com palitos, formamos ${nome} lado a lado (vizinhos dividem um palito). Cada figura nova acrescenta ${m} palitos e a primeira precisa de 1 a mais. Quantos palitos para ${k} ${nome}?`,ok:String(m*k+1),fill:NUM,bad:[[String((m+1)*k),'contou palitos de mais',`Figuras vizinhas dividem um palito.`],[String(m*k),'esqueceu o palito do começo','Some o palito extra da primeira figura.'],[String(k+m),'somou em vez de multiplicar',`São ${m} palitos a cada figura.`]],h:[`A expressão é ${m}n + 1.`,`Troque n por ${k}.`],e:`${m} × ${k} + 1 = ${m*k+1}.`})};
+const gSeq=()=>{const a=rnd(2,5),b=pick([-2,-1,1,2,3,4,5]),T=[1,2,3,4].map(i=>a*i+b),ok=exA(a,b,'n');
+ return M({q:`Na sequência ${T.join(', ')}, …, qual é o termo geral (n é a posição do termo)?`,ok,fill:()=>`${rnd(2,6)}n + ${rnd(1,6)}`,
+  bad:[[exA(b>0?b:-b,a,'n'),'trocou coeficiente e constante',`A razão (${a}) multiplica n.`],[`${a}n`,'esqueceu a constante',`Teste n = 1: ${a} × 1 = ${a}, mas o 1º termo é ${T[0]}.`],[`n + ${T[0]-1}`,'usou só o primeiro termo',`A sequência cresce de ${a} em ${a}, e não de 1 em 1.`]],
+  h:['Veja de quanto em quanto a sequência cresce: esse é o coeficiente de n.','Teste a expressão com n = 1: deve dar o primeiro termo.'],e:`Cresce de ${a} em ${a} e o 1º termo é ${T[0]}: ${ok}.`})};
+return {1:[gTraduz1,gCoef,gValor(false)],2:[gValor(true),gTraduz2,gSimp,gTraduz1],3:[gContexto,gPalitos,gSeq,gValor(true)]};
+})();
+MODS.push({id:'alg',ano:7,ic:'🔤',nome:'Linguagem algébrica',sub:'Máquina de funções, expressões e padrões',liveInfo:true,
+ ctl:[{k:'x',l:'Valor de x (entrada)',min:-6,max:10,v:2},{k:'n',l:'Blocos de x (coeficiente)',min:1,max:5,v:3},{k:'c',l:'Unidades soltas (termo constante)',min:-9,max:9,v:2}],
+ info:v=>{const e=(v.n===1?'x':v.n+'x')+(v.c>0?` + ${v.c}`:v.c<0?` − ${-v.c}`:''),r=v.n*v.x+v.c,xs=v.x<0?`(${v.x})`:v.x;
+  return locked?`${e}, com x = ${v.x}: ${v.n} × ${xs}${v.c?` ${v.c<0?'−':'+'} ${Math.abs(v.c)}`:''} = ${r}`:`Máquina: ${e} · entrada x = ${v.x} · saída = ?`},
+ draw(c,v,W,H,k){const mx=84,mw=W-2*mx,my=34,mh=H-64,n=v.n,cu=v.c,tw=Math.max(18,Math.min(36,(mw-16)/n-6)),cy=my+mh/2,out=v.n*v.x+cu;
+  c.textAlign='center';c.lineWidth=2;c.strokeStyle=k.a;c.fillStyle=k.f;c.beginPath();if(c.roundRect)c.roundRect(mx,my,mw,mh,14);else c.rect(mx,my,mw,mh);c.fill();c.stroke();
+  c.fillStyle=k.t;c.font='bold 14px sans-serif';c.fillText((n===1?'x':n+'x')+(cu>0?` + ${cu}`:cu<0?` − ${-cu}`:''),W/2,my-10);
+  const tx0=W/2-(n*(tw+6)-6)/2;
+  for(let i=0;i<n;i++){const x0=tx0+i*(tw+6);c.fillStyle=k.pk;c.fillRect(x0,my+14,tw,tw);c.fillStyle='#0f172a';c.font='bold 16px sans-serif';c.fillText('x',x0+tw/2,my+14+tw/2+6);c.fillStyle=k.m;c.font='11px sans-serif';c.fillText(String(v.x),x0+tw/2,my+14+tw+14)}
+  const u=Math.abs(cu),us=14,per=Math.max(1,Math.min(u,Math.floor((mw-16)/(us+3)))),ux=W/2-(per*(us+3)-3)/2,uy=my+14+tw+30;
+  for(let i=0;i<u;i++){c.fillStyle=cu>0?k.c1:k.c2;c.fillRect(ux+(i%per)*(us+3),uy+Math.floor(i/per)*(us+3),us,us)}
+  const chip=(x,t,col)=>{c.fillStyle=col;c.beginPath();c.arc(x,cy,22,0,7);c.fill();c.fillStyle='#0f172a';c.font='bold 15px sans-serif';c.fillText(t,x,cy+5)};
+  chip(36,String(v.x),k.pk);chip(W-36,locked?String(out):'?',k.a);
+  c.strokeStyle=k.t;c.lineWidth=2;[[60,mx-4],[W-mx+4,W-60]].forEach(([a,b])=>{c.beginPath();c.moveTo(a,cy);c.lineTo(b,cy);c.lineTo(b-6,cy-5);c.moveTo(b,cy);c.lineTo(b-6,cy+5);c.stroke()});
+  c.fillStyle=k.m;c.font='11px sans-serif';c.fillText('entrada',36,cy+40);c.fillText('saída',W-36,cy+40);c.textAlign='left'},
+ rod:8,gens:ALG_GENS});
+
 /* Remove o aviso de "em breve" de todo módulo que já está ativo */
 for (let i = SOON.length - 1; i >= 0; i--) {
   if (MODS.some(m => m.nome === SOON[i].nome)) SOON.splice(i, 1);
