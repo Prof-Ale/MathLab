@@ -1617,14 +1617,29 @@ stats();home();ui();
         body: JSON.stringify({ question })
       });
 
-      const dados = await resposta.json().catch(() => ({}));
+     
+const textoResposta = await resposta.text();
 
-      if (!resposta.ok) {
-        throw new Error(
-          dados.error || dados.message ||
-          `O Worker respondeu com HTTP ${resposta.status}.`
-        );
-      }
+let dados = {};
+try {
+  dados = JSON.parse(textoResposta);
+} catch {
+  dados = {};
+}
+
+if (!resposta.ok) {
+  const detalhe =
+    dados.error ||
+    dados.message ||
+    dados.details ||
+    textoResposta ||
+    'Sem detalhes fornecidos pelo servidor.';
+
+  throw new Error(
+    `HTTP ${resposta.status}: ${detalhe}`
+  );
+}
+
 
       const conteudo = dados.answer ?? dados.response ?? dados.text;
 
