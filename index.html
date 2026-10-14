@@ -619,11 +619,22 @@ SOLID_GENS[3].push(()=>{const n=rnd(3,8),Vt=2*n,A=3*n,F=n+2;
   bad:[[String(A-Vt),'esqueceu o 2 da relação de Euler','V − A + F = 2, então F = 2 − V + A.'],[String(A+Vt+2),'somou em vez de usar V − A + F = 2','Na relação de Euler, as arestas entram subtraindo.'],[String(Vt+A-2),'trocou os sinais da relação','Isole F em V − A + F = 2.']],
   fill:()=>String(rnd(4,30)),h:['A relação de Euler é V − A + F = 2.',`Substitua: ${Vt} − ${A} + F = 2. Quanto vale F?`],e:`${Vt} − ${A} + F = 2, então F = 2 − ${Vt} + ${A} = ${F}.`,s:{tipo:2,n,a:4,c:5}})});
 (()=>{const m=MODS.find(x=>x.id==='solidos');if(!m)return;
- m.gg=true;m.reset={n:3};m.sub='Cubo, prismas e Euler · 3D interativo';
- m.ctl.push({k:'n',l:'Lados da base (prisma)',min:3,max:8,v:3});
- const f0=m.fix,i0=m.info;
- m.fix=v=>{f0(v);v.n=Math.min(8,Math.max(3,Math.round(v.n||3)))};
- m.info=v=>v.tipo===2?`Prisma de base regular com ${v.n} lados · aresta da base ${v.a} cm · altura ${v.c} cm`:i0(v);
+ const N=['Cubo','Paralelepípedo','Prisma','Pirâmide','Cilindro','Cone','Esfera'];
+ m.gg=true;m.reset={n:3,cons:0,plan:0};m.sub='Poliedros, corpos redondos e planificações · 3D interativo';
+ m.ctl[0].max=6;m.ctl[0].l='Sólido (0 cubo · 1 bloco · 2 prisma · 3 pirâmide · 4 cilindro · 5 cone · 6 esfera)';
+ m.ctl[1].l='Aresta, raio ou comprimento';
+ m.ctl.push({k:'n',l:'Lados da base (prisma e pirâmide)',min:3,max:8,v:3},{k:'plan',l:'Abrir a planificação (poliedros)',min:0,max:100,v:0,u:'%'});
+ const f0=m.fix,i0=m.info,d0=m.draw;
+ m.fix=v=>{f0(v);v.tipo=Math.min(6,Math.max(0,v.tipo));v.n=Math.min(8,Math.max(3,Math.round(v.n||3)));v.plan=Math.min(100,Math.max(0,Math.round(v.plan||0)))};
+ m.info=v=>{const t=v.tipo;
+  if(v.cons)return GG.lido==null?'Construção disponível só no modo 3D.':`Arraste o ponto rosa P · altura: ${GG.lido.toFixed(1)} cm · volume: ${(v.a*v.b*GG.lido).toFixed(1)} cm³`;
+  if(t===0)return locked?i0(v):`Cubo: aresta ${v.a} cm`;
+  if(t===1)return locked?i0(v):`Paralelepípedo: ${v.a} × ${v.b} × ${v.c} cm`;
+  if(t===2)return `Prisma de base regular com ${v.n} lados · aresta da base ${v.a} cm · altura ${v.c} cm`;
+  if(t===3)return `Pirâmide de base regular com ${v.n} lados · aresta da base ${v.a} cm · altura ${v.c} cm`;
+  if(t===6)return `Esfera · raio ${v.a} cm`;
+  return `${N[t]} · raio ${v.a} cm · altura ${v.c} cm`};
+ m.draw=(c,v,W,H,k)=>{if(v.tipo>2){c.fillStyle=k.t;c.font='bold 15px sans-serif';c.textAlign='center';c.fillText(N[v.tipo]+': o 3D é necessário para ver este sólido',W/2,H/2);c.textAlign='left';return}d0(c,v,W,H,k)};
 })();
 
 const GG={ok:false,app:null,key:''};
@@ -642,31 +653,88 @@ function ggIniciar(){
   try{new GGBApplet({appName:'3d',width:w,height:300,showToolBar:false,showAlgebraInput:false,showMenuBar:false,showResetIcon:false,
    enableRightClick:false,enableLabelDrags:false,showZoomButtons:false,language:'pt',
    appletOnLoad:api=>{if(!cur||cur.id!==id)return;GG.app=api;GG.ok=true;box.style.cssText='';cv.style.display='none';
-    ggNota('🧊 Arraste para girar o sólido · role (ou use dois dedos) para aproximar.');desenhar()}},true).inject('ggb')}
+    ggNota('🧊 Arraste para girar o sólido · role (ou use dois dedos) para aproximar.');desenhar();ggPosQuestao()}},true).inject('ggb')}
   catch(e){ggNota('📡 3D indisponível. Usando o desenho simples.')}
  });
 }
 function ggCena(v){
- const g=GG.app;if(!g)return;const key=[v.tipo,v.a,v.b,v.c,v.n].join();if(key===GG.key)return;
+ const g=GG.app;if(!g)return;
+ const cons=v.cons?1:0,key=[v.tipo,v.a,v.b,v.c,v.n,v.plan,cons].join();if(key===GG.key)return;
  try{
-  const n=v.n||3;let pts,h;
-  if(v.tipo===0){pts=[[0,0],[v.a,0],[v.a,v.a],[0,v.a]];h=v.a}
-  else if(v.tipo===1){pts=[[0,0],[v.a,0],[v.a,v.b],[0,v.b]];h=v.c}
-  else{const R=v.a/(2*Math.sin(Math.PI/n));pts=Array.from({length:n},(_,i)=>[R*Math.cos(2*Math.PI*i/n),R*Math.sin(2*Math.PI*i/n)]);h=v.c}
-  const f=x=>(+x).toFixed(3),xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),lo=Math.min(0,...xs,...ys)-1,hi=Math.max(...xs,...ys,h)+1;
-  if(g.exists('base'))g.deleteObject('base');
-  g.evalCommand('base=Polygon('+pts.map(p=>`(${f(p[0])},${f(p[1])},0)`).join(',')+')');
-  g.evalCommand(`solido=Prism(base,${h})`);
-  g.getAllObjectNames().forEach(nm=>{const t=String(g.getObjectType(nm));
+  ['net','P','eixo','solido','base'].forEach(o=>{if(g.exists(o))g.deleteObject(o)});
+  GG.lido=null;const n=v.n||3,t=v.tipo,A=v.a,f=x=>(+x).toFixed(3);let pts=null,h=v.c,R=A;
+  if(t===0){pts=[[0,0],[A,0],[A,A],[0,A]];h=A}
+  else if(t===1)pts=[[0,0],[A,0],[A,v.b],[0,v.b]];
+  else if(t===2||t===3){R=A/(2*Math.sin(Math.PI/n));pts=Array.from({length:n},(_,i)=>[R*Math.cos(2*Math.PI*i/n),R*Math.sin(2*Math.PI*i/n)])}
+  if(pts){
+   g.evalCommand('base=Polygon('+pts.map(p=>`(${f(p[0])},${f(p[1])},0)`).join(',')+')');
+   if(cons){g.evalCommand('eixo=Segment((0,0,0),(0,0,12))');g.evalCommand('P=Point(eixo,0.1)');h='z(P)'}
+   g.evalCommand(`solido=${t===3?'Pyramid':'Prism'}(base,${h})`);
+  }else if(t===4)g.evalCommand(`solido=Cylinder((0,0,0),(0,0,${v.c}),${A})`);
+  else if(t===5)g.evalCommand(`solido=Cone((0,0,0),(0,0,${v.c}),${A})`);
+  else g.evalCommand(`solido=Sphere((0,0,0),${A})`);
+  const antes=new Set(g.getAllObjectNames()),plan=pts&&v.plan>0&&!cons;let ocultar=false;
+  if(plan){try{g.evalCommand(`net=Net(solido,${(v.plan/100).toFixed(2)})`);ocultar=g.exists('net')}catch(e){}}
+  g.getAllObjectNames().forEach(nm=>{const ty=String(g.getObjectType(nm));
    try{g.setLabelVisible(nm,false);
-    if(/point/i.test(t)){g.setColor(nm,'#0f172a');g.setPointSize(nm,3)}
-    else if(/segment/i.test(t)){g.setColor(nm,'#0f172a');g.setLineThickness(nm,4)}
-    else if(/polygon|polyhedron/i.test(t)){g.setColor(nm,'#e69f00');g.setFilling(nm,.35)}}catch(e){}});
+    if(ocultar&&antes.has(nm)){g.setVisible(nm,false);return}
+    if(/point/i.test(ty)){g.setColor(nm,'#0f172a');g.setPointSize(nm,3)}
+    else if(/segment/i.test(ty)){g.setColor(nm,'#0f172a');g.setLineThickness(nm,4)}
+    else if(/polygon|polyhedron|net|quadric|cylinder|cone|sphere/i.test(ty)){g.setColor(nm,'#e69f00');g.setFilling(nm,.35)}}catch(e){}});
+  if(cons){try{g.setColor('eixo','#ec4899');g.setColor('P','#ec4899');g.setPointSize('P',8);g.setVisible('P',true);
+   GG.lido=g.getZcoord('P');g.registerObjectUpdateListener('P','ggAtualizaP');$('info').textContent=cur.info(V)}catch(e){}}
   try{g.evalCommand('ShowAxes(3,false)');g.evalCommand('ShowGrid(3,false)')}catch(e){}
+  const ext=plan?2.2*Math.max(A,R,v.b||0,v.c):0,lo=-(Math.max(R,A)+1)-ext,hi=Math.max(R,A,v.c,cons?12:0)+1+ext;
   try{g.setCoordSystem(lo,hi,lo,hi,Math.min(-1,lo),hi)}catch(e){}
   GG.key=key;
  }catch(e){console.warn('GeoGebra:',e)}
 }
+window.ggAtualizaP=()=>{try{GG.lido=GG.app.getZcoord('P');if(cur&&cur.gg&&V.cons)$('info').textContent=cur.info(V)}catch(e){}};
+
+/* ----- construção: o MathLab lê o ponto que o aluno arrastou ----- */
+function ggPosQuestao(){
+ const o=$('qo');if(!o||!cur||!cur.gg)return;
+ const old=$('vbtn');if(old)old.remove();
+ const c=!!(Q&&Q.cons&&GG.ok);o.style.display=c?'none':'';
+ if(c){const b=document.createElement('button');b.className='go';b.id='vbtn';b.textContent='✔️ Verificar minha construção';b.onclick=ggVerificar;o.after(b)}
+}
+function ggVerificar(){
+ if(locked||!GG.app||!Q||!Q.cons)return;
+ let z;try{z=GG.app.getZcoord('P')}catch(e){return}
+ const alvo=Q.cons.alvo,ok=Math.abs(z-alvo)<=0.35,i=Q.o.indexOf(String(ok?alvo:z<alvo?alvo-1:alvo+1));
+ if(i>=0)resp(i,$('qo').children[i]);
+ if(ok){const b=$('vbtn');if(b)b.disabled=true}
+}
+const _questaoOrig=questao;questao=function(){_questaoOrig();ggPosQuestao()};
+
+/* ----- novas questões: corpos redondos, pirâmides, planificações e construção ----- */
+const NN=n=>['','','','triangular','quadrangular','pentagonal','hexagonal','heptagonal','octogonal'][n];
+const SN=['Cubo','Paralelepípedo','Prisma','Pirâmide','Cilindro','Cone','Esfera'];
+const sc=(t,n)=>({tipo:t,a:4,b:3,c:5,n:n||3});
+const gNome=()=>{const t=pick([0,2,3,4,5,6]),red=x=>x>=4,ok=SN[t],n=t===2?pick([3,5,6]):rnd(3,6);
+ return mk({q:'Gire o sólido no simulador. Qual é o nome dele?',ok,
+  bad:[0,2,3,4,5,6].filter(x=>x!==t).map(x=>[SN[x],red(x)===red(t)?'confundiu dois sólidos parecidos':'confundiu poliedro com corpo redondo',red(t)?'Corpos redondos têm superfície curva: cilindro, cone e esfera.':'Poliedros têm todas as faces planas.']),
+  h:['As faces são planas ou existe parte curva?','Conte as bases e observe o formato das laterais.'],e:`É um(a) ${ok.toLowerCase()}.`,s:sc(t,n)})};
+const gPoli=()=>{const t=pick([0,2,3,4,5,6]),red=t>=4;
+ return mk({q:'O sólido do simulador é um poliedro ou um corpo redondo?',ok:red?'Corpo redondo':'Poliedro',
+  bad:[[red?'Poliedro':'Corpo redondo','confundiu poliedro com corpo redondo',red?'Este sólido tem superfície curva.':'Este sólido só tem faces planas.'],['Os dois','achou que é as duas coisas','Cada sólido é de um tipo só.'],['Nenhum dos dois','não classificou o sólido','Todo sólido aqui é poliedro ou corpo redondo.']],
+  h:['Existe alguma parte curva na superfície?','Poliedro: só faces planas. Corpo redondo: superfície curva.'],e:red?'Há superfície curva: é corpo redondo.':'Todas as faces são planas: é poliedro.',s:sc(t,t===2?pick([3,5,6]):rnd(3,6))})};
+const gPir=()=>{const n=rnd(3,8),t=pick(['faces','arestas','vértices']),F=n+1,A=2*n,Vt=n+1;
+ const D={faces:{ok:F,bad:[[n,'esqueceu a base','Além das faces laterais existe a base.'],[A,'confundiu faces com arestas','Arestas são os segmentos entre as faces.'],[n+2,'usou a regra do prisma','A pirâmide tem uma base só.']]},
+  arestas:{ok:A,bad:[[n,'contou só as arestas da base',`Há ${n} na base e ${n} que sobem até o topo.`],[F,'confundiu arestas com faces','Arestas são segmentos, e não faces.'],[3*n,'usou a regra do prisma','O prisma tem 3n; a pirâmide tem 2n.']]},
+  'vértices':{ok:Vt,bad:[[n,'esqueceu o vértice do topo',`Além dos ${n} da base há o vértice do topo.`],[2*n,'usou a regra do prisma','O prisma tem 2n vértices; a pirâmide tem um só no topo.'],[3*n,'confundiu vértices com arestas','Vértices são os cantos.']]}}[t];
+ return mk({q:`Uma pirâmide de base ${NN(n)} tem quantas ${t}? Gire o sólido e conte.`,ok:String(D.ok),bad:D.bad.map(b=>[String(b[0]),b[1],b[2]]),fill:()=>String(rnd(2,30)),
+  h:['Conte primeiro a base, depois o topo.',`A base tem ${n} lados e todos os lados sobem até um só vértice.`],e:`Pirâmide ${NN(n)}: ${F} faces, ${A} arestas e ${Vt} vértices.`,s:sc(3,n)})};
+const gPlan=()=>{const k=pick(['cubo','prisma','pirâmide']),n=k==='cubo'?4:rnd(3,8),ok=k==='cubo'?6:k==='prisma'?n+2:n+1;
+ return mk({q:k==='cubo'?'Abra a planificação do cubo. Quantos quadrados ela tem?':`Abra a planificação de um(a) ${k} de base ${NN(n)}. Quantas figuras ela tem?`,ok:String(ok),
+  bad:[[String(ok+1),'contou uma face a mais','Conte cada figura uma única vez.'],[String(ok-1),'esqueceu uma face','Não esqueça as bases e a face de baixo.'],[String(2*n),'contou os vértices ou arestas da base','Conte as figuras, e não os cantos.']],fill:()=>String(rnd(3,12)),
+  h:['Use o controle de planificação para abrir o sólido.','Cada face do sólido vira uma figura plana.'],e:`A planificação tem ${ok} figuras.`,s:{...sc(k==='cubo'?0:k==='prisma'?2:3,n),plan:100}})};
+const gCons=()=>{const a=rnd(2,5),b=rnd(2,4),h=rnd(3,9),Vv=a*b*h;
+ const q=mk({q:`A base mede ${a} cm × ${b} cm. Arraste o ponto rosa P até o bloco ter volume ${Vv} cm³ e clique em Verificar.`,ok:String(h),
+  bad:[[String(h-1),'construiu o bloco baixo demais','Seu bloco está baixo: o volume ainda é menor que o pedido.'],[String(h+1),'construiu o bloco alto demais','Seu bloco está alto: o volume passou do pedido.'],[String(h+2),'construiu o bloco alto demais','Seu bloco está alto demais.']],
+  h:['O volume é a área da base vezes a altura.',`A base tem ${a*b} cm². A altura é ${Vv} ÷ ${a*b}.`],e:`Altura = ${Vv} ÷ ${a*b} = ${h} cm.`,s:{tipo:1,a,b,c:1,cons:{alvo:h}}});
+ q.cons={alvo:h};return q};
+SOLID_GENS[1].push(gNome);SOLID_GENS[2].push(gPoli,gPir,gPlan,gCons);SOLID_GENS[3].push(gPir,gCons);
 
 /* ===== TELA INICIAL ===== */
 function home(){
@@ -738,7 +806,7 @@ function resp(i,b){
       else{seqOk=0;seqErr++;if(seqErr>=2&&niv>1){niv--;seqErr=0;ultG=-1;extra=` Vamos reforçar o nível ${niv}.`}}
       S.niv[cur.id]=niv;
     }else{(S.done[cur.id]=S.done[cur.id]||[])[qi]=true}
-    fb.className='fb ok';fb.textContent=`✅ ${q.e} (+${ganho} XP)${extra}`;$('nx').disabled=false;som(extra.includes('Subiu')?'up':'ok');
+    if(cur.gg)$('info').textContent=cur.info(V);fb.className='fb ok';fb.textContent=`✅ ${q.e} (+${ganho} XP)${extra}`;$('nx').disabled=false;som(extra.includes('Subiu')?'up':'ok');
   }else{
     b.disabled=true;combo=0;
     const tg=q.tg&&q.tg[i],ms=q.ms&&q.ms[i];
