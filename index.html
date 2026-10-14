@@ -1616,17 +1616,17 @@ const resumoModulos = indicadores.modulos
   )
   .join('; ');
 
+
 const question = [
-  'Atue como ADA 1, assistente pedagogica do MathLab.',
-  `Respostas: ${indicadores.totalRespostas}.`,
-  `Acertos: ${indicadores.acertos}.`,
-  `Erros: ${indicadores.erros}.`,
-  `Taxa de acerto: ${indicadores.percentualAcerto}%.`,
-  `Acertos na primeira tentativa: ${indicadores.percentualAcertoNaPrimeiraTentativa}%.`,
+  'Voce é a ADA 1, assistente pedagogica do MathLab.',
+  `Dados: ${indicadores.totalRespostas} respostas, ${indicadores.acertos} acertos, ${indicadores.erros} erros, ${indicadores.percentualAcerto}% de acerto e ${indicadores.percentualAcertoNaPrimeiraTentativa}% de acerto na primeira tentativa.`,
   `Modulos: ${resumoModulos}.`,
-  `Foco do professor: ${foco.slice(0, 200)}.`,
-  'Produza sintese, hipoteses provisórias, ZDP, perguntas mediadoras, intervencoes praticas e formas de verificar a aprendizagem. Nao invente evidencias.'
+  `Foco do professor: ${foco.slice(0, 150) || 'analise geral'}.`,
+  'Responda em portugues, com texto completo e conciso, em ate 150 palavras.',
+  'Inclua: sintese dos dados, uma hipotese cautelosa, ZDP, duas perguntas mediadoras, duas intervencoes praticas e como verificar a aprendizagem.',
+  'Nao invente evidencias. Termine todas as frases e conclua o parecer. Se faltarem dados, declare essa limitacao.'
 ].join(' ').slice(0, 950);
+
 
 
       
