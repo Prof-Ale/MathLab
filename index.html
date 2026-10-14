@@ -1605,17 +1605,39 @@ stats();home();ui();
     status.textContent = '⏳ Calculando indicadores e consultando a ADA…';
 
     try {
-      const indicadores = obterIndicadores();
-      const foco = textoSeguro($ada('adaFoco').value);
-      const question = montarPergunta(indicadores, foco);
+      
+const indicadores = obterIndicadores();
+const foco = textoSeguro($ada('adaFoco').value);
 
-      const resposta = await fetch(ADA_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ question })
-      });
+const resumoModulos = indicadores.modulos
+  .slice(0, 5)
+  .map(m =>
+    `${m.modulo}: ${m.acertos}/${m.respostas} acertos`
+  )
+  .join('; ');
+
+const question = [
+  'Atue como ADA 1, assistente pedagogica do MathLab.',
+  `Respostas: ${indicadores.totalRespostas}.`,
+  `Acertos: ${indicadores.acertos}.`,
+  `Erros: ${indicadores.erros}.`,
+  `Taxa de acerto: ${indicadores.percentualAcerto}%.`,
+  `Acertos na primeira tentativa: ${indicadores.percentualAcertoNaPrimeiraTentativa}%.`,
+  `Modulos: ${resumoModulos}.`,
+  `Foco do professor: ${foco.slice(0, 200)}.`,
+  'Produza sintese, hipoteses provisórias, ZDP, perguntas mediadoras, intervencoes praticas e formas de verificar a aprendizagem. Nao invente evidencias.'
+].join(' ').slice(0, 950);
+
+
+      
+const resposta = await fetch(ADA_ENDPOINT, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ message: question })
+});
+
 
      
 const textoResposta = await resposta.text();
