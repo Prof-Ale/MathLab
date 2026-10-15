@@ -79,8 +79,21 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
 @media print{header,footer,#creditosModal,main> :not(#mlExtras),#mlExtras> :not(#mlReport),.mlPagination{display:none!important}body,main,#mlExtras{display:block!important;background:#fff!important;color:#000!important;max-width:none!important;padding:0!important;border:0!important}#mlReport *{color:#000!important;background:#fff!important}table{font-size:9pt!important}thead{display:table-header-group}tr{break-inside:avoid}}
 .ggbbox{width:100%;height:300px;border:2px solid var(--bd);border-radius:12px;overflow:hidden;background:#fff}
 .gg-note{font-size:.8rem;color:var(--mu);text-align:center}
+
+/* ===== Badges de pré-requisito e próximo passo (Fase 1.2) ===== */
+.mod-badges{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem}
+.badge{font-size:.7rem;padding:.2rem .5rem;border-radius:6px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.badge-prereq{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.4)}
+.badge-prox{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.4)}
+.badge-bncc{background:rgba(6,182,212,.12);color:#67e8f9;border:1px solid rgba(6,182,212,.35);font-family:monospace}
+body.theme-light .badge-prereq{background:rgba(239,68,68,.1);color:#b91c1c;border-color:rgba(239,68,68,.4)}
+body.theme-light .badge-prox{background:rgba(16,185,129,.1);color:#047857;border-color:rgba(16,185,129,.4)}
+body.theme-light .badge-bncc{background:rgba(6,182,212,.1);color:#0e7490;border-color:rgba(6,182,212,.4)}
+body.theme-contrast .badge-prereq{background:#000;color:#f00;border-color:#f00}
+body.theme-contrast .badge-prox{background:#000;color:#0f0;border-color:#0f0}
+body.theme-contrast .badge-bncc{background:#000;color:#0ff;border-color:#0ff}
 </style>
-<style id="blCss">
+ <style id="blCss">
 @page{size:A4;margin:12mm}
 #boletim{position:fixed;inset:0;z-index:100;background:#d9dde3;overflow:auto;padding:1rem;color:#111}
 #boletim .bl-ctl{max-width:210mm;margin:0 auto 1rem;background:#fff;border-radius:12px;padding:1rem;display:grid;gap:.7rem;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));color:#111}
@@ -203,7 +216,6 @@ function carregarEstado(){
     if(!p||typeof p!=='object'||Array.isArray(p))throw Error('formato inesperado');
     return normalizarEstado(p);
   }catch(e){
-    /* Dado ilegível: preserva o texto bruto e NÃO grava por cima até o professor decidir. */
     leituraFalhou=true;dadosBrutos=raw;
     storageError='Os dados salvos neste navegador estão ilegíveis ('+e.message+'). Foram preservados e não serão sobrescritos.';
     try{if(!localStorage.getItem('mathlab-ilegivel'))localStorage.setItem('mathlab-ilegivel',raw)}catch(_){}
@@ -341,8 +353,7 @@ const FRA_GENS={
    h:['Procure um número que divida o numerador e o denominador ao mesmo tempo.','Divida os dois pelo maior divisor comum.'],
    e:`O maior divisor comum de ${p} e ${q} é ${g}. ${p} ÷ ${g} = ${n0} e ${q} ÷ ${g} = ${d0}.`,s:{n:p,d:q}})}
 ]};
-
-/* ===== GERADORES: ÂNGULOS ===== */
+ /* ===== GERADORES: ÂNGULOS ===== */
 const gr=n=>`${n}°`;
 const DEF_ANG={agudo:'Um ângulo agudo mede menos de 90°.',reto:'Um ângulo reto mede exatamente 90°.',obtuso:'Um ângulo obtuso fica entre 90° e 180°.',raso:'Um ângulo raso mede exatamente 180°.'};
 const valAng=t=>t==='agudo'?rnd(5,85):t==='obtuso'?rnd(95,175):t==='reto'?90:180;
@@ -622,10 +633,11 @@ const MODS=[
  rod:8,gens:INT_GENS}
 ];
 
-const SOON=[{ano:7,ic:'✖️',nome:'Regras de sinais'},{ano:7,ic:'🔤',nome:'Linguagem algébrica'}];
-
-
-/* ===== SÓLIDOS GEOMÉTRICOS ===== */
+const SOON=[
+  {ano:8,ic:'🎲',nome:'Probabilidade',eixo:'Probabilidade e Estatística'},
+  {ano:9,ic:'📊',nome:'Funções afim e quadrática',eixo:'Álgebra'}
+];
+ /* ===== SÓLIDOS GEOMÉTRICOS ===== */
 const SOLID_GENS={
   1:[
     ()=>{const a=rnd(2,9);return mk({q:`Um cubo tem aresta ${a} cm. Qual é o seu volume, em cm³?`,ok:String(a**3),bad:[[String(6*a*a),'calculou a área total em vez do volume','A área total usa as seis faces; o volume usa aresta ao cubo.'],[String(12*a),'calculou o total de arestas','O cubo tem 12 arestas, mas volume é outra grandeza.'],[String(a*a),'elevou a aresta ao quadrado','O volume do cubo é aresta ao cubo.']],fill:()=>String(rnd(1,700)),h:['O volume de um cubo é aresta × aresta × aresta.',`Calcule ${a} × ${a} × ${a}.`],e:`V = ${a}³ = ${a**3} cm³.`,s:{tipo:0,a}})},
@@ -794,7 +806,6 @@ function home(){
     'Probabilidade e Estatística':'📊'
   };
 
-  /* --- helpers de progresso --- */
   const dominioModulo = m => {
     if (!m.gens) {
       const d=(S.done[m.id]||[]).filter(Boolean).length;
@@ -803,7 +814,6 @@ function home(){
     }
     const nivel = S.niv[m.id] || 1;
     const cnt   = S.cnt[m.id] || 0;
-    // Considera "dominado" quem chegou ao nível 3 com pelo menos 10 questões
     const pct   = nivel >= 3 ? Math.min(1, cnt/10) : (nivel-1)/2;
     return {pct, nivel, feitas: cnt, total: null};
   };
@@ -811,42 +821,34 @@ function home(){
   const moduloDominado = id => {
     const m = MODS.find(x => x.id === id);
     if (!m) return true;
-    const d = dominioModulo(m);
-    return d.pct >= 1;
+    return dominioModulo(m).pct >= 1;
   };
 
-  /* --- badge de pré-requisito pendente --- */
   const prereqPendente = m => {
     if (!m.prereq || !m.prereq.length) return null;
     const faltando = m.prereq.filter(p => !moduloDominado(p));
     if (!faltando.length) return null;
-    const nomes = faltando.map(p => (MODS.find(x=>x.id===p)?.nome) || p).join(', ');
-    return nomes;
+    return faltando.map(p => (MODS.find(x=>x.id===p)?.nome) || p).join(', ');
   };
 
-  /* --- badge de próximo passo sugerido --- */
   const proximoSugerido = m => {
     if (!m.proximo || !m.proximo.length) return null;
     if (!moduloDominado(m.id)) return null;
-    const nomes = m.proximo.map(p => (MODS.find(x=>x.id===p)?.nome) || p).join(', ');
-    return nomes;
+    return m.proximo.map(p => (MODS.find(x=>x.id===p)?.nome) || p).join(', ');
   };
 
-  /* --- agrupa módulos ativos por eixo --- */
   const porEixo = {};
   MODS.forEach(m => {
     const e = m.eixo || 'Outros';
     (porEixo[e] = porEixo[e] || []).push(m);
   });
 
-  /* --- módulos em breve, agrupados por eixo (se tiverem) --- */
   const emBreve = {};
   SOON.forEach(m => {
     const e = m.eixo || 'Em breve';
     (emBreve[e] = emBreve[e] || []).push(m);
   });
 
-  /* --- ordena cada eixo por prereq (sem prereq primeiro) --- */
   const ordenarPorPrereq = lista => {
     const visitados = new Set();
     const resultado = [];
@@ -864,7 +866,6 @@ function home(){
     return resultado;
   };
 
-  /* --- HTML do card --- */
   const cardModulo = m => {
     const d = dominioModulo(m);
     const prog = m.gens
@@ -888,7 +889,6 @@ function home(){
     </button>`;
   };
 
-  /* --- monta a página --- */
   let h = '<h1 style="font-size:1.6rem">Escolha um assunto</h1>';
 
   ORDEM_EIXOS.forEach(eixo => {
@@ -899,7 +899,6 @@ function home(){
     h += '</div>';
   });
 
-  // Eixos que não estão em ORDEM_EIXOS (fallback)
   Object.keys(porEixo).forEach(eixo => {
     if (ORDEM_EIXOS.includes(eixo)) return;
     const lista = porEixo[eixo];
@@ -908,7 +907,6 @@ function home(){
     h += '</div>';
   });
 
-  // Módulos em breve (agrupados por eixo, se houver)
   const eixosBreve = Object.keys(emBreve);
   if (eixosBreve.length) {
     h += '<h2 class="t">🚧 Em breve</h2>';
@@ -924,6 +922,7 @@ function home(){
   h += rodapeHome();
   $('main').innerHTML = h;
 }
+
 /* ===== LABORATÓRIO ===== */
 let cv,cx,W,H;
 function abrir(id){GG.ok=false;GG.app=null;
@@ -1073,12 +1072,10 @@ function rodapeHome(){
              :'<p style="color:var(--mu)">Resolva alguns desafios e aqui aparecem os erros mais comuns.</p>';
   return h+'<p style="margin-top:1.2rem"><button class="btn" onclick="zerar(event)">🗑️ Zerar progresso</button></p>';
 }
-
-/* =========================================================
+ /* =========================================================
    MATHLAB — EVOLUÇÃO PEDAGÓGICA
    Histórico local, painel docente, CSV e regras de sinais
    ========================================================= */
-
 
 function dataLocal() {
   const d = new Date();
@@ -1206,7 +1203,6 @@ const SIGN_GENS = {
       });
     },
     () => {
-      /* Parte do quociente e do divisor para o resultado ser sempre inteiro */
       const divisor = rnd(2, 12);
       const quociente = rnd(2, 12);
       const dividendo = divisor * quociente;
@@ -1368,7 +1364,7 @@ const gContexto=()=>{const p=rnd(2,6),k=rnd(2,6),nome=pick(NOMES),t=pick([0,1,2]
   bad:[[`${p*k} m abaixo`,'não percebeu que voltar no tempo inverte o sinal',`(−${p}) × (−${k}) = +${p*k}: antes, ele estava mais alto.`],[`${p+k} m acima`,'somou em vez de multiplicar','A variação por minuto se repete em cada minuto: multiplique.'],[`${p+k} m abaixo`,'somou e errou o sinal','Multiplique e analise os sinais.']],
   fill:()=>`${rnd(2,40)} m acima`,h:['Descer é −; voltar no tempo também é −.','Multiplique (−p) × (−k) e veja o sinal.'],e:`(−${p}) × (−${k}) = +${p*k}, ou seja, ${p*k} m acima.`,s:{op:2,a:1,b:1}});
  if(t===1)return mk({q:`${nome} tem ${k} dívidas de R$ ${p} cada. Qual é o saldo total?`,ok:rS(-p*k),
-  bad:[[rS(p*k),'ignorou que dívida é negativa','Dívida é valor negativo: o saldo fica abaixo de zero.'],[rS(-(p+k)),'somou em vez de multiplicar','São ${k} dívidas iguais: multiplique.'.replace('${k}',k)],[rS(-p*k+p),'contou uma dívida a menos','Conte todas as dívidas.']],
+  bad:[[rS(p*k),'ignorou que dívida é negativa','Dívida é valor negativo: o saldo fica abaixo de zero.'],[rS(-(p+k)),'somou em vez de multiplicar',`São ${k} dívidas iguais: multiplique.`],[rS(-p*k+p),'contou uma dívida a menos','Conte todas as dívidas.']],
   fill:()=>rS(rnd(-60,60)),h:[`Cada dívida é −${p}.`,`Calcule ${k} × (−${p}).`],e:`${k} × (−${p}) = −${p*k}.`,s:{op:2,a:1,b:1}});
  return mk({q:`Uma dívida de R$ ${p*k} foi dividida igualmente entre ${k} amigos. Qual é o saldo de cada um, como número inteiro?`,ok:rS(-p),
   bad:[[rS(p),'esqueceu que é dívida','A dívida é negativa: cada saldo fica abaixo de zero.'],[rS(-p*k*k),'multiplicou em vez de dividir','Dividir igualmente é uma divisão.'],[rS(-(p*k-k)),'subtraiu em vez de dividir','Repartir é dividir.']],
@@ -1477,7 +1473,6 @@ const lin=(m,k,q=0)=>{const T=[[q,'x²'],[m,'x'],[k,'']].filter(t=>t[0]);if(!T.l
 const dis=(a,b)=>`${a<0?'−':''}${Math.abs(a)===1?'':Math.abs(a)}(x ${b<0?'−':'+'} ${Math.abs(b)})`;
 const fct=(g,p,r)=>`${g}(${p===1?'':p}x + ${r})`;
 const ev=(f,x)=>f?f[0]*x+f[1]+(f[2]||0)*x*x:null;
-/* monta a questão e guarda, para cada alternativa, os coeficientes [m,k,q] que a Máquina B usará */
 const Mq=({q,ok,bad,h,e,f1,t1,md,f2,t2,x,neg})=>{
   const cand={},seen=new Set([ok[2]]),B=[];cand[ok[2]]=[ok[0],ok[1],ok[4]||0];
   bad.forEach(b=>{const p=[b[0],b[1],b[5]||0];
@@ -1597,7 +1592,6 @@ MODS.push({id:'equiv',ano:7,ic:'⚖️',nome:'Expressões equivalentes',sub:'Dua
    if(locked){c.fillStyle=k.m;c.font='11px sans-serif';c.fillText(`${a}x + ${a*b}`,ox+16+(wx+b*u)/2,oy+a*hu+18)}}
   c.textAlign='left'},
  rod:8,gens:GENS});
-/* ao responder, a Máquina B passa a mostrar a alternativa escolhida (certa ou errada) */
 const r0=resp;
 resp=function(i,b){
   if(cur&&cur.id==='equiv'&&Q&&Q.s&&Q.s.cand&&!locked&&Number.isInteger(i)&&i>=0&&i<Q.o.length){
@@ -1617,7 +1611,6 @@ const FIG=['Retângulo','Triângulo','Paralelogramo','Trapézio','Círculo'];
 const areaDe=(f,a,b,h)=>f===0?a*h:f===1?a*h/2:f===2?a*h:f===3?(a+b)*h/2:PI*a*a;
 const S=(f,a,b,h,kind,ans)=>({f,a,b,h,kind,ans});
 const O=o=>mk(o);
-/* ---------- nível 1 ---------- */
 const gAreaRet=()=>{const a=R(3,11),h=R(2,8);
  return O({q:`Um retângulo mede ${a} cm de base por ${h} cm de altura. Qual é a área dele?`,ok:cm2(a*h),
   bad:[[cm2(2*(a+h)),'calculou o perímetro em vez da área','Perímetro é a soma dos lados; área é quantos quadradinhos cabem dentro.'],[cm2(a+h),'somou as medidas','A área vem de base × altura, e não da soma.'],[cm(a*h),'esqueceu que área é medida em cm²','Área mede superfície: a unidade leva ².'],[cm2(a*h*2),'dobrou o resultado','Retângulo não precisa dividir nem dobrar: base × altura.']],
@@ -1635,7 +1628,6 @@ const gUnidade=()=>{const a=R(3,9),h=R(2,6);
  return O({q:`A base de um retângulo mede ${a} cm e a altura ${h} cm. Em qual unidade a área deve ser escrita?`,ok:'cm²',
   bad:[['cm','confundiu área com comprimento','Área cobre uma superfície: a unidade é ao quadrado.'],['cm³','confundiu área com volume','cm³ é para volume, o espaço dentro de um sólido.'],['cm × cm × cm','confundiu com volume','Área usa duas medidas, não três.']],
   fill:()=>'m',h:['Área é quantos quadradinhos cobrem a figura.','Cada quadradinho tem 1 cm de lado: é 1 cm².'],e:`Área do retângulo: ${a*h} cm².`,s:S(0,a,a,h,'area',a*h)})};
-/* ---------- nível 2 ---------- */
 const gTri=()=>{const a=2*R(2,6),h=R(2,8);
  return O({q:`Um triângulo tem base ${a} cm e altura ${h} cm. Qual é a área dele?`,ok:cm2(a*h/2),
   bad:[[cm2(a*h),'esqueceu de dividir por 2','O triângulo ocupa metade do retângulo de mesma base e altura.'],[cm2(a+h),'somou base e altura','A área vem do produto, não da soma.'],[cm2(a*h/2+a),'somou a base ao resultado','Basta base × altura ÷ 2.'],[cm2(a*h*2),'multiplicou por 2 em vez de dividir','O triângulo é metade do retângulo.']],
@@ -1652,7 +1644,6 @@ const gAltura=()=>{const b=R(3,9),h=R(2,8),A=b*h;
  return O({q:`Um retângulo tem área ${A} cm² e base ${b} cm. Qual é a altura?`,ok:cm(h),
   bad:[[cm(A*b),'multiplicou em vez de dividir','Área = base × altura, então altura = área ÷ base.'],[cm(A-b),'subtraiu','Desfaça a multiplicação com uma divisão.'],[cm(A/2),'dividiu por 2','Divida pela base, não por 2.'],[cm(b+h+1),'chutou','Confira: base × altura deve dar a área.']],
   fill:()=>cm(R(1,20)),h:['Quanto vezes a base dá a área?',`${A} ÷ ${b}.`],e:`Altura = ${A} ÷ ${b} = ${h} cm.`,s:S(0,b,b,h,'area',A)})};
-/* ---------- nível 3 ---------- */
 const gCirculo=()=>{const r=R(2,9);
  return O({q:`Use π = 3,14. Qual é a área de um círculo de raio ${r} cm?`,ok:cm2(PI*r*r),
   bad:[[cm2(2*PI*r),'calculou o comprimento da circunferência','2πr mede o contorno; a área é πr².'],[cm2(PI*(2*r)*(2*r)),'usou o diâmetro como se fosse o raio','O raio é metade do diâmetro; a fórmula usa o raio.'],[cm2(PI*r),'esqueceu de elevar o raio ao quadrado','Na área, o raio multiplica a si mesmo.'],[cm2(r*r),'esqueceu o π','Falta multiplicar por π.']],
@@ -1731,7 +1722,6 @@ const par=(r1,r2,a=1)=>[a,-a*(r1+r2),a*r1*r2];
 const S=(a,b,c,oc)=>({a,b,c,oc:oc?1:0});
 const nz=(lo,hi)=>{let v;do{v=R(lo,hi)}while(!v);return v};
 const sinal=(r)=>r<0?`(x + ${-r})`:`(x − ${r})`;
-/* ---------- nível 1: reconhecer e verificar ---------- */
 const gCoef=()=>{const a=pick([1,1,2,3,-1,-2]),b=Math.random()<.2?0:nz(-9,9),c=Math.random()<.15?0:nz(-9,9),L=pick(['a','b','c']),val={a,b,c}[L],eq=eqT(a,b,c);
  const outros=Object.entries({a,b,c}).filter(([k])=>k!==L).map(([,v])=>v);
  const bad=[[String(-val===val?1:-val).replace('-','−'),'trocou o sinal do coeficiente','O sinal faz parte do coeficiente: confira se há + ou − antes do termo.']];
@@ -1755,7 +1745,6 @@ const gInc2=()=>{const a=pick([1,1,2,3]),r=pick([-8,-6,-5,-4,-3,-2,2,3,4,5,6,8])
  return mk({q:`Resolva a equação ${eqT(a,-a*r,0)}.`,ok:raizes(0,r),
   bad:[[`x = ${sg(r)}`,'dividiu por x e perdeu a raiz 0','Em x(…) = 0, o fator x também pode ser zero.'],[raizes(0,-r),'trocou o sinal da outra raiz','Isole: o fator entre parênteses vale zero.'],['x = 0','esqueceu a outra raiz','Há dois fatores, e cada um pode ser zero.'],[`x = ${sg(a*r)}`,'não dividiu pelo coeficiente',`Divida por ${a} ao isolar.`]],
   fill:()=>`x = ${sg(R(-12,12))}`,h:['Ponha x em evidência.','Produto igual a zero: um dos fatores é zero.'],e:`x(${a===1?'':a}x ${r>0?'−':'+'} ${Math.abs(a*r)}) = 0, logo x = 0 ou x = ${sg(r)}.`,s:S(a,-a*r,0)})};
-/* ---------- nível 2: resolver ---------- */
 const gFatorada=()=>{let p=nz(-7,7),q=nz(-7,7);if(p===q)q=-q;
  return mk({q:`Quais são as soluções de ${sinal(p)}${sinal(q)} = 0?`,ok:raizes(p,q),
   bad:[[raizes(-p,-q),'trocou o sinal das raízes','No fator (x − 3), x vale +3: o sinal dentro do parêntese é o oposto da raiz.'],[raizes(p,-q),'trocou o sinal de uma raiz','Cada fator se resolve separadamente.'],[`x = ${sg(p*q)}`,'multiplicou os números','Produto zero: cada fator vale zero, e as soluções não se multiplicam.'],[raizes(p+q,0),'somou os números','Cada fator se iguala a zero separadamente.']],
@@ -1780,8 +1769,7 @@ const gSomaProd=()=>{let r1=nz(-6,6),r2=nz(-6,6);const Sm=r1+r2,P=r1*r2;if(!Sm)r
  return mk({q:`Duas raízes de x² + bx + c = 0 somam ${sg(s2)} e têm produto ${sg(p2)}. Qual é a equação?`,ok:eqT(1,-s2,p2),
   bad:[[eqT(1,s2,p2),'esqueceu que b é o oposto da soma','Na forma x² − Sx + P = 0, o termo em x é menos a soma.'],[eqT(1,-p2,s2),'trocou soma e produto','A soma vai com x e o produto é o termo livre.'],[eqT(1,s2,-p2),'errou os sinais','Use x² − (soma)x + (produto) = 0.'],[eqT(1,-s2,-p2),'trocou o sinal do produto','O produto entra com o próprio sinal.']],
   fill:()=>eqT(1,R(-9,9),R(-9,9)),h:['Se as raízes são r e s, a equação é x² − (r + s)x + r·s = 0.','Aqui só são dados a soma e o produto.'],e:`x² − (${sg(s2)})x + (${sg(p2)}) = 0, ou seja, ${eqT(1,-s2,p2)}.`,s:S(1,-s2,p2,true)})};
-/* ---------- nível 3: problemas e gráfico ---------- */
-const gAreaRet=()=>{const w=R(2,8),d=R(1,5),A=w*(w+d);
+const gAreaRet2=()=>{const w=R(2,8),d=R(1,5),A=w*(w+d);
  return mk({q:`A área de um retângulo é ${A} cm² e o comprimento excede a largura em ${d} cm. Qual é a largura?`,ok:`${w} cm`,
   bad:[[`${w+d} cm`,'respondeu o comprimento em vez da largura',`O comprimento é a largura + ${d}.`],[`−${w+d} cm`,'não descartou a raiz negativa','Medida de lado não pode ser negativa: descarte essa raiz.'],[`${A-d} cm`,'subtraiu em vez de montar a equação','Monte x(x + '+d+') = '+A+' e resolva.'],[`${Math.round(A/d)} cm`,'dividiu a área pelo excesso','A largura aparece duas vezes na equação: x² + '+d+'x − '+A+' = 0.']],
   fill:()=>`${R(1,30)} cm`,h:[`Chame a largura de x: o comprimento é x + ${d}. Área = x(x + ${d}) = ${A}.`,`Resolva x² + ${d}x − ${A} = 0 e escolha a raiz positiva.`],e:`x² + ${d}x − ${A} = 0 tem raízes ${w} e −${w+d}. A largura é ${w} cm.`,s:S(1,d,-A)})};
@@ -1798,7 +1786,7 @@ const gBola=()=>{const m=R(1,4),T=2*m,Hm=m*m,inst=Math.random()<.6;
   bad:inst?[[`${T} s`,'respondeu o instante em que a bola volta ao chão','A altura máxima ocorre no vértice, a meio caminho entre as duas raízes.'],[`${Hm} s`,'respondeu a altura no lugar do instante','Foi pedido o instante, e não a altura.'],[`${m+1} s`,'chutou um valor perto','Use tv = −b ÷ 2a.'],[`${2*T} s`,'dobrou o tempo de queda','A bola volta ao chão em '+T+' s; o ponto mais alto é a metade disso.']]
           :[[`${m} m`,'respondeu o instante no lugar da altura','Substitua o instante do vértice em h para achar a altura.'],[`${T} m`,'confundiu com o tempo total de voo','A altura é h calculado no vértice.'],[`${Hm*2} m`,'dobrou a altura','Calcule h(t) só uma vez, no instante do vértice.'],[`${Hm+m} m`,'somou instante e altura','Basta calcular h no instante do vértice.']],
   fill:()=>inst?`${R(1,12)} s`:`${R(1,30)} m`,h:['O ponto mais alto da parábola é o vértice.',`O instante do vértice é t = −b ÷ 2a = ${m}.`],e:`t = ${m} s e h(${m}) = −${m*m} + ${2*m*m} = ${Hm} m.`,s:S(-1,2*m,0)})};
-const GENS={1:[gCoef,gEhRaiz,gInc1,gInc2],2:[gFatorada,gDelta,gNumRaizes,gBhaskara,gSomaProd],3:[gAreaRet,gNumero,gVertice,gBola,gBhaskara]};
+const GENS={1:[gCoef,gEhRaiz,gInc1,gInc2],2:[gFatorada,gDelta,gNumRaizes,gBhaskara,gSomaProd],3:[gAreaRet2,gNumero,gVertice,gBola,gBhaskara]};
 MODS.push({id:'eq2',ano:9,ic:'📈',nome:'Equação do 2º grau',sub:'Parábola, raízes, discriminante e Bhaskara',liveInfo:true,
  ctl:[{k:'a',l:'a (coeficiente de x²)',min:-3,max:3,v:1},{k:'b',l:'b (coeficiente de x)',min:-10,max:10,v:-5},{k:'c',l:'c (termo independente)',min:-12,max:12,v:6}],
  fix(v){v.a=Math.round(v.a)||1;v.b=Math.round(v.b);v.c=Math.round(v.c)},
@@ -1834,8 +1822,7 @@ MODS.push({id:'eq2',ano:9,ic:'📈',nome:'Equação do 2º grau',sub:'Parábola,
  rod:8,gens:GENS});
 window.__eq2={GENS,eqT,raizes};
 })();
-
-/* ===== 8º ANO: TRIÂNGULOS · 9º ANO: TEOREMA DE PITÁGORAS E TEOREMA DE TALES ===== */
+ /* ===== 8º ANO: TRIÂNGULOS · 9º ANO: TEOREMA DE PITÁGORAS E TEOREMA DE TALES ===== */
 (()=>{
 const fmN=n=>(Math.round(n*100)/100).toLocaleString('pt-BR'),mdcT=(a,b)=>b?mdcT(b,a%b):a;
 const clsL=(a,b,c)=>a===b&&b===c?'equilátero':(a===b||b===c||a===c)?'isósceles':'escaleno',
@@ -1956,7 +1943,6 @@ const dg=n=>{const d=dig(n);return{d5:d[0],d4:d[1],d3:d[2],d2:d[3],d1:d[4],d0:d[
 const Nd=v=>v.d5*1e5+v.d4*1e4+v.d3*1e3+v.d2*100+v.d1*10+v.d0;
 const distinct=len=>Number(shuf([1,2,3,4,5,6,7,8,9]).slice(0,len).join(''));
 
-/* ---------- NÚMEROS NATURAIS E SISTEMA POSICIONAL ---------- */
 const gValPos=()=>{const N=distinct(rnd(4,6)),s=String(N),i=rnd(0,s.length-1),d=Number(s[s.length-1-i]),ok=d*10**i;
  return mk({q:`No número ${fm(N)}, qual é o valor posicional do algarismo ${d}?`,ok:fm(ok),bad:[B(fm(d),'deu o valor absoluto do algarismo','Valor posicional é o algarismo vezes o valor da sua ordem.'),B(fm(d*10**(i+1)),'errou a ordem (uma casa à esquerda)','Confira a ordem do algarismo, contando da direita.'),B(fm(i?d*10**(i-1):d*100),'errou a ordem (uma casa à direita)','Confira a ordem do algarismo, contando da direita.')],
   fill:()=>fm(rnd(1,9)*10**rnd(0,5)),h:['Conte a ordem do algarismo da direita para a esquerda: unidades, dezenas, centenas…',`O ${d} está na ordem das ${ORD[i]}.`],e:`${d} ${ORD[i]} = ${fm(ok)}.`,s:dg(N)})};
@@ -2002,7 +1988,6 @@ MODS.push({id:'nat',ano:6,ic:'🔢',nome:'Números naturais e sistema posicional
   c.fillStyle=k.m;c.font='11px sans-serif';c.fillText('cada bolinha vale 1 unidade da sua ordem',W/2,H-6);c.textAlign='left'},
  rod:8,gens:{1:[gValPos,gOrdem,gAntSuc],2:[gDecomp,gMontar,gArred],3:[gMaiorMenor,gOrdenar,gDezenas]}});
 
-/* ---------- ADIÇÃO E SUBTRAÇÃO ---------- */
 const wAdd=(a,b)=>[0,1,2,3].reduce((s,i)=>s+((dd(a,i)+dd(b,i))%10)*10**i,0),wSub=(a,b)=>[0,1,2,3].reduce((s,i)=>s+ab(dd(a,i)-dd(b,i))*10**i,0);
 const gS1=()=>{let a=0,b=0;for(let i=0;i<3;i++){const x=rnd(i===2?1:0,8),y=rnd(0,9-x);a+=x*10**i;b+=y*10**i}
  return mk({q:`Quanto é ${fm(a)} + ${fm(b)}?`,ok:fm(a+b),bad:[B(fm(a+b+10),'errou a soma de uma ordem','Some coluna por coluna: unidades, dezenas, centenas.'),B(fm(a+b-10),'errou a soma de uma ordem','Some coluna por coluna: unidades, dezenas, centenas.'),B(fm(ab(a-b)),'subtraiu em vez de somar','A operação é uma adição.')],
@@ -2051,7 +2036,6 @@ MODS.push({id:'adsub',ano:6,ic:'➕',nome:'Adição e subtração',sub:'Algoritm
   c.fillStyle=k.m;c.font='11px sans-serif';c.fillText(op?'−1 = ordem que emprestou · +10 = ordem que recebeu':'+1 = "vai um" para a ordem seguinte',W/2,H-6);c.textAlign='left'},
  rod:8,gens:{1:[gS1,gSub1],2:[gS2,gSub2,gFalta,gProp],3:[gCtx2,gEstima,gProva,gFalta]}});
 
-/* ---------- MULTIPLICAÇÃO E DIVISÃO ---------- */
 const gGrupos=()=>{const g=rnd(2,9),n=rnd(2,9),o=pick([['caixas','lápis'],['sacolas','laranjas'],['prateleiras','livros']]);
  return mk({q:`${g} ${o[0]} com ${n} ${o[1]} em cada uma. Quantos ${o[1]} há ao todo?`,ok:String(g*n),bad:[B(String(g+n),'somou em vez de multiplicar','Grupos iguais pedem multiplicação.'),B(String(g*n+n),'contou um grupo a mais','Conte só os grupos que existem.'),B(String(g*n-n),'contou um grupo a menos','Conte todos os grupos.')],
   fill:()=>String(rnd(4,80)),h:['Grupos com a mesma quantidade: multiplicação.',`${g} × ${n}.`],e:`${g} × ${n} = ${g*n}.`,s:{op:0,a:g,b:n}})};
@@ -2089,7 +2073,6 @@ MODS.push({id:'muldiv',ano:6,ic:'✖️',nome:'Multiplicação e divisão',sub:'
   c.textAlign='left'},
  rod:8,gens:{1:[gGrupos,gRepartir],2:[gMult2,gResto,gPReal],3:[gCtx,gExpr,gMult2]}});
 
-/* ---------- TABUADA DE MULTIPLICAÇÃO ---------- */
 const rev=n=>Number(String(n).split('').reverse().join(''));
 const gFato=ns=>()=>{const n=pick(ns),m=rnd(2,10),p=n*m;
  return mk({q:`Quanto é ${n} × ${m}?`,ok:String(p),bad:[B(String(n*(m+1)),'errou uma linha da tabuada (passou)','Compare com a linha vizinha: cada linha soma ' + n + '.'),B(String(n*(m-1)),'errou uma linha da tabuada (faltou)','Compare com a linha vizinha: cada linha soma ' + n + '.'),B(String(n+m),'somou em vez de multiplicar','Multiplicar é somar ' + n + ' parcelas iguais.'),B(String(rev(p)),'trocou os algarismos do resultado','Confira a ordem dos algarismos.')],
@@ -2114,7 +2097,6 @@ MODS.push({id:'tabmul',ano:6,ic:'🧮',nome:'Tabuada de multiplicação',sub:'Fa
   for(let i=1;i<=10;i++){const y=30+(i-1)*rh,sel=i===v.m;if(sel){c.fillStyle=k.f;c.fillRect(W/2-110,y,220,rh-2);c.strokeStyle=k.a;c.lineWidth=2;c.strokeRect(W/2-110,y,220,rh-2)}c.fillStyle=sel?k.a:k.t;c.fillText(`${n} × ${i} = ${sel&&!locked?'?':n*i}`,W/2,y+rh*.72)}c.textAlign='left'},
  rod:8,gens:{1:[gFato([2,3,4,5,10])],2:[gFato([6,7,8,9]),gMFalta,gNaoPert],3:[gDobro,gMCtx,gMFalta]}});
 
-/* ---------- TABUADA DE DIVISÃO ---------- */
 const gDiv=ds=>()=>{const d=pick(ds),q=rnd(2,10),n=d*q;
  return mk({q:`Quanto é ${n} ÷ ${d}?`,ok:String(q),bad:[B(String(d),'deu o divisor','O quociente diz quantos grupos de ' + d + ' cabem em ' + n + '.'),B(String(q+1),'errou por um grupo','Confira: divisor × quociente = dividendo.'),B(String(q-1),'errou por um grupo','Confira: divisor × quociente = dividendo.'),B(String(n-d),'subtraiu em vez de dividir','Dividir é contar quantos grupos de ' + d + ' cabem.')],
   fill:()=>String(rnd(1,12)),h:[`No simulador, conte quantos grupos de ${d} cabem em ${n}.`,`Pense: ${d} × ? = ${n}.`],e:`${n} ÷ ${d} = ${q}, porque ${d} × ${q} = ${n}.`,s:{d,q}})};
@@ -2138,8 +2120,39 @@ MODS.push({id:'tabdiv',ano:6,ic:'➗',nome:'Tabuada de divisão',sub:'Grupos igu
   c.textAlign='center';c.fillStyle=k.m;c.font='12px sans-serif';c.fillText(`${n} quadradinhos em grupos de ${d} · ${locked?q:'?'} grupos`,W/2,H-8);c.textAlign='left'},
  rod:8,gens:{1:[gDiv([2,3,4,5,10])],2:[gDiv([6,7,8,9]),gDFalta,gFam],3:[gZero,gDCtx,gDFalta]}});
 
-/* ordem dos cards do 6º ano */
 const O6=['nat','adsub','muldiv','tabmul','tabdiv','fra','solidos'],ix=MODS.map((m,i)=>m.ano===6?i:-1).filter(i=>i>=0),st=ix.map(i=>MODS[i]).sort((x,y)=>{const a=O6.indexOf(x.id),b=O6.indexOf(y.id);return (a<0?99:a)-(b<0?99:b)});ix.forEach((i,j)=>{MODS[i]=st[j]});
+})();
+
+/* ===== FASE 1.1 — METADADOS CURRICULARES =====
+   Adiciona eixo, BNCC, pré-requisitos, próximos passos e objetivos
+   a cada módulo. Não altera comportamento: só enriquece os objetos. */
+(()=>{
+  const META = {
+    nat:    { eixo:'Números', bncc:['EF06MA01','EF06MA02','EF06MA03'], prereq:[], proximo:['adsub','muldiv'], objetivos:['Reconhecer ordens e classes','Compor e decompor números','Comparar e ordenar naturais'], tempo:'2 aulas' },
+    adsub:  { eixo:'Números', bncc:['EF06MA03','EF06MA04'], prereq:['nat'], proximo:['muldiv','tabmul'], objetivos:['Somar e subtrair com reagrupamento','Aplicar propriedades da adição','Resolver problemas com adição e subtração'], tempo:'3 aulas' },
+    muldiv: { eixo:'Números', bncc:['EF06MA03','EF06MA05','EF06MA06'], prereq:['adsub'], proximo:['tabmul','tabdiv','mmc'], objetivos:['Multiplicar e dividir com resto','Aplicar a prova real','Resolver expressões com prioridade'], tempo:'3 aulas' },
+    tabmul: { eixo:'Números', bncc:['EF06MA03','EF06MA05'], prereq:['muldiv'], proximo:['tabdiv','mmc','fra'], objetivos:['Memorizar fatos fundamentais','Reconhecer padrões na tabuada','Encontrar o fator que falta'], tempo:'2 aulas' },
+    tabdiv: { eixo:'Números', bncc:['EF06MA03','EF06MA05'], prereq:['tabmul'], proximo:['mmc','fra'], objetivos:['Relacionar divisão e multiplicação','Reconhecer casos especiais (0, 1, ÷0)','Resolver problemas de repartição'], tempo:'2 aulas' },
+    fra:    { eixo:'Números', bncc:['EF06MA06','EF06MA07','EF07MA08'], prereq:['muldiv','tabdiv'], proximo:['dec','equiv','eq'], objetivos:['Reconhecer fração como parte de um todo','Comparar frações','Somar e subtrair frações','Simplificar frações'], tempo:'4 aulas' },
+    solidos:{ eixo:'Geometria', bncc:['EF06MA17','EF06MA18','EF07MA20'], prereq:[], proximo:['area'], objetivos:['Reconhecer poliedros e corpos redondos','Contar faces, arestas e vértices','Calcular volume de prismas'], tempo:'3 aulas' },
+    ang:    { eixo:'Geometria', bncc:['EF06MA25','EF07MA23'], prereq:[], proximo:['tri'], objetivos:['Classificar ângulos','Reconhecer complementares e suplementares','Aplicar ângulos em triângulos'], tempo:'3 aulas' },
+    eq:     { eixo:'Álgebra', bncc:['EF07MA18','EF08MA06'], prereq:['alg','int'], proximo:['eq2','equiv'], objetivos:['Resolver equações do 1º grau','Aplicar o princípio da balança','Resolver problemas com equações'], tempo:'4 aulas' },
+    int:    { eixo:'Números', bncc:['EF07MA03','EF07MA04'], prereq:['adsub'], proximo:['sinais','eq'], objetivos:['Localizar inteiros na reta','Somar e subtrair inteiros','Resolver problemas com saldo e temperatura'], tempo:'3 aulas' },
+    sinais: { eixo:'Números', bncc:['EF07MA04','EF08MA04'], prereq:['int'], proximo:['eq','alg'], objetivos:['Aplicar a regra dos sinais','Multiplicar e dividir inteiros','Resolver expressões com inteiros'], tempo:'3 aulas' },
+    alg:    { eixo:'Álgebra', bncc:['EF07MA13','EF07MA14','EF08MA06'], prereq:['muldiv'], proximo:['equiv','eq'], objetivos:['Traduzir linguagem natural em expressões','Identificar coeficiente e variável','Calcular valor numérico'], tempo:'3 aulas' },
+    equiv:  { eixo:'Álgebra', bncc:['EF07MA15','EF08MA06'], prereq:['alg'], proximo:['eq','eq2'], objetivos:['Aplicar a propriedade distributiva','Fatorar expressões simples','Reconhecer equivalência'], tempo:'3 aulas' },
+    area:   { eixo:'Geometria', bncc:['EF06MA19','EF07MA31','EF08MA19'], prereq:['muldiv','solidos'], proximo:['pit'], objetivos:['Calcular área de figuras planas','Diferenciar área de perímetro','Resolver problemas com unidades'], tempo:'4 aulas' },
+    eq2:    { eixo:'Álgebra', bncc:['EF09MA09','EF09MA10'], prereq:['eq','equiv'], proximo:[], objetivos:['Resolver equações do 2º grau','Interpretar o discriminante','Relacionar raízes e gráfico'], tempo:'5 aulas' },
+    tri:    { eixo:'Geometria', bncc:['EF06MA25','EF07MA23','EF08MA17'], prereq:['ang'], proximo:['pit'], objetivos:['Somar ângulos internos','Classificar triângulos','Aplicar a desigualdade triangular'], tempo:'3 aulas' },
+    pit:    { eixo:'Geometria', bncc:['EF09MA13','EF09MA14'], prereq:['area','tri'], proximo:['cart'], objetivos:['Aplicar o Teorema de Pitágoras','Calcular catetos e hipotenusa','Reconhecer ternas pitagóricas'], tempo:'4 aulas' },
+    tales:  { eixo:'Geometria', bncc:['EF09MA14','EF09MA15'], prereq:['fra','tri'], proximo:['pit'], objetivos:['Aplicar o Teorema de Tales','Resolver proporções com segmentos','Aplicar em problemas de sombra'], tempo:'3 aulas' }
+  };
+  for (const m of MODS) {
+    const meta = META[m.id];
+    if (!meta) continue;
+    Object.assign(m, meta);
+  }
+  window.__meta = META;
 })();
 
 /* Remove o aviso de "em breve" de todo módulo que já está ativo */
@@ -2260,6 +2273,7 @@ function zerar(ev){
   if(bt&&!bt.dataset.sim){bt.dataset.sim=1;const t=bt.textContent;bt.textContent='Clique de novo para apagar TUDO (baixe um backup antes)';setTimeout(()=>{delete bt.dataset.sim;bt.textContent=t},6000);return}
   try{localStorage.removeItem('mathlab');localStorage.removeItem('mathlab-anterior');localStorage.removeItem('mathlab-ilegivel')}catch(e){alert('Falha ao apagar: '+e.message);return}
   location.reload()}
+
 /* ===== BOLETIM DO ALUNO E RELATÓRIO DA TURMA (PDF por impressão) ===== */
 (()=>{
 const DICAS={fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
@@ -2272,7 +2286,6 @@ const SIT=(p,n)=>n<5?['·','Poucos dados']:p>=80?['●','Consolidado']:p>=50?['�
 const nomeAl=r=>(r.estudante||'Não identificado');
 const chaveAl=r=>nomeAl(r)+'\u0001'+(r.turma||'');
 
-/* agrupa tentativas por questão e calcula as métricas de um conjunto de registros */
 function resumo(rs){
   const q=new Map();let legado=0;
   rs.forEach(r=>{
@@ -2341,8 +2354,7 @@ function cabecalho(titulo,cfg,sub){
   const hoje=new Date();
   return `<div class="bl-cab"><div><h1>${escHtml(titulo)}</h1><small>MathLab · Matemática em Investigação</small></div><div style="text-align:right;font-size:9.5pt">${cfg.escola?`<b>${escHtml(cfg.escola)}</b><br>`:''}${cfg.prof?`Professor(a): ${escHtml(cfg.prof)}<br>`:''}Emitido em ${hoje.toLocaleDateString('pt-BR')}</div></div>${sub}`;
 }
-function rodape(){return `<div class="bl-rodape">Registro de uso do MathLab neste navegador. Não é nota nem avaliação formal: serve para orientar a próxima aula. “Acerto na 1ª tentativa” conta a questão em que o estudante acertou sem errar antes. Dados locais, sem senha e sem sincronização.</div>`}
-
+function rodape(){return `<div class="bl-rodape">Registro de uso do MathLab neste navegador. Não é nota nem avaliação formal: serve para orientar a próxima aula. "Acerto na 1ª tentativa" conta a questão em que o estudante acertou sem errar antes. Dados locais, sem senha e sem sincronização.</div>`}
 function htmlAluno(rs,nome,turma,ini,fim,cfg){
   const r=resumo(rs);
   const id=`<div class="bl-id"><div><b>Estudante:</b> ${escHtml(nome)}</div><div><b>Turma:</b> ${escHtml(turma||'—')}</div><div><b>Período:</b> ${ini||fim?`${fmtData(ini)||'início'} a ${fmtData(fim)||'hoje'}`:(r.ultima?'todo o histórico':'—')}</div></div>`;
@@ -2361,8 +2373,6 @@ function htmlTurma(rs,turma,ini,fim,cfg){
   const linhas=[...al.entries()].map(([k,a])=>{const m=resumo(a),p=pct(m.ok1,m.qs);return{nome:nomeAl(a[0]),turma:a[0].turma||'',m,p,mods:Object.keys(m.porMod).length,s:SIT(p,m.qs)}}).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
   const id=`<div class="bl-id"><div><b>Turma:</b> ${escHtml(turma||'todas')}</div><div><b>Período:</b> ${ini||fim?`${fmtData(ini)||'início'} a ${fmtData(fim)||'hoje'}`:'todo o histórico'}</div><div><b>Estudantes com registro:</b> ${linhas.length}</div></div>`;
   const kp=`<div class="bl-kpis"><div class="bl-kpi"><b>${r.qs}</b><span>questões respondidas</span></div><div class="bl-kpi"><b>${pctT(r.ok1,r.qs)}</b><span>acerto na 1ª tentativa</span></div><div class="bl-kpi"><b>${linhas.filter(x=>x.s[1]==='Precisa de apoio').length}</b><span>estudantes que precisam de apoio</span></div><div class="bl-kpi"><b>${tempoT(r.tempo)}</b><span>tempo mediano por questão</span></div></div>`;
-  const mods=Object.keys(r.porMod).sort((a,b)=>r.porMod[b].qs-r.porMod[a].qs);
-  const quem=mod=>new Set(rs.filter(x=>x.modulo===mod&&!x.acertou&&x.erro&&x.erro!=='Resposta incorreta').map(chaveAl)).size;
   const errTurma=r.erros.slice(0,8).map(e=>({...e,pessoas:new Set(rs.filter(x=>x.modulo===e.mod&&x.erro===e.txt&&!x.acertou).map(chaveAl)).size}));
   return cabecalho('Relatório da turma',cfg,id)+kp+
    `<div class="bl-sec"><h2>Desempenho da turma por assunto</h2>${tabelaModulos(r,'','',false)}</div>`+
@@ -2372,7 +2382,6 @@ function htmlTurma(rs,turma,ini,fim,cfg){
    adaSec(cfg)+`<div class="bl-sec"><h2>Observações do professor</h2><div class="bl-nota">${escHtml(cfg.obs||'')}</div><div class="bl-ass"><div>Assinatura do professor</div><div>Data</div></div></div>`+rodape();
 }
 const adaSec=cfg=>cfg.ada?`<div class="bl-sec"><h2>Parecer da ADA (assistente de IA)</h2><p style="white-space:pre-wrap">${escHtml(cfg.ada)}</p><p style="font-size:8.5pt;color:#444">Texto gerado por inteligência artificial a partir de indicadores agregados dos filtros do painel no momento da consulta. É uma hipótese de trabalho, não um diagnóstico: o professor revisa antes de usar.</p></div>`:'';
-
 function fechar(){const b=$('boletim');if(b)b.remove();document.body.classList.remove('bl-open');document.removeEventListener('keydown',tecla);const f=window._blFoco;if(f&&f.focus)f.focus()}
 function tecla(e){if(e.key==='Escape')fechar()}
 function abrirRelatorioPdf(modo){
@@ -2392,7 +2401,7 @@ function abrirRelatorioPdf(modo){
    <label>Escola<input id="blEsc" maxlength="80" value="${escHtml(cfg.escola||'')}" placeholder="Nome da escola"></label><label>Professor(a)<input id="blProf" maxlength="80" value="${escHtml(cfg.prof||'')}" placeholder="Seu nome"></label>
    <label class="bl-wide" style="grid-template-columns:auto 1fr;align-items:center;gap:.5rem"><input type="checkbox" id="blAda" ${window.__adaParecer?'':'disabled'}><span>Incluir o parecer da ADA ${window.__adaParecer?'(revise antes de imprimir)':'(consulte a ADA primeiro, na parte de baixo da página)'}</span></label>
    <label class="bl-wide">Observação para o relatório (opcional)<textarea id="blObs" rows="3" maxlength="600" placeholder="Ex.: combinar retomada de sinais na próxima semana.">${escHtml(cfg.obs||'')}</textarea></label>
-   <div class="bl-btns"><button class="go" id="blImp">🖨️ Imprimir / Salvar como PDF</button><button id="blFechar">Fechar</button><span class="bl-aviso" id="blAviso" role="status">Na janela de impressão, escolha “Salvar como PDF”. Papel A4, margens padrão.</span></div></div><article class="bl-page" id="blPagina" aria-live="polite"></article>`;
+   <div class="bl-btns"><button class="go" id="blImp">🖨️ Imprimir / Salvar como PDF</button><button id="blFechar">Fechar</button><span class="bl-aviso" id="blAviso" role="status">Na janela de impressão, escolha "Salvar como PDF". Papel A4, margens padrão.</span></div></div><article class="bl-page" id="blPagina" aria-live="polite"></article>`;
   document.body.appendChild(el);document.body.classList.add('bl-open');document.addEventListener('keydown',tecla);
   const pagina=()=>{
     let ini=$('blIni').value,fim=$('blFim').value;
@@ -2418,7 +2427,6 @@ function abrirRelatorioPdf(modo){
 }
 window.abrirRelatorioPdf=abrirRelatorioPdf;window.__bl={resumo,htmlAluno,htmlTurma,SIT};
 
-/* botões no painel do professor */
 const homeAntes=home;
 home=function(){
   homeAntes();
@@ -2429,109 +2437,307 @@ home=function(){
 };
 })();
 
-/* ===== EXTRAS: "Para reforçar" com atalho de treino e novos cards "em breve" ===== */
+/* ===== EXTRAS: "Para reforçar" com atalho de treino, sugestão de pré-requisito ===== */
 rodapeHome=function(){
   const L=[];Object.entries(S.err||{}).forEach(([m,o])=>Object.entries(o).forEach(([t,n])=>L.push([m,t,n])));
   L.sort((a,b)=>b[2]-a[2]);
   const nomes=Object.fromEntries(MODS.map(m=>[m.id,m.nome]));
+  const dominioModulo = id => {
+    const pm = MODS.find(m=>m.id===id);
+    if (!pm) return true;
+    if (pm.gens) {
+      const nivel = S.niv[id]||1, cnt = S.cnt[id]||0;
+      return nivel>=3 && cnt>=10;
+    }
+    return (S.done[id]||[]).filter(Boolean).length === (pm.qs?.length||0);
+  };
   let h='<h2 class="t">🔎 Para reforçar</h2>';
-  h+=L.length?'<ul style="line-height:2.1;padding-left:1.2rem">'+L.slice(0,3).map(x=>`<li><b>${escHtml(nomes[x[0]]||x[0])}</b>: ${escHtml(x[1])} (${x[2]}×)${nomes[x[0]]?` <button class="btn" style="padding:.2rem .7rem;margin-left:.4rem" onclick="abrir('${escHtml(x[0])}')" aria-label="Treinar ${escHtml(nomes[x[0]])}">Treinar</button>`:''}</li>`).join('')+'</ul>'
-             :'<p style="color:var(--mu)">Resolva alguns desafios e aqui aparecem os erros mais comuns.</p>';
+  if(L.length){
+    h += '<ul style="line-height:2.1;padding-left:1.2rem">' + L.slice(0,3).map(x=>{
+      const mod = MODS.find(m=>m.id===x[0]);
+      const nome = escHtml(nomes[x[0]]||x[0]);
+      const treinar = mod ? ` <button class="btn" style="padding:.2rem .7rem;margin-left:.4rem" onclick="abrir('${escHtml(x[0])}')" aria-label="Treinar ${nome}">Treinar</button>` : '';
+      let sugestao = '';
+      if (mod && mod.prereq && mod.prereq.length) {
+        const faltando = mod.prereq.filter(p => !dominioModulo(p));
+        if (faltando.length) {
+          const nomesPre = faltando.map(p => (MODS.find(m=>m.id===p)?.nome)||p).join(', ');
+          const primeiro = faltando[0];
+          sugestao = `<br><small style="color:var(--mu)">Antes, domine <b>${escHtml(nomesPre)}</b>. <button class="btn" style="padding:.15rem .5rem;font-size:.75rem" onclick="abrir('${escHtml(primeiro)}')">Treinar pré-requisito</button></small>`;
+        }
+      }
+      return `<li><b>${nome}</b>: ${escHtml(x[1])} (${x[2]}×)${treinar}${sugestao}</li>`;
+    }).join('') + '</ul>';
+  } else {
+    h += '<p style="color:var(--mu)">Resolva alguns desafios e aqui aparecem os erros mais comuns.</p>';
+  }
   return h+'<p style="margin-top:1.2rem"><button class="btn" onclick="zerar(event)">🗑️ Zerar progresso</button></p>';
 };
-SOON.push({ano:8,ic:'🎲',nome:'Probabilidade'},{ano:9,ic:'📊',nome:'Funções afim e quadrática'});
-
-/* ===== FASE 1.1 — METADADOS CURRICULARES =====
-   Adiciona eixo, BNCC, pré-requisitos, próximos passos e objetivos
-   a cada módulo. Não altera comportamento: só enriquece os objetos. */
-(()=>{
-  const META = {
-    nat:    { eixo:'Números', bncc:['EF06MA01','EF06MA02','EF06MA03'],
-              prereq:[], proximo:['adsub','muldiv'],
-              objetivos:['Reconhecer ordens e classes','Compor e decompor números','Comparar e ordenar naturais'],
-              tempo:'2 aulas' },
-    adsub:  { eixo:'Números', bncc:['EF06MA03','EF06MA04'],
-              prereq:['nat'], proximo:['muldiv','tabmul'],
-              objetivos:['Somar e subtrair com reagrupamento','Aplicar propriedades da adição','Resolver problemas com adição e subtração'],
-              tempo:'3 aulas' },
-    muldiv: { eixo:'Números', bncc:['EF06MA03','EF06MA05','EF06MA06'],
-              prereq:['adsub'], proximo:['tabmul','tabdiv','mmc'],
-              objetivos:['Multiplicar e dividir com resto','Aplicar a prova real','Resolver expressões com prioridade'],
-              tempo:'3 aulas' },
-    tabmul: { eixo:'Números', bncc:['EF06MA03','EF06MA05'],
-              prereq:['muldiv'], proximo:['tabdiv','mmc','fra'],
-              objetivos:['Memorizar fatos fundamentais','Reconhecer padrões na tabuada','Encontrar o fator que falta'],
-              tempo:'2 aulas' },
-    tabdiv: { eixo:'Números', bncc:['EF06MA03','EF06MA05'],
-              prereq:['tabmul'], proximo:['mmc','fra'],
-              objetivos:['Relacionar divisão e multiplicação','Reconhecer casos especiais (0, 1, ÷0)','Resolver problemas de repartição'],
-              tempo:'2 aulas' },
-    fra:    { eixo:'Números', bncc:['EF06MA06','EF06MA07','EF07MA08'],
-              prereq:['muldiv','tabdiv'], proximo:['dec','equiv','eq'],
-              objetivos:['Reconhecer fração como parte de um todo','Comparar frações','Somar e subtrair frações','Simplificar frações'],
-              tempo:'4 aulas' },
-    solidos:{ eixo:'Geometria', bncc:['EF06MA17','EF06MA18','EF07MA20'],
-              prereq:[], proximo:['area'],
-              objetivos:['Reconhecer poliedros e corpos redondos','Contar faces, arestas e vértices','Calcular volume de prismas'],
-              tempo:'3 aulas' },
-    ang:    { eixo:'Geometria', bncc:['EF06MA25','EF07MA23'],
-              prereq:[], proximo:['tri'],
-              objetivos:['Classificar ângulos','Reconhecer complementares e suplementares','Aplicar ângulos em triângulos'],
-              tempo:'3 aulas' },
-    eq:     { eixo:'Álgebra', bncc:['EF07MA18','EF08MA06'],
-              prereq:['alg','int'], proximo:['eq2','equiv'],
-              objetivos:['Resolver equações do 1º grau','Aplicar o princípio da balança','Resolver problemas com equações'],
-              tempo:'4 aulas' },
-    int:    { eixo:'Números', bncc:['EF07MA03','EF07MA04'],
-              prereq:['adsub'], proximo:['sinais','eq'],
-              objetivos:['Localizar inteiros na reta','Somar e subtrair inteiros','Resolver problemas com saldo e temperatura'],
-              tempo:'3 aulas' },
-    sinais: { eixo:'Números', bncc:['EF07MA04','EF08MA04'],
-              prereq:['int'], proximo:['eq','alg'],
-              objetivos:['Aplicar a regra dos sinais','Multiplicar e dividir inteiros','Resolver expressões com inteiros'],
-              tempo:'3 aulas' },
-    alg:    { eixo:'Álgebra', bncc:['EF07MA13','EF07MA14','EF08MA06'],
-              prereq:['muldiv'], proximo:['equiv','eq'],
-              objetivos:['Traduzir linguagem natural em expressões','Identificar coeficiente e variável','Calcular valor numérico'],
-              tempo:'3 aulas' },
-    equiv:  { eixo:'Álgebra', bncc:['EF07MA15','EF08MA06'],
-              prereq:['alg'], proximo:['eq','eq2'],
-              objetivos:['Aplicar a propriedade distributiva','Fatorar expressões simples','Reconhecer equivalência'],
-              tempo:'3 aulas' },
-    area:   { eixo:'Geometria', bncc:['EF06MA19','EF07MA31','EF08MA19'],
-              prereq:['muldiv','solidos'], proximo:['pit'],
-              objetivos:['Calcular área de figuras planas','Diferenciar área de perímetro','Resolver problemas com unidades'],
-              tempo:'4 aulas' },
-    eq2:    { eixo:'Álgebra', bncc:['EF09MA09','EF09MA10'],
-              prereq:['eq','equiv'], proximo:[],
-              objetivos:['Resolver equações do 2º grau','Interpretar o discriminante','Relacionar raízes e gráfico'],
-              tempo:'5 aulas' },
-    tri:    { eixo:'Geometria', bncc:['EF06MA25','EF07MA23','EF08MA17'],
-              prereq:['ang'], proximo:['pit'],
-              objetivos:['Somar ângulos internos','Classificar triângulos','Aplicar a desigualdade triangular'],
-              tempo:'3 aulas' },
-    pit:    { eixo:'Geometria', bncc:['EF09MA13','EF09MA14'],
-              prereq:['area','tri'], proximo:['cart'],
-              objetivos:['Aplicar o Teorema de Pitágoras','Calcular catetos e hipotenusa','Reconhecer ternas pitagóricas'],
-              tempo:'4 aulas' },
-    tales:  { eixo:'Geometria', bncc:['EF09MA14','EF09MA15'],
-              prereq:['fra','tri'], proximo:['pit'],
-              objetivos:['Aplicar o Teorema de Tales','Resolver proporções com segmentos','Aplicar em problemas de sombra'],
-              tempo:'3 aulas' }
-  };
-  for (const m of MODS) {
-    const meta = META[m.id];
-    if (!meta) continue;
-    Object.assign(m, meta);
-  }
-  // Expõe para depuração no console
-  window.__meta = META;
-})();
 
 save();
 if(S.fs){fs=S.fs;document.documentElement.style.setProperty('--fs',fs+'rem')}
 if(S.tema)tema(S.tema);
 stats();home();ui();
+</script>
+
+<!-- ===== MATHLAB ADA 1 — INTEGRAÇÃO COM O WORKER ===== -->
+<section id="adaPanel" class="box" style="margin:1.5rem 0">
+  <h2>🤖 ADA 1 — Assistente de Diagnóstico e Aprendizagem</h2>
+  <p>
+    Analise os indicadores do histórico para identificar dificuldades,
+    planejar mediações e sugerir intervenções pedagógicas.
+  </p>
+
+  <label for="adaFoco">Foco adicional para a análise (opcional)</label>
+  <small style="display:block;color:var(--mu)">Não escreva nomes de estudantes aqui: o texto é enviado ao serviço da ADA junto com os indicadores.</small>
+  <textarea id="adaFoco" rows="3" maxlength="1500"
+    placeholder="Ex.: priorize erros de frações e proponha perguntas mediadoras."
+    style="width:100%;padding:.8rem;border-radius:8px;background:var(--bg);color:var(--tx);border:1px solid var(--bd)"></textarea>
+
+  <div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.5rem">
+    <button type="button" class="go" id="adaConsultar">
+      🤖 Consultar ADA
+    </button>
+    <button type="button" class="btn" id="adaCopiar" disabled>
+      📋 Copiar parecer
+    </button>
+  </div>
+
+  <p id="adaStatus" role="status" aria-live="polite"
+     style="margin-top:.7rem;color:var(--mu)"></p>
+
+  <article id="adaResultado" hidden
+    style="white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;padding:1rem;border:1px solid var(--bd);border-radius:12px;background:var(--bg)"></article>
+</section>
+
+<script>
+(() => {
+  'use strict';
+
+  const ADA_ENDPOINT =
+    'https://mathlab-ada.alessandro-barbosa-sp.workers.dev/api/ada';
+
+  const $ada = id => document.getElementById(id);
+  let ultimoParecer = '';
+  let consultando = false;
+
+  function textoSeguro(valor) {
+    return String(valor ?? '').trim();
+  }
+
+  function obterIndicadores() {
+    if (typeof S === 'undefined' || !Array.isArray(S.hist)) {
+      throw new Error(
+        'O histórico do MathLab não está disponível nesta tela.'
+      );
+    }
+
+    const registros = typeof registrosFiltrados === 'function'
+      ? registrosFiltrados()
+      : S.hist;
+
+    if (!registros.length) {
+      throw new Error(
+        'Não há respostas no histórico para analisar. ' +
+        'Registre respostas ou ajuste os filtros do relatório.'
+      );
+    }
+
+    const modulos = {};
+
+    for (const r of registros) {
+      const modulo = textoSeguro(r.modulo) || 'Não identificado';
+
+      if (!modulos[modulo]) {
+        modulos[modulo] = {
+          modulo: typeof nomeModulo === 'function'
+            ? nomeModulo(modulo)
+            : modulo,
+          respostas: 0,
+          acertos: 0,
+          erros: 0,
+          acertosPrimeiraTentativa: 0,
+          primeiras: 0,
+          errosPorTipo: {},
+          tentativasTotal: 0,
+          tempoTotal: 0,
+          registrosComTempo: 0
+        };
+      }
+
+      const m = modulos[modulo];
+      m.respostas++;
+      if (Number(r.tentativa) === 1) m.primeiras++;
+
+      if (r.acertou) {
+        m.acertos++;
+
+        if (Number(r.tentativa) === 1) {
+          m.acertosPrimeiraTentativa++;
+        }
+      } else {
+        m.erros++;
+
+        const tipo = textoSeguro(r.erro) || 'Erro não classificado';
+        m.errosPorTipo[tipo] = (m.errosPorTipo[tipo] || 0) + 1;
+      }
+
+      m.tentativasTotal += Math.max(1, Number(r.tentativa) || 1);
+
+      if (Number.isFinite(Number(r.tempoSegundos))) {
+        m.tempoTotal += Number(r.tempoSegundos);
+        m.registrosComTempo++;
+      }
+    }
+
+    const total = registros.length;
+    const acertos = registros.filter(r => r.acertou).length;
+    const primeiraTentativa = registros.filter(
+      r => Number(r.tentativa) === 1 && r.acertou
+    ).length;
+    const questoesIniciadas = registros.filter(
+      r => Number(r.tentativa) === 1
+    ).length;
+
+    const resumoModulos = Object.values(modulos).map(m => ({
+      modulo: m.modulo,
+      respostas: m.respostas,
+      acertos: m.acertos,
+      erros: m.erros,
+      percentualAcerto: Math.round(100 * m.acertos / m.respostas),
+      acertosNaPrimeiraTentativa: m.acertosPrimeiraTentativa,
+      questoesIniciadas: m.primeiras,
+      errosFrequentes: Object.entries(m.errosPorTipo)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([tipo, quantidade]) => ({ tipo, quantidade })),
+      mediaTentativas: Number(
+        (m.tentativasTotal / m.respostas).toFixed(2)
+      ),
+      tempoMedioSegundos: m.registrosComTempo
+        ? Math.round(m.tempoTotal / m.registrosComTempo)
+        : null
+    }));
+
+    return {
+      totalRespostas: total,
+      acertos,
+      erros: total - acertos,
+      percentualAcerto: Math.round(100 * acertos / total),
+      questoesIniciadas,
+      percentualAcertoNaPrimeiraTentativa: questoesIniciadas
+        ? Math.round(100 * primeiraTentativa / questoesIniciadas)
+        : null,
+      modulos: resumoModulos,
+      observacao:
+        'Dados agregados do histórico local. ' +
+        'A análise não identifica individualmente o estudante.'
+    };
+  }
+
+  function montarPerguntaCompacta(ind, foco) {
+    const cortar = (t, n) => {
+      t = String(t || '').replace(/\s+/g, ' ').trim();
+      return t.length > n ? t.slice(0, n - 1) + '…' : t;
+    };
+    const topo =
+      'Você é a ADA 1, assistente pedagógica do MathLab. ' +
+      `Dados: ${ind.totalRespostas} tentativas`
+      + (ind.questoesIniciadas ? `, ${ind.questoesIniciadas} questões, ${ind.percentualAcertoNaPrimeiraTentativa}% de acerto na 1ª tentativa` : '')
+      + `, ${ind.erros} erros. `;
+    const fim =
+      ` Foco do professor: ${cortar(foco, 110) || 'análise geral'}. ` +
+      'Responda em português, até 170 palavras, frases completas: síntese; ' +
+      'hipótese cautelosa ligada aos erros típicos; ZDP; 2 perguntas mediadoras; ' +
+      '2 intervenções; como verificar. Não invente dados; declare limites.';
+    const limite = 950 - topo.length - fim.length - 12;
+    const mods = [...ind.modulos]
+      .sort((a, b) => b.respostas - a.respostas)
+      .slice(0, 5);
+    let corpo = 'Assuntos: ';
+    const partes = [];
+    for (const m of mods) {
+      const p1 = m.questoesIniciadas
+        ? Math.round(100 * m.acertosNaPrimeiraTentativa / m.questoesIniciadas)
+        : null;
+      const erros = m.errosFrequentes
+        .filter(e => e.tipo !== 'Erro não classificado' && e.tipo !== 'Resposta incorreta')
+        .slice(0, 2)
+        .map(e => `"${cortar(e.tipo, 48)}" ${e.quantidade}x`)
+        .join(', ');
+      const seg = `${m.modulo} ${p1 == null ? '' : p1 + '% na 1ª'}${erros ? ' (erros: ' + erros + ')' : ''}`;
+      if ((corpo + [...partes, seg].join('; ')).length > limite) break;
+      partes.push(seg);
+    }
+    const dados = corpo + (partes.join('; ') || 'sem detalhes') + '.';
+    return (topo + dados + fim).slice(0, 950);
+  }
+
+  async function consultarADA() {
+    if (consultando) return;
+
+    const botao = $ada('adaConsultar');
+    const status = $ada('adaStatus');
+    const resultado = $ada('adaResultado');
+    const copiar = $ada('adaCopiar');
+
+    consultando = true;
+    botao.disabled = true;
+    copiar.disabled = true;
+    resultado.hidden = true;
+    status.textContent = '⏳ Calculando indicadores e consultando a ADA…';
+
+    try {
+      const indicadores = obterIndicadores();
+      const foco = textoSeguro($ada('adaFoco').value);
+      const question = montarPerguntaCompacta(indicadores, foco);
+
+      const resposta = await fetch(ADA_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: question })
+      });
+
+      const textoResposta = await resposta.text();
+      let dados = {};
+      try { dados = JSON.parse(textoResposta); } catch { dados = {}; }
+
+      if (!resposta.ok) {
+        const detalhe = dados.error || dados.message || dados.details || textoResposta || 'Sem detalhes fornecidos pelo servidor.';
+        throw new Error(`HTTP ${resposta.status}: ${detalhe}`);
+      }
+
+      const conteudo = dados.answer ?? dados.response ?? dados.text;
+      if (typeof conteudo !== 'string' || !conteudo.trim()) {
+        throw new Error('O Worker respondeu, mas não retornou um parecer textual reconhecido.');
+      }
+
+      ultimoParecer = conteudo.trim();
+      window.__adaParecer = ultimoParecer;
+      resultado.textContent = ultimoParecer;
+      resultado.hidden = false;
+      copiar.disabled = false;
+      status.textContent = '✅ Parecer recebido. Revise as sugestões antes de aplicá-las.';
+    } catch (erro) {
+      status.textContent = '❌ Não foi possível concluir a consulta: ' + (erro.message || 'erro inesperado') + ' Verifique a conexão e o formato esperado pelo Worker.';
+    } finally {
+      consultando = false;
+      botao.disabled = false;
+    }
+  }
+
+  $ada('adaConsultar').addEventListener('click', consultarADA);
+
+  $ada('adaCopiar').addEventListener('click', async () => {
+    if (!ultimoParecer) return;
+    try {
+      await navigator.clipboard.writeText(ultimoParecer);
+      $ada('adaStatus').textContent = '📋 Parecer copiado.';
+    } catch {
+      $ada('adaStatus').textContent = 'Não foi possível copiar automaticamente. Selecione o texto do parecer.';
+    }
+  });
+})();
 </script>
 <!-- ===== FIM DA INTEGRAÇÃO ADA 1 ===== -->
 </body>
