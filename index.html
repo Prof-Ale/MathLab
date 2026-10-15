@@ -780,20 +780,150 @@ const gCons=()=>{const a=rnd(2,5),b=rnd(2,4),h=rnd(3,9),Vv=a*b*h;
  q.cons={alvo:h,a,b,vol:Vv};return q};
 SOLID_GENS[1].push(gNome);SOLID_GENS[2].push(gPoli,gPir,gPlan,gCons);SOLID_GENS[3].push(gPir,gCons);
 
-/* ===== TELA INICIAL ===== */
+/* ===== TELA INICIAL — renderização por eixo (Fase 1.2) ===== */
 function home(){
-  cur=null;try{if('speechSynthesis' in window)window.speechSynthesis.cancel()}catch(e){}
-  let h='<h1 style="font-size:1.6rem">Escolha um assunto</h1>';
-  [...new Set([...MODS.map(m=>m.ano),...SOON.map(m=>m.ano)])].sort((x,y)=>x-y).forEach(a=>{
-    h+=`<h2 class="t">${a}º ano</h2><div class="cards">`;
-    MODS.filter(m=>m.ano===a).forEach(m=>{const d=(S.done[m.id]||[]).filter(Boolean).length,
-        prog=m.gens?`Nível ${S.niv[m.id]||1} de 3 · ${S.cnt[m.id]||0} resolvidas`:`${d}/${m.qs.length} questões ${d===m.qs.length?'⭐':''}`;
-      h+=`<button class="mod" onclick="abrir('${m.id}')"><span class="ic">${m.ic}</span><b>${m.nome}</b><small>${m.sub}</small><small>${prog}</small></button>`});
-    SOON.filter(m=>m.ano===a).forEach(m=>h+=`<div class="mod soon"><span class="ic">${m.ic}</span><b>${m.nome}</b><small>Em breve</small></div>`);
-    h+='</div>'});h+=rodapeHome();
-  $('main').innerHTML=h;
-}
+  cur=null;
+  try{if('speechSynthesis' in window)window.speechSynthesis.cancel()}catch(e){}
 
+  const ORDEM_EIXOS = ['Números','Álgebra','Geometria','Grandezas e Medidas','Probabilidade e Estatística'];
+  const ICONE_EIXO = {
+    'Números':'🔢',
+    'Álgebra':'🔤',
+    'Geometria':'📐',
+    'Grandezas e Medidas':'📏',
+    'Probabilidade e Estatística':'📊'
+  };
+
+  /* --- helpers de progresso --- */
+  const dominioModulo = m => {
+    if (!m.gens) {
+      const d=(S.done[m.id]||[]).filter(Boolean).length;
+      const total=m.qs?m.qs.length:0;
+      return {pct: total? d/total : 0, nivel: null, feitas: d, total};
+    }
+    const nivel = S.niv[m.id] || 1;
+    const cnt   = S.cnt[m.id] || 0;
+    // Considera "dominado" quem chegou ao nível 3 com pelo menos 10 questões
+    const pct   = nivel >= 3 ? Math.min(1, cnt/10) : (nivel-1)/2;
+    return {pct, nivel, feitas: cnt, total: null};
+  };
+
+  const moduloDominado = id => {
+    const m = MODS.find(x => x.id === id);
+    if (!m) return true;
+    const d = dominioModulo(m);
+    return d.pct >= 1;
+  };
+
+  /* --- badge de pré-requisito pendente --- */
+  const prereqPendente = m => {
+    if (!m.prereq || !m.prereq.length) return null;
+    const faltando = m.prereq.filter(p => !moduloDominado(p));
+    if (!faltando.length) return null;
+    const nomes = faltando.map(p => (MODS.find(x=>x.id===p)?.nome) || p).join(', ');
+    return nomes;
+  };
+
+  /* --- badge de próximo passo sugerido --- */
+  const proximoSugerido = m => {
+    if (!m.proximo || !m.proximo.length) return null;
+    if (!moduloDominado(m.id)) return null;
+    const nomes = m.proximo.map(p => (MODS.find(x=>x.id===p)?.nome) || p).join(', ');
+    return nomes;
+  };
+
+  /* --- agrupa módulos ativos por eixo --- */
+  const porEixo = {};
+  MODS.forEach(m => {
+    const e = m.eixo || 'Outros';
+    (porEixo[e] = porEixo[e] || []).push(m);
+  });
+
+  /* --- módulos em breve, agrupados por eixo (se tiverem) --- */
+  const emBreve = {};
+  SOON.forEach(m => {
+    const e = m.eixo || 'Em breve';
+    (emBreve[e] = emBreve[e] || []).push(m);
+  });
+
+  /* --- ordena cada eixo por prereq (sem prereq primeiro) --- */
+  const ordenarPorPrereq = lista => {
+    const visitados = new Set();
+    const resultado = [];
+    const visitar = id => {
+      if (visitados.has(id)) return;
+      const m = lista.find(x => x.id === id);
+      if (!m) return;
+      (m.prereq || []).forEach(p => {
+        if (lista.some(x => x.id === p)) visitar(p);
+      });
+      visitados.add(id);
+      resultado.push(m);
+    };
+    lista.forEach(m => visitar(m.id));
+    return resultado;
+  };
+
+  /* --- HTML do card --- */
+  const cardModulo = m => {
+    const d = dominioModulo(m);
+    const prog = m.gens
+      ? `Nível ${d.nivel}/3 · ${d.feitas} resolvidas`
+      : `${d.feitas}/${d.total} questões ${d.feitas===d.total && d.total>0 ? '⭐' : ''}`;
+
+    const pend = prereqPendente(m);
+    const prox = proximoSugerido(m);
+
+    const badges = [];
+    if (pend) badges.push(`<span class="badge badge-prereq" title="Pré-requisito ainda não dominado">⚠ Pré-requisito: ${pend}</span>`);
+    if (prox) badges.push(`<span class="badge badge-prox" title="Próximo passo sugerido">➡ Próximo: ${prox}</span>`);
+    if (m.bncc && m.bncc.length) badges.push(`<span class="badge badge-bncc" title="Habilidades BNCC">${m.bncc.slice(0,2).join(' · ')}${m.bncc.length>2?'…':''}</span>`);
+
+    return `<button class="mod" onclick="abrir('${m.id}')" aria-label="${m.nome} — ${prog}">
+      <span class="ic">${m.ic}</span>
+      <b>${m.nome}</b>
+      <small>${m.sub}</small>
+      <small>${prog}</small>
+      ${badges.length ? `<div class="mod-badges">${badges.join('')}</div>` : ''}
+    </button>`;
+  };
+
+  /* --- monta a página --- */
+  let h = '<h1 style="font-size:1.6rem">Escolha um assunto</h1>';
+
+  ORDEM_EIXOS.forEach(eixo => {
+    const lista = porEixo[eixo];
+    if (!lista || !lista.length) return;
+    h += `<h2 class="t">${ICONE_EIXO[eixo] || '📚'} ${eixo}</h2><div class="cards">`;
+    ordenarPorPrereq(lista).forEach(m => { h += cardModulo(m); });
+    h += '</div>';
+  });
+
+  // Eixos que não estão em ORDEM_EIXOS (fallback)
+  Object.keys(porEixo).forEach(eixo => {
+    if (ORDEM_EIXOS.includes(eixo)) return;
+    const lista = porEixo[eixo];
+    h += `<h2 class="t">📚 ${eixo}</h2><div class="cards">`;
+    ordenarPorPrereq(lista).forEach(m => { h += cardModulo(m); });
+    h += '</div>';
+  });
+
+  // Módulos em breve (agrupados por eixo, se houver)
+  const eixosBreve = Object.keys(emBreve);
+  if (eixosBreve.length) {
+    h += '<h2 class="t">🚧 Em breve</h2>';
+    eixosBreve.forEach(eixo => {
+      h += `<h3 style="color:var(--mu);font-size:1rem;margin:.8rem 0 .4rem">${eixo}</h3><div class="cards">`;
+      emBreve[eixo].forEach(m => {
+        h += `<div class="mod soon"><span class="ic">${m.ic}</span><b>${m.nome}</b><small>Em breve</small></div>`;
+      });
+      h += '</div>';
+    });
+  }
+
+  h += rodapeHome();
+  $('main').innerHTML = h;
+}
 /* ===== LABORATÓRIO ===== */
 let cv,cx,W,H;
 function abrir(id){GG.ok=false;GG.app=null;
