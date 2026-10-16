@@ -570,6 +570,7 @@ const nz=(a,b)=>{let v;do{v=rnd(a,b)}while(!v);return v};
 const rs=n=>n<0?`−R$ ${-n}`:`R$ ${n}`;
 const INT_GENS={
 1:[
+ /* ---- 1. soma de dois inteiros (existente) ---- */
  ()=>{const a=nz(-10,10),b=nz(-10,10),res=a+b;
   return mk({q:`Quanto é ${pn(a)} + ${pn(b)}?`,ok:String(res),
    bad:[[String(Math.abs(a)+Math.abs(b)),'somou sem olhar os sinais','Atenção aos sinais: números negativos ficam à esquerda do zero na reta.'],
@@ -577,9 +578,61 @@ const INT_GENS={
         [String(-res),'inverteu o sinal do resultado','Confira para que lado você andou na reta.']],
    fill:()=>String(res+rnd(-6,6)),
    h:[`O simulador já está em ${a}. Some ${pn(b)} a esse valor.`,`Ande ${Math.abs(b)} casas ${b<0?'para a esquerda (somar negativo)':'para a direita (somar positivo)'}.`],
-   e:`${pn(a)} + ${pn(b)} = ${res}.`,s:{pos:a}})}
+   e:`${pn(a)} + ${pn(b)} = ${res}.`,s:{pos:a}})},
+
+ /* ---- 2. novo: ordem na reta ---- */
+ ()=>{const n1=nz(-20,20);let n2;do{n2=nz(-20,20)}while(n2===n1);
+  const menor=Math.min(n1,n2),maior=Math.max(n1,n2),t=pick([0,1]);
+  if(t===0){
+   return mk({q:`Qual número está mais à esquerda na reta numérica: ${pn(n1)} ou ${pn(n2)}?`,ok:pn(menor),
+    bad:[[pn(maior),'escolheu o maior número','Na reta, o menor número fica mais à esquerda.'],
+         ['Depende do sinal','achou que depende do sinal','Compare as duas posições diretamente na reta.'],
+         ['São iguais','achou que são iguais','Os dois números são diferentes.']],
+    fill:()=>pn(pick([n1,n2])),
+    h:['Quanto mais à esquerda, menor o número.','Compare os dois na reta: quem está mais longe do zero para a esquerda é menor.'],
+    e:`${pn(menor)} fica mais à esquerda que ${pn(maior)} na reta.`,s:{pos:n1}});
+  }
+  return mk({q:`Qual número está mais à direita na reta numérica: ${pn(n1)} ou ${pn(n2)}?`,ok:pn(maior),
+   bad:[[pn(menor),'escolheu o menor número','Na reta, o maior número fica mais à direita.'],
+        ['Depende do sinal','achou que depende do sinal','Compare as duas posições diretamente na reta.'],
+        ['São iguais','achou que são iguais','Os dois números são diferentes.']],
+   fill:()=>pn(pick([n1,n2])),
+   h:['Quanto mais à direita, maior o número.','Compare os dois na reta: quem está mais longe do zero para a direita é maior.'],
+   e:`${pn(maior)} fica mais à direita que ${pn(menor)} na reta.`,s:{pos:n1}})},
+
+ /* ---- 3. novo: oposto (simétrico) ---- */
+ ()=>{const n=nz(-15,15),t=pick([0,1]);
+  if(t===0){
+   return mk({q:`Quanto é o oposto de ${pn(n)}?`,ok:String(-n),
+    bad:[[String(n),'repetiu o mesmo número','O oposto é o simétrico na reta: mesma distância do zero, do outro lado.'],
+         [String(n+1),'errou a operação','Para achar o oposto, só troque o sinal.'],
+         ['Não existe','achou que não existe oposto','Todo inteiro tem oposto: até o zero tem oposto (ele mesmo).']],
+    fill:()=>String(-n+rnd(-3,3)),
+    h:['O oposto é o número que está à mesma distância do zero, mas do outro lado.','Só troque o sinal: se é positivo, fica negativo; se é negativo, fica positivo.'],
+    e:`O oposto de ${pn(n)} é ${pn(-n)}.`,s:{pos:n}});
+  }
+  return mk({q:`Na reta, a que distância do zero está ${pn(n)}?`,ok:String(Math.abs(n)),
+   bad:[[String(n),'deu o número com sinal','A distância é sempre positiva ou zero (é o módulo).'],
+        [String(-Math.abs(n)),'usou distância negativa','Distância nunca é negativa.'],
+        [String(Math.abs(n)+1),'errou a contagem','Conte quantos passos do zero até o número.']],
+   fill:()=>String(rnd(1,20)),
+   h:['Distância é o número de passos até o zero.','Conte do zero até o número, sem se importar com o lado.'],
+   e:`${pn(n)} está a ${Math.abs(n)} unidade(s) do zero.`,s:{pos:n}})},
+
+ /* ---- 4. novo: comparação com < > ---- */
+ ()=>{let a=nz(-20,20),b=nz(-20,20);if(a===b)b=a+1;
+  const ok=a<b?'<':'>',outro=ok==='<'?'>':'<';
+  return mk({q:`Complete com < ou >: ${pn(a)} ___ ${pn(b)}`,ok,
+   bad:[[outro,'inverteu o sinal de comparação',`Na reta, ${pn(Math.min(a,b))} fica à esquerda de ${pn(Math.max(a,b))}.`],
+        ['=','colocou igualdade','Os dois números são diferentes.'],
+        ['Não dá para comparar','achou que não dá para comparar','Números inteiros podem sempre ser comparados na reta.']],
+   fill:()=>pick(['=','≈','≠']),
+   h:['Quem está mais à esquerda é o menor.','O sinal abre para o lado do número maior.'],
+   e:`${pn(a)} ${ok} ${pn(b)}.`,s:{pos:a}})}
 ],
+
 2:[
+ /* ---- 5. subtração de dois inteiros (existente) ---- */
  ()=>{const a=nz(-10,10),b=nz(-10,10),res=a-b;
   return mk({q:`Quanto é ${pn(a)} − ${pn(b)}?`,ok:String(res),
    bad:[[String(a+b),'somou em vez de subtrair','A operação é uma subtração.'],
@@ -587,9 +640,42 @@ const INT_GENS={
         [String(-(a+b)),'trocou o sinal e somou','Subtrair um número é somar o seu oposto.']],
    fill:()=>String(res+rnd(-6,6)),
    h:['Subtrair um número é o mesmo que somar o seu oposto.',`${pn(a)} − ${pn(b)} = ${a} + ${pn(-b)}. Agora ande essa quantidade na reta.`],
-   e:`${pn(a)} − ${pn(b)} = ${a} ${b<0?'+':'−'} ${Math.abs(b)} = ${res}.`,s:{pos:a}})}
+   e:`${pn(a)} − ${pn(b)} = ${a} ${b<0?'+':'−'} ${Math.abs(b)} = ${res}.`,s:{pos:a}})},
+
+ /* ---- 6. novo: soma de três inteiros ---- */
+ ()=>{const a=nz(-8,8),b=nz(-8,8),c=nz(-8,8),res=a+b+c;
+  return mk({q:`Quanto é ${pn(a)} + ${pn(b)} + ${pn(c)}?`,ok:String(res),
+   bad:[[String(a+b-c),'errou o sinal de um dos termos',`Todos os termos estão sendo somados, nenhum subtraído.`],
+        [String(Math.abs(a)+Math.abs(b)+Math.abs(c)),'somou sem olhar os sinais','Some com cuidado: cada número tem um sinal.'],
+        [String(a-b+c),'trocou um sinal','Substitua os sinais originais.']],
+   fill:()=>String(res+rnd(-8,8)),
+   h:['Some um número de cada vez, movendo o ponto na reta.','Primeiro some '+a+' + '+pn(b)+', depois some '+pn(c)+'.'],
+   e:`${pn(a)} + ${pn(b)} + ${pn(c)} = ${res}.`,s:{pos:a}})},
+
+ /* ---- 7. novo: distância entre dois inteiros ---- */
+ ()=>{const a=nz(-12,12);let b;do{b=nz(-12,12)}while(b===a);
+  const d=Math.abs(a-b);
+  return mk({q:`Qual é a distância entre ${pn(a)} e ${pn(b)} na reta numérica?`,ok:String(d),
+   bad:[[String(a-b),'deu a diferença com sinal','Distância é sempre positiva: use o valor absoluto.'],
+        [String(b-a),'deu a diferença invertida (ainda com sinal possível)','Distância é o módulo da diferença.'],
+        [String(d+1),'errou a contagem por um','Conte quantas unidades há entre os dois pontos.']],
+   fill:()=>String(rnd(1,30)),
+   h:['Conte quantas casas há entre um ponto e o outro na reta.','Distância = |a − b|.'],
+   e:`|${pn(a)} − ${pn(b)}| = ${d}.`,s:{pos:a}})},
+
+ /* ---- 8. novo: dobro e triplo de inteiros ---- */
+ ()=>{const a=nz(-9,9),k=pick([2,3]),res=k*a;
+  return mk({q:`Quanto é o ${k===2?'dobro':'triplo'} de ${pn(a)}?`,ok:String(res),
+   bad:[[String(a+k),'somou em vez de multiplicar',`O ${k===2?'dobro':'triplo'} é ${k} × ${pn(a)}.`],
+        [String(-res),'errou o sinal do produto',`Multiplicar por ${k} (positivo) mantém o sinal de ${pn(a)}.`],
+        [String(k*Math.abs(a)),'ignorou o sinal do número','O número tem sinal; multiplique considerando o sinal.']],
+   fill:()=>String(rnd(-40,40)),
+   h:[`Multiplique ${pn(a)} por ${k}.`,`${k} × ${pn(a)}: o resultado tem o mesmo sinal de ${pn(a)}.`],
+   e:`${k} × ${pn(a)} = ${res}.`,s:{pos:a}})}
 ],
+
 3:[
+ /* ---- 9. temperatura (existente) ---- */
  ()=>{const t=rnd(-5,10),d=rnd(3,15),res=t-d;
   return mk({q:`A temperatura estava em ${t}°C e caiu ${d}°C. Qual é a nova temperatura?`,ok:`${res}°C`,
    bad:[[`${t+d}°C`,'somou em vez de descontar a queda','Uma queda de temperatura faz o valor diminuir.'],
@@ -598,6 +684,8 @@ const INT_GENS={
    fill:()=>`${rnd(-20,20)}°C`,
    h:['Uma queda é um movimento para a esquerda na reta.',`Parta de ${t} e ande ${d} casas para a esquerda.`],
    e:`${t} − ${d} = ${res}. A nova temperatura é ${res}°C.`,s:{pos:t}})},
+
+ /* ---- 10. saldo bancário (existente) ---- */
  ()=>{const a=rnd(1,15),b=rnd(1,15),res=b-a,nome=pick(NOMES);
   return mk({q:`${nome} estava devendo R$ ${a} (saldo de −${a}) e depositou R$ ${b}. Qual é o novo saldo?`,ok:rs(res),
    bad:[[rs(a+b),'somou os valores como se fossem positivos','A dívida é um valor negativo e o depósito é positivo.'],
@@ -605,7 +693,28 @@ const INT_GENS={
         [rs(-(a+b)),'somou a dívida com o depósito','O depósito reduz a dívida, e não aumenta.']],
    fill:()=>rs(rnd(-20,20)),
    h:[`Dívida é negativa: o saldo começa em −${a}. O simulador já está lá.`,`Depositar é andar ${b} casas para a direita.`],
-   e:`−${a} + ${b} = ${res}.`,s:{pos:-a}})}
+   e:`−${a} + ${b} = ${res}.`,s:{pos:-a}})},
+
+ /* ---- 11. novo: elevação / profundidade ---- */
+ ()=>{const inicio=rnd(0,50),desce=rnd(5,40),sobe=rnd(3,30),res=inicio-desce+sobe;
+  return mk({q:`Um submarino estava a ${inicio} m de profundidade, desceu mais ${desce} m e depois subiu ${sobe} m. A que profundidade ele está agora?`,ok:`${-res} m`,
+   bad:[[`${-(inicio+desce+sobe)} m`,'somou a subida em vez de descontar','Subir é andar para cima, ou seja, somar um valor positivo.'],
+        [`${-(inicio+desce)} m`,'esqueceu de descontar a subida',`Depois de descer, ele subiu ${sobe} m; desconte esse valor.`],
+        [`${res} m`,'perdeu o sinal de profundidade','Profundidade é medida abaixo da superfície, ou seja, negativa.']],
+   fill:()=>`${rnd(-80,80)} m`,
+   h:['Descer é andar para a esquerda na reta (mais negativo).','Subir é andar para a direita. Combine as duas operações.'],
+   e:`−${inicio} − ${desce} + ${sobe} = ${-res} m de profundidade.`,s:{pos:-inicio}})},
+
+ /* ---- 12. novo: expressão mista com + e − ---- */
+ ()=>{const a=nz(-10,10),b=nz(-10,10),c=nz(-10,10),t=rnd(0,1),res=t? a-b+c : a-b-c;
+  const expr=t?`${pn(a)} − ${pn(b)} + ${pn(c)}`:`${pn(a)} − ${pn(b)} − ${pn(c)}`;
+  return mk({q:`Quanto é ${expr}?`,ok:String(res),
+   bad:[[String(a+b+c),'somou todos os termos','Há sinais de subtração na expressão: respeite-os.'],
+        [String(a-b+Math.abs(c)),'errou o sinal do último termo',t?'O último termo é somado (positivo).':'O último termo é subtraído: subtrair '+pn(c)+' é somar '+pn(-c)+'.'],
+        [String(a+b-c),'trocou o sinal do termo do meio',`Subtrair ${pn(b)} é somar ${pn(-b)}.`]],
+   fill:()=>String(res+rnd(-8,8)),
+   h:['Resolva da esquerda para a direita, respeitando os sinais.',`Subtrair um número é somar o oposto. ${pn(b)} é subtraído, então equivale a somar ${pn(-b)}.`],
+   e:`${expr} = ${res}.`,s:{pos:a}})}
 ]};
 
 /* ===== MÓDULOS ===== */
