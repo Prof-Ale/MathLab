@@ -87,6 +87,13 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
 .mmc-modos button.on{background:var(--gold);color:#000;border-color:var(--gold)}
 .mmc-legenda{font-size:.75rem;color:var(--mu);text-align:center;margin-top:.3rem}
 
+
+/* ===== Módulo primos: crivo + máquina de testar (Fase 3) ===== */
+.pr-modos{display:flex;gap:.4rem;margin-bottom:.5rem}
+.pr-modos button{flex:1;background:rgba(255,255,255,.05);color:var(--tx);border:1px solid var(--bd);padding:.5rem;border-radius:8px;font-weight:700;font-size:.85rem;cursor:pointer}
+.pr-modos button.on{background:var(--gold);color:#000;border-color:var(--gold)}
+.pr-legenda{font-size:.75rem;color:var(--mu);text-align:center;margin-top:.3rem}
+ 
 /* ===== Badges de pré-requisito e próximo passo (Fase 1.2) ===== */
 .mod-badges{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem}
 .badge{font-size:.7rem;padding:.2rem .5rem;border-radius:6px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -738,6 +745,175 @@ const MMC_GENS={
    h:[`Fatore ${a} e ${b} e depois ${a*k} e ${b*k}.`,'Compare as duas fatorações.'],
    e:`MDC(${a*k}, ${b*k}) = ${D*k}.`,s:{a,b}})}
 ]};
+
+   /* ===== GERADORES: PRIMOS E DIVISIBILIDADE =====
+   Nível 1: critérios básicos (2, 3, 5, 9, 10)
+   Nível 2: critérios avançados (4, 6, 8) + primo/composto
+   Nível 3: fatoração e crivo
+*/
+const ehPrimo=n=>{if(n<2)return false;for(let i=2;i*i<=n;i++)if(n%i===0)return false;return true};
+const somaAlg=n=>String(n).split('').reduce((s,d)=>s+Number(d),0);
+const PRIMOS_ATE_50=[2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
+const fatora=(n)=>{const f=[];let x=n;for(let p=2;p*p<=x;p++){while(x%p===0){f.push(p);x/=p}}if(x>1)f.push(x);return f};
+const PRIMOS_GENS={
+1:[
+ /* ---- 1. divisível por 2 ---- */
+ ()=>{const base=rnd(10,99),mult=rnd(2,5),eh=pick([0,1]);
+  const N=eh?base*2:base*2+1;
+  return mk({q:`O número ${N} é divisível por 2?`,ok:eh?'Sim':'Não',
+   bad:[[eh?'Não':'Sim',`inverteu a resposta`,`Um número é divisível por 2 quando termina em 0, 2, 4, 6 ou 8. ${N} termina em ${N%10}.`],
+        ['Só se for par e maior que 10','inventou uma condição extra','A regra do 2 vale para qualquer número, independente do tamanho.'],
+        ['Não dá para saber','achou que não dá para saber',`Olhe o último algarismo de ${N}.`]],
+   fill:()=>String(rnd(10,99)),
+   h:[`Olhe o último algarismo de ${N}.`,`Se terminar em 0, 2, 4, 6 ou 8, é divisível por 2.`],
+   e:`${N} termina em ${N%10}, então ${eh?'é':'não é'} divisível por 2.`,s:{n:N}})},
+
+ /* ---- 2. divisível por 3 ---- */
+ ()=>{const base=rnd(11,99),eh=pick([0,1]);
+  let N=eh?base*3:base*3+1;
+  const s=somaAlg(N),div=s%3===0;
+  return mk({q:`O número ${N} é divisível por 3?`,ok:div?'Sim':'Não',
+   bad:[[div?'Não':'Sim',`inverteu a resposta`,`A soma dos algarismos de ${N} é ${s}, que ${div?'é':'não é'} múltiplo de 3.`],
+        ['Só se for ímpar','inventou uma condição extra','A regra do 3 não depende de par ou ímpar.'],
+        ['Não dá para saber','achou que não dá para saber',`Some os algarismos de ${N}.`]],
+   fill:()=>String(rnd(11,99)),
+   h:[`Some os algarismos de ${N}.`,`Se a soma for divisível por 3, o número também é.`],
+   e:`${N} → ${String(N).split('').join(' + ')} = ${s}. ${s} ${div?'é':'não é'} múltiplo de 3, então ${N} ${div?'é':'não é'} divisível por 3.`,s:{n:N}})},
+
+ /* ---- 3. divisível por 5 ---- */
+ ()=>{const base=rnd(5,40),eh=pick([0,1]);
+  const N=eh?base*5:base*5+pick([1,2,3,4]);
+  const div=N%5===0;
+  return mk({q:`O número ${N} é divisível por 5?`,ok:div?'Sim':'Não',
+   bad:[[div?'Não':'Sim',`inverteu a resposta`,`Um número é divisível por 5 quando termina em 0 ou 5. ${N} termina em ${N%10}.`],
+        ['Só se for ímpar','inventou uma condição extra','A regra do 5 vale para pares e ímpares.'],
+        ['Não dá para saber','achou que não dá para saber',`Olhe o último algarismo de ${N}.`]],
+   fill:()=>String(rnd(5,200)),
+   h:[`Olhe o último algarismo de ${N}.`,'Se for 0 ou 5, é divisível por 5.'],
+   e:`${N} termina em ${N%10}, então ${div?'é':'não é'} divisível por 5.`,s:{n:N}})},
+
+ /* ---- 4. divisível por 10 ---- */
+ ()=>{const base=rnd(2,30),eh=pick([0,1]);
+  const N=eh?base*10:base*10+pick([1,2,3,5,7]);
+  const div=N%10===0;
+  return mk({q:`O número ${N} é divisível por 10?`,ok:div?'Sim':'Não',
+   bad:[[div?'Não':'Sim',`inverteu a resposta`,`Um número é divisível por 10 só quando termina em 0. ${N} termina em ${N%10}.`],
+        ['Só se terminar em 5','confundiu com a regra do 5','Divisível por 5 termina em 0 ou 5. Divisível por 10 termina só em 0.'],
+        ['Não dá para saber','achou que não dá para saber',`Olhe o último algarismo de ${N}.`]],
+   fill:()=>String(rnd(20,300)),
+   h:[`Olhe o último algarismo de ${N}.`,'Só termina em 0 é divisível por 10.'],
+   e:`${N} termina em ${N%10}, então ${div?'é':'não é'} divisível por 10.`,s:{n:N}})}
+],
+2:[
+ /* ---- 5. divisível por 4 ---- */
+ ()=>{const base=rnd(20,99),eh=pick([0,1]);
+  const N=eh?base*4:base*4+pick([1,2,3]);
+  const div=N%4===0;
+  const ult2=N%100;
+  return mk({q:`O número ${N} é divisível por 4?`,ok:div?'Sim':'Não',
+   bad:[[div?'Não':'Sim',`inverteu a resposta`,`Os últimos dois algarismos de ${N} formam ${ult2}. ${ult2} ${ult2%4===0?'é':'não é'} divisível por 4.`],
+        ['Só se for par','usou a regra do 2 em vez do 4',`Ser par não basta. 6 é par e não é divisível por 4.`],
+        ['Não dá para saber','achou que não dá para saber','Olhe os dois últimos algarismos.']],
+   fill:()=>String(rnd(40,500)),
+   h:[`Olhe os dois últimos algarismos de ${N}.`,`${ult2} ÷ 4 = ${(ult2/4).toFixed(2).replace('.',',')}.`],
+   e:`Os últimos algarismos de ${N} são ${ult2}, e ${ult2} ${div?'é':'não é'} múltiplo de 4.`,s:{n:N}})},
+
+ /* ---- 6. divisível por 9 ---- */
+ ()=>{const base=rnd(11,99),eh=pick([0,1]);
+  const N=eh?base*9:base*9+pick([1,2,3,4,5,6,7]);
+  const s=somaAlg(N),div=s%9===0;
+  return mk({q:`O número ${N} é divisível por 9?`,ok:div?'Sim':'Não',
+   bad:[[div?'Não':'Sim',`inverteu a resposta`,`A soma dos algarismos de ${N} é ${s}. ${s} ${div?'é':'não é'} múltiplo de 9.`],
+        ['Só se for divisível por 3','parou na regra do 3','Todo número divisível por 9 é divisível por 3, mas nem todo número divisível por 3 é divisível por 9.'],
+        ['Não dá para saber','achou que não dá para saber',`Some os algarismos de ${N}.`]],
+   fill:()=>String(rnd(11,999)),
+   h:[`Some os algarismos de ${N}.`,`Se a soma for divisível por 9, o número também é.`],
+   e:`${N} → ${s}. ${s} ${div?'é':'não é'} múltiplo de 9, então ${N} ${div?'é':'não é'} divisível por 9.`,s:{n:N}})},
+
+ /* ---- 7. primo ou composto ---- */
+ ()=>{const eh=pick([0,1]);
+  let N;
+  if(eh){N=pick([11,13,17,19,23,29,31,37,41,43,47])}
+  else{N=pick([9,15,21,25,27,33,35,39,45,49,51,55])}
+  const primo=ehPrimo(N);
+  return mk({q:`O número ${N} é primo ou composto?`,ok:primo?'Primo':'Composto',
+   bad:[[primo?'Composto':'Primo',`inverteu a classificação`,primo?`${N} não tem divisores além de 1 e ele mesmo.`:`${N} = ${fatora(N).join(' × ')}.`],
+        ['Nem primo nem composto','achou que não se encaixa','Todo número maior que 1 é primo ou composto.'],
+        ['Depende do contexto','inventou uma condição extra','A classificação é matemática e não muda.']],
+   fill:()=>String(rnd(2,60)),
+   h:['Um primo só tem divisores 1 e ele mesmo.','Teste dividir por 2, 3, 5, 7... até a raiz do número.'],
+   e:`${N} = ${fatora(N).join(' × ')}, então é ${primo?'primo (só divisível por 1 e por si mesmo)':'composto'}.`,s:{n:N}})},
+
+ /* ---- 8. divisível por 6 ---- */
+ ()=>{const base=rnd(5,40),eh=pick([0,1]);
+  const N=eh?base*6:base*6+pick([1,2,3,4,5]);
+  const div=N%6===0;
+  return mk({q:`O número ${N} é divisível por 6?`,ok:div?'Sim':'Não',
+   bad:[[div?'Não':'Sim',`inverteu a resposta`,`Um número é divisível por 6 quando é divisível por 2 E por 3 ao mesmo tempo. ${N} ${N%2===0?'é par':'é ímpar'} e a soma dos algarismos é ${somaAlg(N)}.`],
+        ['Só se for par','usou só a regra do 2','Precisa ser divisível por 2 E por 3.'],
+        ['Não dá para saber','achou que não dá para saber','Teste as duas regras: par e soma dos algarismos.']],
+   fill:()=>String(rnd(10,300)),
+   h:['A regra do 6 combina as regras do 2 e do 3.',`${N} termina em ${N%10} e a soma dos algarismos é ${somaAlg(N)}.`],
+   e:`${N} ${N%2===0?'é par':'não é par'} e ${somaAlg(N)} ${somaAlg(N)%3===0?'é':'não é'} múltiplo de 3, então ${div?'é':'não é'} divisível por 6.`,s:{n:N}})}
+],
+3:[
+ /* ---- 9. fatoração em primos ---- */
+ ()=>{const N=pick([12,18,20,24,28,36,40,45,48,50,54,56,60]);
+  const f=fatora(N);
+  const certa=f.join(' × ');
+  const erradas=[];
+  // alternativa 1: um fator não-primo
+  const f2=[...f];f2[0]=f2[0]*2;f2.splice(1,0,f2[0]/2===f2[0]?f2[0]:2).filter(x=>x);
+  erradas.push([...new Set([f2[0]/2*2, ...f.slice(1)])].join(' × '));
+  // alternativa 2: soma em vez de produto
+  erradas.push(f.reduce((s,x)=>s+x,0)+' (soma dos primos)');
+  // alternativa 3: fatoração com primo trocado
+  const ult=f[f.length-1],trocado=ult===2?3:2;
+  erradas.push([...f.slice(0,-1),trocado].join(' × '));
+  return mk({q:`Qual é a fatoração em primos de ${N}?`,ok:certa,
+   bad:erradas.map(e=>[e,'fatoração incorreta',`Você pode verificar multiplicando: ${e} não dá ${N}.`]),
+   fill:()=>`${f[0]} × ${f[0]} × ${f[0]}`,
+   h:[`Divida ${N} pelo menor primo possível (2, 3, 5, 7...).`,'Continue dividindo até sobrar 1.'],
+   e:`${N} = ${f.join(' × ')}.`,s:{n:N}})},
+
+ /* ---- 10. menor fator primo ---- */
+ ()=>{const N=pick([14,15,21,22,25,26,33,34,35,38,39,46,49,51,55,57]);
+  const f=fatora(N);
+  const menor=f[0];
+  return mk({q:`Qual é o menor fator primo de ${N}?`,ok:String(menor),
+   bad:[[String(1),'deu 1 como primo','1 não é primo. O menor primo é 2.'],
+        [String(N),'deu o próprio número','O próprio número só é fator primo se ele mesmo for primo.'],
+        [String(menor+1),'andou 1 a mais','Procure o menor primo que divide o número.']],
+   fill:()=>String(rnd(2,15)),
+   h:[`Teste dividir ${N} por 2, depois por 3, depois por 5...`,`O primeiro primo que dividir ${N} é o menor.`],
+   e:`${N} = ${f.join(' × ')}, então o menor fator primo é ${menor}.`,s:{n:N}})},
+
+ /* ---- 11. quantos primos há no intervalo ---- */
+ ()=>{const inicio=pick([1,5,10,15,20,25,30]),fim=inicio+pick([10,15,20]);
+  const lista=PRIMOS_ATE_50.filter(p=>p>inicio&&p<=fim);
+  const certa=String(lista.length);
+  const erradas=[String(lista.length+1),String(lista.length-1),String(lista.length+2)];
+  return mk({q:`Quantos números primos há entre ${inicio} e ${fim}?`,ok:certa,
+   bad:erradas.map(e=>[e,'contagem incorreta',`Os primos nesse intervalo são: ${lista.join(', ')}.`]),
+   fill:()=>String(rnd(1,15)),
+   h:['Lembre da lista de primos: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47.',`Conte só os que estão entre ${inicio} e ${fim}.`],
+   e:`Primos entre ${inicio} e ${fim}: ${lista.join(', ')}. Total: ${lista.length}.`,s:{n:fim}})},
+
+ /* ---- 12. qual é primo? (armadilhas) ---- */
+ ()=>{const armadilhas=[51,57,91,119,133,143,161,187]; // produtos de dois primos
+  const N=pick(armadilhas);
+  const f=fatora(N);
+  const primo=pick(PRIMOS_ATE_50.filter(p=>p>N-10&&p<N+10&&ehPrimo(p)));
+  const outros=[N+2,N+4,N+6].filter(x=>!ehPrimo(x)).slice(0,2);
+  const alternativas=[primo,N,...outros].slice(0,4);
+  return mk({q:`Qual destes números é primo?`,ok:String(primo),
+   bad:[[String(N),'caiu na armadilha dos primos próximos',`${N} = ${f.join(' × ')}: não é primo.`],
+        ...outros.map(x=>[String(x),'caiu em outro composto',`${x} também é composto.`]),
+        [String(primo),'acertou',`Você pode confirmar: ${primo} só tem divisores 1 e ele mesmo.`]].slice(0,4),
+   fill:()=>String(rnd(2,200)),
+   h:['Teste cada alternativa: 2, 3, 5, 7, 11, 13...','Números como 51 e 91 parecem primos, mas não são.'],
+   e:`${primo} é primo (só divisível por 1 e por ele mesmo). ${N} = ${f.join(' × ')}.`,s:{n:primo}})}
+]};              
                    
 /* ===== GERADORES: NÚMEROS INTEIROS ===== */
 const pn=n=>n<0?`(${n})`:String(n);
@@ -1004,6 +1180,81 @@ const MODS=[
   }
  },
  rod:8,gens:MMC_GENS},
+
+{id:'primos',ano:6,ic:'🔱',nome:'Primos e divisibilidade',sub:'Crivo de Eratóstenes e fatoração em primos',
+ ctl:[{k:'modo',l:'Modo (0 crivo · 1 máquina de testar)',min:0,max:1,v:0},
+      {k:'n',l:'Número em foco (máquina de testar)',min:2,max:50,v:17}],
+ fix:v=>{v.modo=Math.round(v.modo)?1:0;v.n=Math.max(2,Math.min(50,Math.round(v.n)))},
+ info(v){
+  if(v.modo===0){
+   const primos=PRIMOS_ATE_50.slice(0,10).join(', ');
+   return `Crivo de Eratóstenes até 50 · primeiros primos: ${primos}...`;
+  }
+  const primo=ehPrimo(v.n),s=somaAlg(v.n);
+  const div2=v.n%2===0?'sim':'não',div3=s%3===0?'sim':'não',div5=v.n%5===0?'sim':'não',div9=s%9===0?'sim':'não',div10=v.n%10===0?'sim':'não';
+  return `${v.n} · div 2: ${div2} · div 3: ${div3} · div 5: ${div5} · div 9: ${div9} · div 10: ${div10} · ${primo?'primo':'composto'}`;
+ },
+ draw(c,v,W,H,k){
+  c.clearRect(0,0,W,H);
+  if(v.modo===0){
+   // Crivo até 50 (grid 10×5)
+   const cols=10,rows=5,cw=W/cols,ch=H/rows;
+   c.textAlign='center';
+   for(let i=0;i<50;i++){
+    const num=i+1,x=(i%cols)*cw+cw/2,y=Math.floor(i/cols)*ch+ch/2+5;
+    const primo=ehPrimo(num);
+    if(num===1){
+     c.fillStyle=k.m;c.font='bold 14px sans-serif';
+     c.fillText('1',x,y);
+     c.strokeStyle=k.m;c.lineWidth=1.5;
+     c.beginPath();c.moveTo(x-8,y-6);c.lineTo(x+8,y+6);c.stroke();
+    }else if(primo){
+     c.fillStyle=k.a;c.beginPath();c.arc(x,y-4,12,0,7);c.fill();
+     c.fillStyle='#000';c.font='bold 13px sans-serif';
+     c.fillText(String(num),x,y);
+    }else{
+     c.fillStyle=k.m;c.font='13px sans-serif';
+     c.fillText(String(num),x,y);
+     c.strokeStyle=k.m;c.lineWidth=1;
+     c.beginPath();c.moveTo(x-9,y-8);c.lineTo(x+9,y+4);c.stroke();
+    }
+   }
+   c.fillStyle=k.t;c.font='bold 12px sans-serif';
+   c.fillText('Números primos até 50 em destaque',W/2,H-4);
+   c.textAlign='left';
+  } else {
+   // máquina de testar
+   c.textAlign='center';
+   c.fillStyle=k.a;c.font='bold 44px sans-serif';
+   c.fillText(String(v.n),W/2,60);
+   c.font='13px sans-serif';
+   c.fillStyle=ehPrimo(v.n)?k.gr:k.c2;
+   c.fillText(ehPrimo(v.n)?'primo':'composto',W/2,84);
+   const s=somaAlg(v.n);
+   const regras=[
+    ['÷ 2', v.n%2===0, 'termina em '+v.n%10],
+    ['÷ 3', s%3===0, 'soma = '+s],
+    ['÷ 5', v.n%5===0, 'termina em '+v.n%10],
+    ['÷ 9', s%9===0, 'soma = '+s],
+    ['÷ 10', v.n%10===0, 'termina em '+v.n%10]
+   ];
+   const bx=W*0.1,by=110,bw=W*0.8,bh=22;
+   regras.forEach((r,i)=>{
+    const y=by+i*(bh+4);
+    c.fillStyle=r[1]?k.gr:k.m;
+    c.globalAlpha=r[1]?0.35:0.15;
+    c.fillRect(bx,y,bw,bh);
+    c.globalAlpha=1;
+    c.fillStyle=k.t;c.font='bold 13px sans-serif';c.textAlign='left';
+    c.fillText(`${r[0]}  ${r[1]?'✓':'✗'}`,bx+10,y+15);
+    c.fillStyle=k.m;c.font='12px sans-serif';
+    c.fillText(r[2],bx+bw-10,y+15);
+    c.textAlign='center';
+   });
+   c.textAlign='left';
+  }
+ },
+ rod:8,gens:PRIMOS_GENS}, 
  
 {id:'int',ano:7,ic:'➖',nome:'Números inteiros',sub:'Adição, subtração e a reta numérica',
  ctl:[{k:'pos',l:'Posição na Reta',min:-20,max:20,v:0}],
