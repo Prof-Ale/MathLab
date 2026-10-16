@@ -612,18 +612,27 @@ const MMC_GENS={
    h:[`Procure todos os números de 1 a ${N} que dividem ${N} sem resto.`,'Não esqueça o 1 e o próprio número.'],
    e:`Divisores de ${N}: ${div.join(', ')} (${div.length} ao todo).`,s:{a:N,b:1}})},
 
-  /* ---- 4. "é divisor de?" ---- */
- ()=>{const n=rnd(2,9),k=rnd(4,12),N=n*k,eh=pick([0,1]);
-  let d=eh?n:n+pick([1,2,3]);
-  if(N%d===0&&!eh)d=N+1;
-  const correto=N%d===0;
-  return mk({q:`${d} é divisor de ${N}?`,ok:correto?'Sim':'Não',
-   bad:[[correto?'Não':'Sim',`inverteu a resposta`,`${N} ÷ ${d} = ${Math.floor(N/d)} com resto ${N%d}.`],
-        [`Sim (${d})`,'confundiu divisor com múltiplo','Divisor é quem divide; múltiplo é resultado da multiplicação.'],
-        ['Não dá para saber','achou que não dá para saber',`Divida ${N} por ${d} e veja se o resto é zero.`]],
-   fill:()=>String(rnd(2,30)),
-   h:[`Divida ${N} por ${d}.`,'Se o resto for zero, é divisor.'],
-   e:`${N} ÷ ${d} = ${Math.floor(N/d)} com resto ${N%d}. ${correto?'É divisor.':'Não é divisor.'}`,s:{a:d,b:k}})}
+ /* ---- 4. "é divisor de?" ---- */
+ ()=>{const n=rnd(2,9);
+  const k=rnd(4,12);
+  const N=n*k;
+  const eh=pick([0,1]);
+  let d;
+  if(eh){d=n}else{d=n+pick([1,2,3])}
+  if(N%d===0&&!eh){d=N+1}
+  const correto=(N%d===0);
+  const textoErrado=correto?'Não':'Sim';
+  const respostaCerta=correto?'Sim':'Não';
+  const divisao=Math.floor(N/d);
+  const resto=N%d;
+  return mk({q:`${d} é divisor de ${N}?`,ok:respostaCerta,
+   bad:[[textoErrado,'inverteu a resposta',`${N} ÷ ${d} = ${divisao} com resto ${resto}.`],
+        ['Sim ('+d+')','confundiu divisor com múltiplo','Divisor é quem divide; múltiplo é resultado da multiplicação.'],
+        ['Não dá para saber','achou que não dá para saber','Divida '+N+' por '+d+' e veja se o resto é zero.']],
+   fill:function(){return String(rnd(2,30))},
+   h:['Divida '+N+' por '+d+'.','Se o resto for zero, é divisor.'],
+   e:`${N} ÷ ${d} = ${divisao} com resto ${resto}. ${correto?'É divisor.':'Não é divisor.'}`,
+   s:{a:d,b:k}})}
 ],
 2:[
  /* ---- 5. MMC de dois números pequenos ---- */
