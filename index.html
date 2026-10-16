@@ -2509,24 +2509,25 @@ const O6=['nat','adsub','muldiv','tabmul','tabdiv','fra','solidos'],ix=MODS.map(
    a cada módulo. Não altera comportamento: só enriquece os objetos. */
 (()=>{
   const META = {
-  nat:    { bncc:['EF02MA01','EF06MA01','EF06MA02','EF06MA03'], /* ... resto igual ... */ },
-  adsub:  { bncc:['EF03MA05','EF03MA06','EF04MA03','EF06MA03'], /* ... */ },
-  muldiv: { bncc:['EF04MA06','EF04MA07','EF05MA08','EF06MA03'], /* ... */ },
-  tabmul: { bncc:['EF03MA03','EF04MA05'], /* ... */ },
-  tabdiv: { bncc:['EF03MA08','EF03MA09'], /* ... */ },
-  fra:    { bncc:['EF06MA07','EF06MA08','EF06MA09','EF06MA10','EF07MA08','EF07MA09'], /* ... */ },
-  solidos:{ bncc:['EF06MA17','EF06MA18','EF07MA30'], /* ... */ },
-  ang:    { bncc:['EF06MA25','EF06MA26'], /* ... */ },
-  eq:     { bncc:['EF06MA14','EF07MA18','EF08MA06'], /* ... */ },
-  int:    { bncc:['EF07MA03','EF07MA04'], /* mantém */ },
-  sinais: { bncc:['EF07MA04','EF07MA05','EF07MA06'], /* ... */ },
-  alg:    { bncc:['EF07MA13','EF07MA14','EF07MA15','EF07MA16','EF08MA06'], /* ... */ },
-  equiv:  { bncc:['EF07MA16','EF08MA06'], /* ... */ },
-  area:   { bncc:['EF07MA31','EF07MA32','EF08MA19'], /* ... */ },
-  eq2:    { bncc:['EF08MA09','EF09MA09'], /* ... */ },
-  tri:    { bncc:['EF06MA19','EF07MA24','EF07MA25'], /* ... */ },
-  pit:    { bncc:['EF09MA13','EF09MA14'], /* mantém */ },
-  tales:  { bncc:['EF09MA10','EF09MA14'], /* ... */ }
+    nat:    { eixo:'Números', bncc:['EF02MA01','EF06MA01','EF06MA02','EF06MA03'], prereq:[], proximo:['adsub','muldiv'], objetivos:['Reconhecer ordens e classes','Compor e decompor números','Comparar e ordenar naturais'], tempo:'2 aulas' },
+    adsub:  { eixo:'Números', bncc:['EF03MA05','EF03MA06','EF04MA03','EF06MA03'], prereq:['nat'], proximo:['muldiv','tabmul'], objetivos:['Somar e subtrair com reagrupamento','Aplicar propriedades da adição','Resolver problemas com adição e subtração'], tempo:'3 aulas' },
+    muldiv: { eixo:'Números', bncc:['EF04MA06','EF04MA07','EF05MA08','EF06MA03'], prereq:['adsub'], proximo:['tabmul','tabdiv','mmc'], objetivos:['Multiplicar e dividir com resto','Aplicar a prova real','Resolver expressões com prioridade'], tempo:'3 aulas' },
+    tabmul: { eixo:'Números', bncc:['EF03MA03','EF04MA05'], prereq:['muldiv'], proximo:['tabdiv','mmc','fra'], objetivos:['Memorizar fatos fundamentais','Reconhecer padrões na tabuada','Encontrar o fator que falta'], tempo:'2 aulas' },
+    tabdiv: { eixo:'Números', bncc:['EF03MA08','EF03MA09'], prereq:['tabmul'], proximo:['mmc','fra'], objetivos:['Relacionar divisão e multiplicação','Reconhecer casos especiais (0, 1, ÷0)','Resolver problemas de repartição'], tempo:'2 aulas' },
+    mmc:    { eixo:'Números', bncc:['EF06MA05','EF06MA06','EF07MA01'], prereq:['tabmul','tabdiv'], proximo:['fra','primos'], objetivos:['Reconhecer múltiplos e divisores','Calcular MMC e MDC','Aplicar MMC e MDC em problemas'], tempo:'4 aulas' },
+    fra:    { eixo:'Números', bncc:['EF06MA07','EF06MA08','EF06MA09','EF06MA10','EF07MA08','EF07MA09'], prereq:['muldiv','tabdiv'], proximo:['dec','equiv','eq'], objetivos:['Reconhecer fração como parte de um todo','Comparar frações','Somar e subtrair frações','Simplificar frações'], tempo:'4 aulas' },
+    solidos:{ eixo:'Geometria', bncc:['EF06MA17','EF06MA18','EF07MA30'], prereq:[], proximo:['area'], objetivos:['Reconhecer poliedros e corpos redondos','Contar faces, arestas e vértices','Calcular volume de prismas'], tempo:'3 aulas' },
+    ang:    { eixo:'Geometria', bncc:['EF06MA25','EF06MA26'], prereq:[], proximo:['tri'], objetivos:['Classificar ângulos','Reconhecer complementares e suplementares','Aplicar ângulos em triângulos'], tempo:'3 aulas' },
+    eq:     { eixo:'Álgebra', bncc:['EF06MA14','EF07MA18','EF08MA06'], prereq:['alg','int'], proximo:['eq2','equiv'], objetivos:['Resolver equações do 1º grau','Aplicar o princípio da balança','Resolver problemas com equações'], tempo:'4 aulas' },
+    int:    { eixo:'Números', bncc:['EF07MA03','EF07MA04'], prereq:['adsub'], proximo:['sinais','eq'], objetivos:['Localizar inteiros na reta','Somar e subtrair inteiros','Resolver problemas com saldo e temperatura'], tempo:'3 aulas' },
+    sinais: { eixo:'Números', bncc:['EF07MA04','EF07MA05','EF07MA06'], prereq:['int'], proximo:['eq','alg'], objetivos:['Aplicar a regra dos sinais','Multiplicar e dividir inteiros','Resolver expressões com inteiros'], tempo:'3 aulas' },
+    alg:    { eixo:'Álgebra', bncc:['EF07MA13','EF07MA14','EF07MA15','EF07MA16','EF08MA06'], prereq:['muldiv'], proximo:['equiv','eq'], objetivos:['Traduzir linguagem natural em expressões','Identificar coeficiente e variável','Calcular valor numérico'], tempo:'3 aulas' },
+    equiv:  { eixo:'Álgebra', bncc:['EF07MA16','EF08MA06'], prereq:['alg'], proximo:['eq','eq2'], objetivos:['Aplicar a propriedade distributiva','Fatorar expressões simples','Reconhecer equivalência'], tempo:'3 aulas' },
+    area:   { eixo:'Geometria', bncc:['EF07MA31','EF07MA32','EF08MA19'], prereq:['muldiv','solidos'], proximo:['pit'], objetivos:['Calcular área de figuras planas','Diferenciar área de perímetro','Resolver problemas com unidades'], tempo:'4 aulas' },
+    eq2:    { eixo:'Álgebra', bncc:['EF08MA09','EF09MA09'], prereq:['eq','equiv'], proximo:[], objetivos:['Resolver equações do 2º grau','Interpretar o discriminante','Relacionar raízes e gráfico'], tempo:'5 aulas' },
+    tri:    { eixo:'Geometria', bncc:['EF06MA19','EF07MA24','EF07MA25'], prereq:['ang'], proximo:['pit'], objetivos:['Somar ângulos internos','Classificar triângulos','Aplicar a desigualdade triangular'], tempo:'3 aulas' },
+    pit:    { eixo:'Geometria', bncc:['EF09MA13','EF09MA14'], prereq:['area','tri'], proximo:['cart'], objetivos:['Aplicar o Teorema de Pitágoras','Calcular catetos e hipotenusa','Reconhecer ternas pitagóricas'], tempo:'4 aulas' },
+    tales:  { eixo:'Geometria', bncc:['EF09MA10','EF09MA14'], prereq:['fra','tri'], proximo:['pit'], objetivos:['Aplicar o Teorema de Tales','Resolver proporções com segmentos','Aplicar em problemas de sombra'], tempo:'3 aulas' }
 };
   for (const m of MODS) {
     const meta = META[m.id];
