@@ -899,17 +899,21 @@ const PRIMOS_GENS={
    h:['Lembre da lista de primos: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47.',`Conte só os que estão entre ${inicio} e ${fim}.`],
    e:`Primos entre ${inicio} e ${fim}: ${lista.join(', ')}. Total: ${lista.length}.`,s:{n:fim}})},
 
- /* ---- 12. qual é primo? (armadilhas) ---- */
- ()=>{const armadilhas=[51,57,91,119,133,143,161,187]; // produtos de dois primos
+  /* ---- 12. qual é primo? (armadilhas) ---- */
+ ()=>{const armadilhas=[51,57,91,119,133,143,161,187];
   const N=pick(armadilhas);
   const f=fatora(N);
-  const primo=pick(PRIMOS_ATE_50.filter(p=>p>N-10&&p<N+10&&ehPrimo(p)));
-  const outros=[N+2,N+4,N+6].filter(x=>!ehPrimo(x)).slice(0,2);
-  const alternativas=[primo,N,...outros].slice(0,4);
+  // lista de primos pequenos garantidos (nunca vazia)
+  const pequenos=[2,3,5,7,11,13,17,19,23,29,31,37,41,43,47];
+  // escolhe um primo que NÃO seja divisor de N e que seja diferente de N
+  const candidatos=pequenos.filter(p=>p!==N&&N%p!==0);
+  const primo=pick(candidatos);
+  // três compostos diferentes, garantidamente distintos entre si e do primo
+  const compostos=[N, N+2, N+4, N+6, N+8].filter(x=>x!==primo&&!ehPrimo(x));
+  const outros=shuf(compostos).slice(0,3);
+  const alternativas=[String(primo),...outros.map(String)];
   return mk({q:`Qual destes números é primo?`,ok:String(primo),
-   bad:[[String(N),'caiu na armadilha dos primos próximos',`${N} = ${f.join(' × ')}: não é primo.`],
-        ...outros.map(x=>[String(x),'caiu em outro composto',`${x} também é composto.`]),
-        [String(primo),'acertou',`Você pode confirmar: ${primo} só tem divisores 1 e ele mesmo.`]].slice(0,4),
+   bad:outros.map(x=>[String(x),'caiu em um composto',ehPrimo(x)?'É primo.':`${x} = ${fatora(x).join(' × ')}.`]),
    fill:()=>String(rnd(2,200)),
    h:['Teste cada alternativa: 2, 3, 5, 7, 11, 13...','Números como 51 e 91 parecem primos, mas não são.'],
    e:`${primo} é primo (só divisível por 1 e por ele mesmo). ${N} = ${f.join(' × ')}.`,s:{n:primo}})}
