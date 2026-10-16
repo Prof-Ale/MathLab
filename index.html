@@ -923,6 +923,79 @@ const MODS=[
   if(grupos){c.fillStyle=k.m;c.font='bold 13px sans-serif';c.textAlign='center';c.fillText(`${n} grupos de ${Rt/n}: cada x vale ${Rt/n}`,W/2,by+92);c.textAlign='left'}},
  rod:8,gens:EQ_GENS},
 
+{id:'mmc',ano:6,ic:'🔗',nome:'Múltiplos, divisores, MMC e MDC',sub:'Sapos na reta e partilha em grupos iguais',
+ ctl:[{k:'modo',l:'Modo (0 MMC · 1 MDC)',min:0,max:1,v:0},
+      {k:'a',l:'Sapo A / Barra A (passo ou comprimento)',min:2,max:12,v:4},
+      {k:'b',l:'Sapo B / Barra B (passo ou comprimento)',min:2,max:12,v:6}],
+ fix:v=>{v.modo=Math.round(v.modo)?1:0;v.a=Math.max(2,Math.min(12,Math.round(v.a)));v.b=Math.max(2,Math.min(12,Math.round(v.b)))},
+ info(v){
+  const M=(v.a*v.b)/mdc(v.a,v.b),D=mdc(v.a,v.b);
+  return v.modo===0
+   ? `Sapos de ${v.a} e ${v.b} casas · MMC = ${M} (se encontram na posição ${M})`
+   : `Barras de ${v.a} cm e ${v.b} cm · MDC = ${D} (maior pedaço igual)`;
+ },
+ draw(c,v,W,H,k){
+  c.clearRect(0,0,W,H);
+  const y=H*.6,step=(W-60)/(2*Math.max(v.a*v.b/mdc(v.a,v.b),20));
+  const cx=W/2;
+  const X=p=>cx+p*step;
+  if(v.modo===0){
+   // sapos saltando
+   const M=(v.a*v.b)/mdc(v.a,v.b),lim=M+Math.max(v.a,v.b);
+   c.strokeStyle=k.t;c.lineWidth=2;
+   c.beginPath();c.moveTo(20,y);c.lineTo(W-20,y);c.stroke();
+   const tk=Math.max(1,Math.round(lim/20));
+   c.fillStyle=k.m;c.font='10px sans-serif';c.textAlign='center';
+   for(let p=0;p<=lim;p+=tk){
+    const px=X(p);c.beginPath();c.moveTo(px,y-4);c.lineTo(px,y+4);c.stroke();
+    if(p%(tk*2)===0)c.fillText(String(p),px,y+18);
+   }
+   // sapo A
+   const paX=X(0),paY=y-40;
+   c.fillStyle=k.c1;c.beginPath();c.arc(paX,paY,10,0,7);c.fill();
+   c.fillStyle='#fff';c.font='bold 11px sans-serif';c.fillText(String(v.a),paX,paY+4);
+   // sapo B
+   const pbY=y-75;
+   c.fillStyle=k.c2;c.beginPath();c.arc(paX,pbY,10,0,7);c.fill();
+   c.fillStyle='#fff';c.fillText(String(v.b),paX,pbY+4);
+   // marca os saltos de cada sapo
+   c.strokeStyle=k.c1;c.lineWidth=1.5;c.globalAlpha=.5;
+   for(let p=v.a;p<=lim;p+=v.a){c.beginPath();c.moveTo(X(p),y-30);c.lineTo(X(p),y);c.stroke()}
+   c.strokeStyle=k.c2;
+   for(let p=v.b;p<=lim;p+=v.b){c.beginPath();c.moveTo(X(p),y-65);c.lineTo(X(p),y);c.stroke()}
+   c.globalAlpha=1;
+   // linha do MMC
+   c.strokeStyle=k.a;c.lineWidth=3;c.setLineDash([6,4]);
+   c.beginPath();c.moveTo(X(M),y-90);c.lineTo(X(M),y+10);c.stroke();
+   c.setLineDash([]);
+   c.fillStyle=k.a;c.font='bold 13px sans-serif';c.fillText(`MMC = ${M}`,X(M),y-96);
+   c.fillStyle=k.t;c.font='bold 12px sans-serif';
+   c.fillText('Sapo A ('+v.a+')',paX,y-40);
+   c.fillText('Sapo B ('+v.b+')',paX,pbY);
+   c.textAlign='left';
+  } else {
+   // barras divididas para MDC
+   const D=mdc(v.a,v.b),ga=v.a/D,gb=v.b/D;
+   const maxW=W-80,scale=maxW/Math.max(v.a,v.b);
+   const bx=40,byA=y-50,byB=y+10,h=28;
+   // barra A
+   c.fillStyle=k.c1;c.globalAlpha=.35;c.fillRect(bx,byA,v.a*scale,h);c.globalAlpha=1;
+   c.strokeStyle=k.c1;c.lineWidth=2;c.strokeRect(bx,byA,v.a*scale,h);
+   for(let i=1;i<ga;i++){c.beginPath();c.moveTo(bx+i*D*scale,byA);c.lineTo(bx+i*D*scale,byA+h);c.stroke()}
+   // barra B
+   c.fillStyle=k.c2;c.globalAlpha=.35;c.fillRect(bx,byB,v.b*scale,h);c.globalAlpha=1;
+   c.strokeStyle=k.c2;c.lineWidth=2;c.strokeRect(bx,byB,v.b*scale,h);
+   for(let i=1;i<gb;i++){c.beginPath();c.moveTo(bx+i*D*scale,byB);c.lineTo(bx+i*D*scale,byB+h);c.stroke()}
+   // rótulos
+   c.fillStyle=k.t;c.font='bold 12px sans-serif';c.textAlign='left';
+   c.fillText(`${v.a} cm`,bx,byA-6);
+   c.fillText(`${v.b} cm`,bx,byB+h+16);
+   c.fillStyle=k.a;c.font='bold 13px sans-serif';
+   c.fillText(`MDC = ${D} cm (maior pedaço igual)`,bx,byB+h+40);
+  }
+ },
+ rod:8,gens:MMC_GENS},
+ 
 {id:'int',ano:7,ic:'➖',nome:'Números inteiros',sub:'Adição, subtração e a reta numérica',
  ctl:[{k:'pos',l:'Posição na Reta',min:-20,max:20,v:0}],
  info:v=>`Posição atual na Reta Numérica: ${v.pos > 0 ? '+'+v.pos : v.pos}`,
