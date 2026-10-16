@@ -80,6 +80,13 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
 .ggbbox{width:100%;height:300px;border:2px solid var(--bd);border-radius:12px;overflow:hidden;background:#fff}
 .gg-note{font-size:.8rem;color:var(--mu);text-align:center}
 
+ 
+/* ===== Módulo mmc: simulador MMC/MDC (Fase 3) ===== */
+.mmc-modos{display:flex;gap:.4rem;margin-bottom:.5rem}
+.mmc-modos button{flex:1;background:rgba(255,255,255,.05);color:var(--tx);border:1px solid var(--bd);padding:.5rem;border-radius:8px;font-weight:700;font-size:.85rem;cursor:pointer}
+.mmc-modos button.on{background:var(--gold);color:#000;border-color:var(--gold)}
+.mmc-legenda{font-size:.75rem;color:var(--mu);text-align:center;margin-top:.3rem}
+
 /* ===== Badges de pré-requisito e próximo passo (Fase 1.2) ===== */
 .mod-badges{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem}
 .badge{font-size:.7rem;padding:.2rem .5rem;border-radius:6px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -564,6 +571,165 @@ const EQ_GENS={
    e:`Tirando os ${a} reais de ${extra}, sobram ${c-a} reais para os ${k} ${pl}. ${c-a} ÷ ${k} = ${x}.`,s:{n:k,a,b:c,t:0}})}
 ]};
 
+/* ===== GERADORES: MÚLTIPLOS, DIVISORES, MMC E MDC =====
+   Nível 1: múltiplos e divisores de um número
+   Nível 2: MMC e MDC de dois números
+   Nível 3: problemas contextuais
+*/
+const fmN=n=>n.toLocaleString('pt-BR');
+const MMC_GENS={
+1:[
+ /* ---- 1. múltiplos de um número ---- */
+ ()=>{const n=rnd(3,9),k=rnd(3,7),seq=[1,2,3,4,5].map(i=>n*i),soma=seq.reduce((s,x)=>s+x,0);
+  return mk({q:`Quais são os 5 primeiros múltiplos de ${n}?`,ok:seq.join(', '),
+   bad:[[seq.map(x=>x+1).join(', '),'somou 1 a cada múltiplo',`Múltiplos de ${n} são ${n}, ${2*n}, ${3*n}, ... Some ${n} a cada passo.`],
+        [[n,...Array(4).fill(n)].join(', '),'repetiu o mesmo número','Múltiplos são resultados da multiplicação por 1, 2, 3, 4, 5.'],
+        [seq.map(x=>x-n).filter(x=>x>0).concat(seq.slice(-1)).join(', '),'andou para trás','Múltiplos crescem para a direita na reta.']],
+   fill:()=>`${rnd(2,15)}, ${rnd(16,30)}, ${rnd(31,45)}, ${rnd(46,60)}, ${rnd(61,90)}`,
+   h:[`Multiplique ${n} por 1, 2, 3, 4 e 5.`,'Você percebe que os múltiplos são os resultados da tabuada.'],
+   e:`Múltiplos de ${n}: ${seq.join(', ')}.`,s:{a:n,b:k}})},
+
+ /* ---- 2. "é múltiplo de?" ---- */
+ ()=>{const n=rnd(2,9),k=rnd(3,9),m=n*k,eh=pick([0,1]),alvo=eh?m:m+pick([1,2,3,-1,-2]);
+  return mk({q:`${alvo} é múltiplo de ${n}?`,ok:eh?'Sim':`Não`,
+   bad:[eh?['Não',`achou que ${alvo} não era múltiplo`,`${alvo} ÷ ${n} = ${k}, dá exato. Portanto é múltiplo.`]
+          :['Sim','achou que era múltiplo',`${alvo} ÷ ${n} não dá exato (resto ${alvo%n}). Portanto não é múltiplo.`],
+        [eh?'Sim':`Não ${alvo}`,'confundiu múltiplo com divisor','Múltiplo é resultado da multiplicação; divisor é o que divide sem resto.'],
+        ['Não dá para saber','achou que não dá para saber',`Divida ${alvo} por ${n} e veja se o resto é zero.`]],
+   fill:()=>String(rnd(2,90)),
+   h:[`Divida ${alvo} por ${n}.`,`Se o resto for zero, é múltiplo.`],
+   e:`${alvo} ÷ ${n} = ${Math.floor(alvo/n)} com resto ${alvo%n}. ${eh?'É múltiplo.':'Não é múltiplo.'}`,s:{a:n,b:k}})},
+
+ /* ---- 3. divisores de um número ---- */
+ ()=>{const N=pick([12,18,20,24,30,36,40,48,60]);
+  const div=[];
+  for(let i=1;i<=N;i++)if(N%i===0)div.push(i);
+  return mk({q:`Quais são TODOS os divisores de ${N}?`,ok:div.join(', '),
+   bad:[[div.slice(0,4).join(', '),'parou antes de listar todos',`Faltam divisores maiores que ${div[3]}.`],
+        [div.slice(0,-1).join(', '),'esqueceu o próprio número',`Todo número é divisor de si mesmo: ${N} ÷ ${N} = 1.`],
+        [div.filter((_,i)=>i%2===0).join(', '),'listou só os pares','Liste todos os números que dividem o valor sem resto.']],
+   fill:()=>`1, ${rnd(2,5)}, ${rnd(6,12)}, ${rnd(13,30)}`,
+   h:[`Procure todos os números de 1 a ${N} que dividem ${N} sem resto.`,'Não esqueça o 1 e o próprio número.'],
+   e:`Divisores de ${N}: ${div.join(', ')} (${div.length} ao todo).`,s:{a:N,b:1}})},
+
+ /* ---- 4. "é divisor de?" ---- */
+ ()=>{const n=rnd(2,9),k=rnd(4,12),N=n*k,eh=pick([0,1]);
+  const d=eh?n:n+pick([1,2,3]);
+  if(N%d===0&&!eh)d=N+1;
+  const correto=N%d===0;
+  return mk({q:`${d} é divisor de ${N}?`,ok:correto?'Sim':'Não',
+   bad:[[correto?'Não':'Sim',`inverteu a resposta`,`${N} ÷ ${d} = ${Math.floor(N/d)} com resto ${N%d}.`],
+        [`Sim (${d})`,'confundiu divisor com múltiplo','Divisor é quem divide; múltiplo é resultado da multiplicação.'],
+        ['Não dá para saber','achou que não dá para saber',`Divida ${N} por ${d} e veja se o resto é zero.`]],
+   fill:()=>String(rnd(2,30)),
+   h:[`Divida ${N} por ${d}.`,'Se o resto for zero, é divisor.'],
+   e:`${N} ÷ ${d} = ${Math.floor(N/d)} com resto ${N%d}. ${correto?'É divisor.':'Não é divisor.'}`,s:{a:d,b:k}})}
+],
+2:[
+ /* ---- 5. MMC de dois números pequenos ---- */
+ ()=>{const pares=[[4,6],[6,8],[4,10],[6,9],[8,12],[9,12],[10,15],[12,18],[6,10],[8,10]];
+  const [a,b]=pick(pares);const M=(a*b)/mdc(a,b);
+  return mk({q:`Qual é o MMC (mínimo múltiplo comum) de ${a} e ${b}?`,ok:String(M),
+   bad:[[String(a*b),'multiplicou os dois números',`${a*b} é múltiplo dos dois, mas não é o MENOR. Veja se há algum menor.`],
+        [String(Math.max(a,b)),'deu um dos números','Esse número precisa ser múltiplo do outro também.'],
+        [String(a+b),'somou os dois números','MMC não é soma: procure múltiplos comuns.']],
+   fill:()=>String(rnd(10,120)),
+   h:[`Liste múltiplos de ${a}: ${a}, ${2*a}, ${3*a}...`,`Depois múltiplos de ${b}. O primeiro que aparece nas duas listas é o MMC.`],
+   e:`Múltiplos de ${a}: ${a}, ${2*a}, ${3*a}... Múltiplos de ${b}: ${b}, ${2*b}, ${3*b}... O primeiro comum é ${M}.`,s:{a,b}})},
+
+ /* ---- 6. MMC por fatoração ---- */
+ ()=>{const pares=[[12,18],[20,30],[24,36],[15,20],[18,24],[16,24]];
+  const [a,b]=pick(pares);const M=(a*b)/mdc(a,b);
+  const fa=(n)=>{const f=[];let x=n;for(let p=2;p<=x;p++)while(x%p===0){f.push(p);x/=p}return f};
+  const fa1=fa(a),fa2=fa(b);
+  return mk({q:`Fatore ${a} e ${b} em primos. Qual é o MMC?`,ok:String(M),
+   bad:[[String(mdc(a,b)),'deu o MDC em vez do MMC','MDC é o maior divisor comum; MMC é o menor múltiplo comum.'],
+        [String(a*b),'multiplicou direto','Use a fatoração: pegue a maior potência de cada primo.'],
+        [String(a+b),'somou','Fatore e combine os primos, não some.']],
+   fill:()=>String(rnd(20,200)),
+   h:[`${a} = ${fa1.join(' × ')}; ${b} = ${fa2.join(' × ')}.`,'Para o MMC, pegue a maior potência de cada primo que aparece.'],
+   e:`${a} = ${fa1.join(' × ')}, ${b} = ${fa2.join(' × ')}. MMC = ${M}.`,s:{a,b}})},
+
+ /* ---- 7. MDC de dois números pequenos ---- */
+ ()=>{const pares=[[12,18],[24,36],[18,30],[20,50],[42,56],[36,48],[16,40],[45,60]];
+  const [a,b]=pick(pares);const D=mdc(a,b);
+  return mk({q:`Qual é o MDC (máximo divisor comum) de ${a} e ${b}?`,ok:String(D),
+   bad:[[String(a*b),'deu o produto (é múltiplo, não divisor)',`O MDC é MENOR que ${a} e ${b}.`],
+        [String(Math.min(a,b)),'deu o menor número','O menor número precisa dividir o outro também.'],
+        [String(a+b),'somou','MDC é um divisor, sempre ≤ menor dos dois.']],
+   fill:()=>String(rnd(2,20)),
+   h:[`Liste os divisores de ${a}. Liste os de ${b}.`,`O MAIOR que aparece nas duas listas é o MDC.`],
+   e:`Divisores comuns de ${a} e ${b} incluem ${D}, que é o maior. MDC = ${D}.`,s:{a,b}})},
+
+ /* ---- 8. MDC por fatoração ---- */
+ ()=>{const pares=[[36,60],[24,40],[18,42],[48,72],[30,45],[28,70]];
+  const [a,b]=pick(pares);const D=mdc(a,b);
+  const fa=(n)=>{const f=[];let x=n;for(let p=2;p<=x;p++)while(x%p===0){f.push(p);x/=p}return f};
+  const fa1=fa(a),fa2=fa(b);
+  return mk({q:`Fatore ${a} e ${b}. Qual é o MDC?`,ok:String(D),
+   bad:[[String(a*b/mdc(a,b)),'deu o MMC em vez do MDC','MDC é o maior divisor comum, não o menor múltiplo.'],
+        [String(a*b),'multiplicou direto',`O MDC é sempre ≤ ${Math.min(a,b)}.`],
+        [String(Math.abs(a-b)),'subtraiu','Fatore e combine só os primos COMUNS.']],
+   fill:()=>String(rnd(2,30)),
+   h:[`${a} = ${fa1.join(' × ')}; ${b} = ${fa2.join(' × ')}.`,'Para o MDC, pegue a MENOR potência de cada primo comum.'],
+   e:`${a} = ${fa1.join(' × ')}, ${b} = ${fa2.join(' × ')}. Primos comuns na menor potência: MDC = ${D}.`,s:{a,b}})}
+],
+3:[
+ /* ---- 9. ônibus que se encontram ---- */
+ ()=>{const pares=[[8,12],[6,10],[10,15],[12,18],[15,20]];
+  const [a,b]=pick(pares);const M=(a*b)/mdc(a,b);
+  return mk({q:`Uma linha de ônibus passa a cada ${a} minutos e outra a cada ${b} minutos. Os dois passaram juntos às 8h. Em quantos minutos passarão juntos de novo?`,ok:`${M} minutos`,
+   bad:[[`${a+b} minutos`,'somou os intervalos','Os ônibus precisam voltar a coincidir, não somar.'],
+        [`${Math.max(a,b)} minutos`,'deu o maior intervalo','O maior intervalo precisa ser múltiplo do menor.'],
+        [`${a*b} minutos`,'multiplicou os intervalos',`${a*b} é múltiplo, mas não o MENOR.`]],
+   fill:()=>`${rnd(20,120)} minutos`,
+   h:['Os ônibus voltam a coincidir no MMC dos intervalos.',`MMC(${a}, ${b}).`],
+   e:`MMC(${a}, ${b}) = ${M} minutos.`,s:{a,b}})},
+
+ /* ---- 10. dividir doces em caixas iguais ---- */
+ ()=>{const pares=[[24,36],[18,30],[40,60],[48,72]];
+  const [a,b]=pick(pares);const D=mdc(a,b);
+  return mk({q:`Há ${a} brigadeiros e ${b} beijinhos. Quero montar o MAIOR número possível de caixas iguais, sem sobrar nada. Quantas caixas?`,ok:`${D} caixas`,
+   bad:[[String(a+b),'somou as quantidades','A pergunta é o número de caixas, não a soma dos doces.'],
+        [String(a*b),'multiplicou','O número de caixas precisa dividir os dois totais.'],
+        [String(Math.min(a,b)),'deu o menor total','Precisa dividir os dois valores ao mesmo tempo.']],
+   fill:()=>`${rnd(2,40)} caixas`,
+   h:['O número de caixas é o maior divisor comum entre os dois totais.',`MDC(${a}, ${b}).`],
+   e:`MDC(${a}, ${b}) = ${D}. Em cada caixa: ${a/D} brigadeiros e ${b/D} beijinhos.`,s:{a,b}})},
+
+ /* ---- 11. ladrilhar piso retangular ---- */
+ ()=>{const pares=[[60,90],[80,120],[90,150],[120,180]];
+  const [a,b]=pick(pares);const D=mdc(a,b);
+  return mk({q:`Um piso retangular mede ${a} cm por ${b} cm. Quero ladrilhos quadrados iguais, do MAIOR tamanho possível, sem cortar nenhum. Qual o lado do ladrilho?`,ok:`${D} cm`,
+   bad:[[`${Math.max(a,b)} cm`,'usou a maior dimensão','O lado precisa dividir as duas dimensões.'],
+        [`${a*b} cm`,'multiplicou','O lado é um divisor, não um múltiplo.'],
+        [`${a+b} cm`,'somou','O lado precisa dividir os dois lados do piso.']],
+   fill:()=>`${rnd(5,80)} cm`,
+   h:['O lado do ladrilho é o maior número que divide as duas dimensões ao mesmo tempo.',`MDC(${a}, ${b}).`],
+   e:`MDC(${a}, ${b}) = ${D} cm. Serão ${a/D} × ${b/D} = ${(a/D)*(b/D)} ladrilhos.`,s:{a,b}})},
+
+ /* ---- 12. expressão mista com múltiplos/divisores ---- */
+ ()=>{const a=rnd(3,9),b=rnd(3,9),k=rnd(2,6);
+  const M=(a*b)/mdc(a,b),D=mdc(a,b);
+  const t=pick([0,1]);
+  if(t===0){
+   return mk({q:`O MMC de ${a} e ${b} é ${M}. O MMC de ${a*k} e ${b*k} é igual a:`,ok:String(M*k),
+    bad:[[String(M),'não percebeu que os números foram multiplicados por '+k,`Multiplicar os dois números por ${k} multiplica o MMC por ${k}.`],
+         [String(M*k*k),'multiplicou por '+k+' duas vezes','Só uma vez: ambos foram multiplicados por '+k+'.'],
+         [String(a*k*b*k),'multiplicou direto sem dividir',`${a*k*b*k} é múltiplo, mas não o MENOR.`]],
+    fill:()=>String(rnd(20,300)),
+    h:[`Fatore ${a} e ${b} e depois ${a*k} e ${b*k}.`,'Compare as duas fatorações.'],
+    e:`MMC(${a*k}, ${b*k}) = ${M*k}.`,s:{a,b}});
+  }
+  return mk({q:`O MDC de ${a} e ${b} é ${D}. O MDC de ${a*k} e ${b*k} é igual a:`,ok:String(D*k),
+   bad:[[String(D),'não percebeu que os números foram multiplicados por '+k,`Multiplicar os dois números por ${k} multiplica o MDC por ${k}.`],
+        [String(D*k*k),'multiplicou por '+k+' duas vezes','Só uma vez: ambos foram multiplicados por '+k+'.'],
+        [String(a*k*b*k),'multiplicou direto',`O MDC é sempre ≤ ${Math.min(a*k,b*k)}.`]],
+   fill:()=>String(rnd(2,60)),
+   h:[`Fatore ${a} e ${b} e depois ${a*k} e ${b*k}.`,'Compare as duas fatorações.'],
+   e:`MDC(${a*k}, ${b*k}) = ${D*k}.`,s:{a,b}})}
+]};
+                   
 /* ===== GERADORES: NÚMEROS INTEIROS ===== */
 const pn=n=>n<0?`(${n})`:String(n);
 const nz=(a,b)=>{let v;do{v=rnd(a,b)}while(!v);return v};
