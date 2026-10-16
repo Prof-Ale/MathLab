@@ -612,9 +612,9 @@ const MMC_GENS={
    h:[`Procure todos os números de 1 a ${N} que dividem ${N} sem resto.`,'Não esqueça o 1 e o próprio número.'],
    e:`Divisores de ${N}: ${div.join(', ')} (${div.length} ao todo).`,s:{a:N,b:1}})},
 
- /* ---- 4. "é divisor de?" ---- */
+  /* ---- 4. "é divisor de?" ---- */
  ()=>{const n=rnd(2,9),k=rnd(4,12),N=n*k,eh=pick([0,1]);
-  const d=eh?n:n+pick([1,2,3]);
+  let d=eh?n:n+pick([1,2,3]);
   if(N%d===0&&!eh)d=N+1;
   const correto=N%d===0;
   return mk({q:`${d} é divisor de ${N}?`,ok:correto?'Sim':'Não',
