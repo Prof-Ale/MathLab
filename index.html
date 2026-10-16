@@ -76,7 +76,7 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
 .mlTable{overflow-x:auto}.mlTable table{width:100%;border-collapse:collapse;font-size:.85rem}
 .mlTable th,.mlTable td{padding:.65rem;text-align:left;border-bottom:1px solid var(--bd);vertical-align:top}.mlTable th{background:var(--cv)}
 #mlReport{display:flex;flex-direction:column;gap:1rem}#mlReport ul{padding-left:1.2rem}#mlExtras p{line-height:1.6}
-@media print{header,footer,#creditosModal,main> :not(#mlExtras),#mlExtras> :not(#mlReport),.mlPagination{display:none!important}body,main,#mlExtras{display:block!important;background:#fff!important;color:#000!important;max-width:none!important;padding:0!important;border:0!important}#mlReport *{color:#000!important;background:#fff!important}table{font-size:9pt!important}thead{display:table-header-group}tr{break-inside:avoid}}
+@media print{header,footer,#creditosModal,main> :not(#mlExtras),#mlExtras> :not(#mlDocente),#mlDocente> :not(#mlReport),.mlPagination{display:none!important}body,main,#mlExtras{display:block!important;background:#fff!important;color:#000!important;max-width:none!important;padding:0!important;border:0!important}#mlReport *{color:#000!important;background:#fff!important}table{font-size:9pt!important}thead{display:table-header-group}tr{break-inside:avoid}}
 .ggbbox{width:100%;height:300px;border:2px solid var(--bd);border-radius:12px;overflow:hidden;background:#fff}
 .gg-note{font-size:.8rem;color:var(--mu);text-align:center}
 
@@ -138,8 +138,39 @@ body.theme-contrast .badge-bncc{background:#000;color:#0ff;border-color:#0ff}
  .bl-page{box-shadow:none!important;max-width:none!important;padding:0!important}
  .bl-page,.bl-page *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
  .bl-sec,.bl-page tr,.bl-kpi{break-inside:avoid}
- .bl-page h2{break-after:avoid}
+ .bl-page h2,.bl-page h3.bl-eixo{break-after:avoid}
 }
+.cod-bncc{font-family:ui-monospace,Consolas,monospace;font-size:.85em;white-space:nowrap}
+.bl-page h3.bl-eixo{margin:.8rem 0 .3rem;font-size:11pt}
+</style>
+<style id="f2Css">
+/* ===== FASE 2: modo professor e confirmação de envio da ADA ===== */
+body:not(.modo-prof) #mlDocente,body:not(.modo-prof) .so-prof{display:none!important}
+body.modo-prof .so-aluno{display:none!important}
+#bp.on{outline:2px solid var(--gold);background:rgba(230,159,0,.18)}
+#mlBannerProf{border:2px solid var(--gold);margin-bottom:1rem}
+#mlBannerProf p{margin:.3rem 0 .7rem;line-height:1.5}
+.ada-ov{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.72);display:flex;align-items:flex-start;justify-content:center;padding:1rem;overflow:auto}
+.ada-dlg{background:var(--card);color:var(--tx);border:2px solid var(--gold);border-radius:16px;max-width:760px;width:100%;padding:1.2rem 1.4rem;margin:auto;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.ada-dlg h2{margin:0 0 .4rem;font-size:1.25rem}
+.ada-dlg h3{margin:1rem 0 .3rem;font-size:1rem}
+.ada-dlg ul{margin:.2rem 0 .2rem 1.2rem;padding:0;line-height:1.55}
+.ada-dlg .ada-vai,.ada-dlg .ada-nao{border-radius:10px;padding:.2rem .9rem .6rem;margin-top:.6rem}
+.ada-dlg .ada-vai{border:1px solid var(--cy)}
+.ada-dlg .ada-nao{border:1px solid var(--gr)}
+.ada-dlg blockquote{margin:.4rem 0;padding:.6rem .8rem;border-left:4px solid var(--gold);background:var(--bg);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font-size:.92rem}
+.ada-dlg pre{margin:.4rem 0;padding:.7rem;background:var(--bg);border:1px solid var(--bd);border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.82rem;max-height:14rem;overflow:auto}
+.ada-dlg .ada-alerta{border:2px solid #ef4444;border-radius:10px;padding:.5rem .8rem;margin:.6rem 0;background:rgba(239,68,68,.12)}
+.ada-dlg label{display:block;font-weight:700;margin-top:.7rem}
+.ada-dlg input[type=text]{width:100%;padding:.55rem;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit}
+.ada-dlg .ada-chk{display:flex;gap:.5rem;align-items:flex-start;font-weight:400}
+.ada-dlg .ada-btns{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem;justify-content:flex-end}
+.ada-dlg .ada-btns button:disabled{opacity:.5;cursor:not-allowed}
+#adaLogBox{margin-top:1rem}
+#adaLogBox summary{cursor:pointer;font-weight:700}
+#adaLogBox table{width:100%;border-collapse:collapse;font-size:.82rem;margin:.5rem 0}
+#adaLogBox th,#adaLogBox td{border-bottom:1px solid var(--bd);padding:.4rem;text-align:left;vertical-align:top}
+#adaLogBox pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:.3rem 0;font-size:.8rem}
 </style>
 </head>
 <body>
@@ -156,6 +187,7 @@ body.theme-contrast .badge-bncc{background:#000;color:#0ff;border-color:#0ff}
     <button class="btn" onclick="tema('light')" aria-label="Modo claro">☀️</button>
     <button class="btn" onclick="tema('dark')" aria-label="Modo noturno">🌙</button>
     <button class="btn" onclick="tema('contrast')" aria-label="Alto contraste">◐</button>
+    <button class="btn" id="bp" onclick="alternarModoProfessor()" aria-pressed="false" aria-label="Entrar no modo professor" title="Entrar no modo professor (sem senha)">👩‍🏫</button>
     <button class="btn" id="bm" onclick="musica(!S.au.m)" aria-pressed="false" aria-label="Música de fundo" title="Ligar a música">🎵</button>
     <button class="btn" id="bs" onclick="efeitos(!S.au.s)" aria-pressed="true" aria-label="Efeitos sonoros" title="Desligar os efeitos sonoros">🔊</button>
   </div>
@@ -193,8 +225,8 @@ body.theme-contrast .badge-bncc{background:#000;color:#0ff;border-color:#0ff}
 
 <script>
 /* ===== ESTADO E PROGRESSO ===== */
-const ESTADO_INICIAL=()=>({xp:0,done:{},niv:{},err:{},cnt:{},au:{m:0,s:1},streak:1,lastLogin:null,hist:[],student:'',turma:'',perfis:{}});
-const MAX_HIST=4000;
+const ESTADO_INICIAL=()=>({xp:0,done:{},niv:{},err:{},cnt:{},au:{m:0,s:1},streak:1,lastLogin:null,hist:[],student:'',turma:'',perfis:{},adaLog:[],modoProfessor:false,modoProfAtividade:0});
+const MAX_HIST=4000,ADA_LOG_MAX=50;
 let storageOK=false,storageError='',storageTime='',leituraFalhou=false,dadosBrutos='';
 function normalizarEstado(obj){
   const s=Object.assign(ESTADO_INICIAL(),obj);
@@ -204,6 +236,7 @@ function normalizarEstado(obj){
   s.au=Object.assign({m:0,s:1},s.au&&typeof s.au==='object'&&!Array.isArray(s.au)?s.au:{});
   s.hist=Array.isArray(s.hist)?s.hist.filter(r=>r&&typeof r==='object'):[];
   s.student=String(s.student||'');s.turma=String(s.turma||'');
+  s.adaLog=(Array.isArray(s.adaLog)?s.adaLog:[]).filter(e=>e&&typeof e==='object').slice(-ADA_LOG_MAX);s.modoProfessor=s.modoProfessor===true;s.modoProfAtividade=Number.isFinite(s.modoProfAtividade)?s.modoProfAtividade:0;
   return s;
 }
 function carregarEstado(){
@@ -1803,7 +1836,7 @@ MODS.push({id:'eq2',ano:9,ic:'📈',nome:'Equação do 2º grau',sub:'Parábola,
   c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=1.8;c.beginPath();c.moveTo(px(X0),py(0));c.lineTo(px(X1),py(0));c.moveTo(px(0),py(Y0));c.lineTo(px(0),py(Y1));c.stroke();
   c.fillStyle=k.m;c.font='10px sans-serif';
   for(let x=X0;x<=X1;x+=2)if(x)c.fillText(String(x),px(x),py(0)+13);
-  c.textAlign='right';for(let y=Y0;y<=Y1;y+=5)if(y)c.fillText(String(y),px(0)-4,py(y)+3);
+  c.textAlign='right';for(let y=Y0;y<=Y1;y+=5)if(y&&py(y)>24)c.fillText(String(y),px(0)-4,py(y)+3);
   c.textAlign='center';
   if(v.oc&&!locked){c.fillStyle=k.m;c.font='13px sans-serif';c.fillText('O gráfico aparece depois da resposta',W/2,H/2-30);return}
   c.save();c.beginPath();c.rect(10,4,W-20,H-8);c.clip();
@@ -2178,19 +2211,22 @@ const homeOriginal=home;
 home=function(){
   homeOriginal();
   const section=document.createElement('section');section.className='box';section.id='mlExtras';section.style.marginTop='1.5rem';
-  section.innerHTML=`<h2>👩‍🏫 Identificação e painel do professor</h2><p id="mlStorage" role="status"></p>
-  <p>O progresso (XP e níveis) é compartilhado neste navegador. O histórico distingue estudante e turma. Este painel é local, sem senha e sem sincronização.</p>
-  <p>${location.protocol==='file:'?'⚠ Arquivo aberto diretamente: a persistência pode variar entre navegadores e pastas. Faça backup JSON antes de mover ou substituir o HTML.':'Dados locais deste endereço e navegador; use backup para transferir.'}</p>
+  section.innerHTML=`<h2 id="mlTitulo">👤 Identificação</h2><p id="mlStorage" role="status"></p>
+  <p class="so-aluno" style="color:var(--mu)">Seu nome ou código ajuda o professor a acompanhar o seu progresso. Use só o que combinou com ele.</p>
+  <p class="so-prof">O progresso (XP e níveis) é compartilhado neste navegador. O histórico distingue estudante e turma. Este painel é local, sem senha e sem sincronização.</p>
+  <p class="so-prof">${location.protocol==='file:'?'⚠ Arquivo aberto diretamente: a persistência pode variar entre navegadores e pastas. Faça backup JSON antes de mover ou substituir o HTML.':'Dados locais deste endereço e navegador; use backup para transferir.'}</p>
   <label for="mlStudent">Nome ou código do estudante</label><input id="mlStudent" maxlength="100" value="${escHtml(S.student)}" placeholder="Sem nome, registra como Não identificado">
   <label for="mlClass">Turma</label><input id="mlClass" maxlength="60" value="${escHtml(S.turma||'')}">
   <button class="go" id="mlSaveStudent">Salvar identificação</button><p id="mlIdentityStatus" role="status"></p>
-  <h2>📊 Relatório</h2><div class="mlFilters">
+  <div id="mlDocente"><h2>📊 Relatório</h2><div class="mlFilters">
   <label>Estudante<input id="mlFilterStudent" placeholder="Todos"></label><label>Turma<input id="mlFilterClass" placeholder="Todas"></label>
   <label>Módulo<select id="mlFilterModule"><option value="">Todos</option>${MODS.map(m=>`<option value="${m.id}">${escHtml(m.nome)}</option>`).join('')}</select></label>
+  <label>Habilidade BNCC<select id="mlFilterBncc"><option value="">Todas</option>${todosCodigosBncc().map(c=>`<option value="${c}">${c}</option>`).join('')}</select></label>
   <label>Data inicial<input id="mlStart" type="date"></label><label>Data final<input id="mlEnd" type="date"></label></div>
-  <div class="mlActions"><button class="go" id="mlFilter">Aplicar filtros</button><button class="btn" id="mlClear">Limpar filtros</button><button class="btn" id="mlCsv">Exportar CSV filtrado</button><button class="btn" id="mlPrint">Imprimir / PDF</button><button class="btn" id="mlBackup">Backup JSON</button><button class="btn" id="mlRestore">Restaurar backup</button><input type="file" id="mlImport" accept=".json,application/json" hidden><button class="btn" id="mlUndo" hidden>Desfazer última restauração</button></div><div id="mlRestoreBox" role="alert"></div>
-  <div id="mlReport" aria-live="polite"></div>`;
+  <div class="mlActions"><button class="go" id="mlFilter">Aplicar filtros</button><button class="btn" id="mlClear">Limpar filtros</button><button class="btn" id="mlCsv">Exportar CSV filtrado</button><button class="btn" id="mlPrint">Imprimir / PDF</button><button class="btn" id="mlBackup">Backup JSON</button><button class="btn" id="mlRestore">Restaurar backup</button><button class="btn" id="mlZerar" onclick="zerar(event)">🗑️ Zerar tudo</button><input type="file" id="mlImport" accept=".json,application/json" hidden><button class="btn" id="mlUndo" hidden>Desfazer última restauração</button></div><div id="mlRestoreBox" role="alert"></div>
+  <div id="mlAdaSlot" style="margin:1rem 0"></div><div id="mlReport" aria-live="polite"></div></div>`;
   $('main').appendChild(section);
+  if(window.__adaNode){$('mlAdaSlot').appendChild(window.__adaNode);if(window.__adaRenderLog)window.__adaRenderLog()}
   $('mlSaveStudent').onclick=()=>{
     const nome=$('mlStudent').value.trim(),turma=$('mlClass').value.trim();
     const mudou=chavePerfil(nome,turma)!==chavePerfil(S.student,S.turma);
@@ -2208,7 +2244,7 @@ home=function(){
       leituraFalhou=false;storageError='';S=normalizarEstado({});save();stats();home();ui()};
   }
   $('mlFilter').onclick=()=>renderRelatorio();$('mlCsv').onclick=exportarRelatorio;
-  $('mlClear').onclick=()=>{['mlFilterStudent','mlFilterClass','mlFilterModule','mlStart','mlEnd'].forEach(id=>$(id).value='');renderRelatorio()};
+  $('mlClear').onclick=()=>{['mlFilterStudent','mlFilterClass','mlFilterModule','mlFilterBncc','mlStart','mlEnd'].forEach(id=>$(id).value='');renderRelatorio()};
   $('mlPrint').onclick=()=>{renderRelatorio();window.print()};
   $('mlBackup').onclick=()=>downloadFile(JSON.stringify({app:'MathLab',version:2,exportado:new Date().toISOString(),state:S},null,2),'application/json','mathlab-backup-'+dataLocal()+'.json');
   $('mlRestore').onclick=()=>$('mlImport').click();$('mlImport').onchange=importarBackup;
@@ -2216,11 +2252,13 @@ home=function(){
   $('mlUndo').onclick=desfazerRestauracao;
   storageStatus();renderRelatorio();
 };
+function codigosBncc(id){const m=MODS.find(x=>x.id===id);return m&&Array.isArray(m.bncc)?m.bncc:[]}
+function todosCodigosBncc(){return [...new Set(MODS.flatMap(m=>Array.isArray(m.bncc)?m.bncc:[]))].sort()}
 function registrosFiltrados(){
   const student=($('mlFilterStudent')?.value||'').trim().toLocaleLowerCase('pt-BR'),turma=($('mlFilterClass')?.value||'').trim().toLocaleLowerCase('pt-BR');
-  const mod=$('mlFilterModule')?.value||'',ini=$('mlStart')?.value||'',fim=$('mlEnd')?.value||'';
+  const hab=$('mlFilterBncc')?.value||'',mod=$('mlFilterModule')?.value||'',ini=$('mlStart')?.value||'',fim=$('mlEnd')?.value||'';
   if(ini&&fim&&ini>fim)throw Error('A data inicial deve ser anterior ou igual à final.');
-  return S.hist.filter(r=>(!student||String(r.estudante||'Não identificado').toLocaleLowerCase('pt-BR').includes(student))&&(!turma||String(r.turma||'').toLocaleLowerCase('pt-BR').includes(turma))&&(!mod||r.modulo===mod)&&(!ini||r.data>=ini)&&(!fim||r.data<=fim));
+  return S.hist.filter(r=>(!student||String(r.estudante||'Não identificado').toLocaleLowerCase('pt-BR').includes(student))&&(!turma||String(r.turma||'').toLocaleLowerCase('pt-BR').includes(turma))&&(!mod||r.modulo===mod)&&(!hab||codigosBncc(r.modulo).includes(hab))&&(!ini||r.data>=ini)&&(!fim||r.data<=fim));
 }
 function metricas(rs){const modernas=rs.filter(r=>r.questaoId),qs=new Set(modernas.map(r=>r.questaoId)),first=modernas.filter(r=>r.tentativa===1);return{n:rs.length,ok:rs.filter(r=>r.acertou).length,qs:qs.size,first:first.length,firstOK:first.filter(r=>r.acertou).length,legacy:rs.length-modernas.length}}
 let reportPage=0;
@@ -2231,7 +2269,7 @@ function renderRelatorio(reset=true){
   const errors={};rs.filter(r=>!r.acertou).forEach(r=>{const k=r.erro||'Resposta incorreta';errors[k]=(errors[k]||0)+1});
   reportPage=Math.min(reportPage,Math.max(0,Math.ceil(rs.length/100)-1));const page=[...rs].reverse().slice(reportPage*100,reportPage*100+100);
   el.innerHTML=`<h3>Resumo do filtro</h3><p>${new Set(rs.map(r=>r.estudante)).size} identificações · ${m.n} tentativas · ${m.ok} certas · ${m.n-m.ok} incorretas.<br>Acerto por tentativa: ${pct(m.ok,m.n)}. Questões iniciadas: ${m.qs}. Acerto na 1ª tentativa: ${pct(m.firstOK,m.first)} (${m.firstOK}/${m.first}).</p>${S.histDescartados?`<p>⚠ O histórico guarda no máximo ${MAX_HIST} respostas. ${S.histDescartados} registros mais antigos foram descartados. Exporte o CSV com frequência.</p>`:''}<p>Uma questão pode ter várias tentativas; este percentual não é uma nota. ${m.legacy?'Há '+m.legacy+' registros antigos sem identificação única de questão.':''}</p>
-  <h3>Por estudante, turma e módulo</h3><div class="mlTable"><table><thead><tr><th>Estudante</th><th>Turma</th><th>Módulo</th><th>Tentativas</th><th>Acertos</th><th>1ª tentativa</th></tr></thead><tbody>${[...groups.values()].map(rows=>{const a=rows[0],g=metricas(rows);return `<tr><td>${escHtml(a.estudante)}</td><td>${escHtml(a.turma||'—')}</td><td>${escHtml(nomeModulo(a.modulo))}</td><td>${g.n}</td><td>${g.ok}</td><td>${pct(g.firstOK,g.first)}</td></tr>`}).join('')}</tbody></table></div>
+  <h3>Por estudante, turma e módulo</h3><div class="mlTable"><table><thead><tr><th>Estudante</th><th>Turma</th><th>Módulo</th><th>Habilidades BNCC</th><th>Tentativas</th><th>Acertos</th><th>1ª tentativa</th></tr></thead><tbody>${[...groups.values()].map(rows=>{const a=rows[0],g=metricas(rows);return `<tr><td>${escHtml(a.estudante)}</td><td>${escHtml(a.turma||'—')}</td><td>${escHtml(nomeModulo(a.modulo))}</td><td class="cod-bncc">${escHtml(codigosBncc(a.modulo).join(' ')||'—')}</td><td>${g.n}</td><td>${g.ok}</td><td>${pct(g.firstOK,g.first)}</td></tr>`}).join('')}</tbody></table></div>
   <h3>Dificuldades registradas</h3><ul>${Object.entries(errors).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([e,n])=>`<li>${escHtml(e)}: ${n} tentativa(s) incorreta(s)</li>`).join('')||'<li>Nenhum erro no filtro atual.</li>'}</ul>
   <h3>Histórico detalhado</h3>${!rs.length?'<p>Nenhum registro encontrado. Resolva um desafio ou revise os filtros. Registros não criados pela versão antiga não podem ser reconstruídos.</p>':''}
   <div class="mlTable"><table><thead><tr><th>Data</th><th>Estudante / turma</th><th>Módulo / nível</th><th>Questão</th><th>Resposta / correta</th><th>Resultado</th><th>Erro</th></tr></thead><tbody>${page.map(r=>`<tr><td>${escHtml(r.data)}</td><td>${escHtml(r.estudante)}<br>${escHtml(r.turma||'')}</td><td>${escHtml(nomeModulo(r.modulo))}<br>${escHtml(r.nivel)}</td><td>${escHtml(r.questao)}</td><td>${escHtml(r.resposta)}<br>Correta: ${escHtml(r.correta||'Não disponível')}</td><td>${r.acertou?'Acerto':'Erro'}<br>Tentativa: ${escHtml(r.tentativa||'—')}</td><td>${escHtml(r.erro||'—')}</td></tr>`).join('')}</tbody></table></div>
@@ -2240,9 +2278,9 @@ function renderRelatorio(reset=true){
 }
 function downloadFile(text,type,name){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
 function exportarRelatorio(){let rs;try{rs=registrosFiltrados()}catch(e){alert(e.message);return}if(!rs.length){alert('Nenhum registro para exportar.');return}
- const cols=['id','data','horario','estudante','turma','modulo','questaoId','questao','resposta','correta','acertou','nivel','tentativa','tempoSegundos','xpGanho','erro'];
+ const cols=['id','data','horario','estudante','turma','modulo','questaoId','questao','resposta','correta','acertou','nivel','tentativa','tempoSegundos','xpGanho','erro','bncc'];
  const cell=v=>{let t=String(v??'');if(/^[=+@\t\r-]/.test(t))t="'"+t;return '"'+t.replace(/"/g,'""')+'"'};
- downloadFile('\uFEFF'+[cols.join(';'),...rs.map(r=>cols.map(c=>cell(c==='modulo'?nomeModulo(r[c]):r[c])).join(';'))].join('\r\n'),'text/csv;charset=utf-8','mathlab-relatorio-'+dataLocal()+'.csv')}
+ downloadFile('\uFEFF'+[cols.join(';'),...rs.map(r=>cols.map(c=>cell(c==='modulo'?nomeModulo(r[c]):c==='bncc'?codigosBncc(r.modulo).join(' '):r[c])).join(';'))].join('\r\n'),'text/csv;charset=utf-8','mathlab-relatorio-'+dataLocal()+'.csv')}
 function aplicarEstado(state){
   S=normalizarEstado(state);limitarHist();leituraFalhou=false;save();
   fs=Number(S.fs)||1;document.documentElement.style.setProperty('--fs',fs+'rem');tema(['light','contrast'].includes(S.tema)?S.tema:'dark');musica(!!S.au.m);stats();home();ui();
@@ -2355,6 +2393,68 @@ function cabecalho(titulo,cfg,sub){
   return `<div class="bl-cab"><div><h1>${escHtml(titulo)}</h1><small>MathLab · Matemática em Investigação</small></div><div style="text-align:right;font-size:9.5pt">${cfg.escola?`<b>${escHtml(cfg.escola)}</b><br>`:''}${cfg.prof?`Professor(a): ${escHtml(cfg.prof)}<br>`:''}Emitido em ${hoje.toLocaleDateString('pt-BR')}</div></div>${sub}`;
 }
 function rodape(){return `<div class="bl-rodape">Registro de uso do MathLab neste navegador. Não é nota nem avaliação formal: serve para orientar a próxima aula. "Acerto na 1ª tentativa" conta a questão em que o estudante acertou sem errar antes. Dados locais, sem senha e sem sincronização.</div>`}
+
+/* ===== FASE 1.3: currículo no boletim e no relatório da turma ===== */
+const EIXOS=['Números','Álgebra','Geometria','Grandezas e Medidas','Probabilidade e Estatística'];
+const modMeta=id=>MODS.find(m=>m.id===id)||null;
+const eixoDe=id=>(modMeta(id)&&modMeta(id).eixo)||'Outros';
+const MIN_Q=5;
+function porEixo(ids){
+  const g={};ids.forEach(id=>{const e=eixoDe(id);(g[e]=g[e]||[]).push(id)});
+  return Object.keys(g).sort((a,b)=>{const i=EIXOS.indexOf(a),j=EIXOS.indexOf(b);return (i<0?99:i)-(j<0?99:j)}).map(e=>[e,g[e]]);
+}
+const codHtml=l=>l.length?l.map(c=>`<span class="cod-bncc">${escHtml(c)}</span>`).join(' '):'sem código';
+function secObjetivos(r){
+  const ids=Object.keys(r.porMod).filter(id=>r.porMod[id].qs>=MIN_Q&&modMeta(id));
+  if(!ids.length)return `<div class="bl-sec"><h2>Objetivos e habilidades</h2><p>Esta seção aparece quando há ${MIN_Q} ou mais questões em um assunto no período.</p></div>`;
+  return `<div class="bl-sec"><h2>Objetivos e habilidades trabalhados</h2>`+porEixo(ids).map(([e,l])=>
+    `<h3 class="bl-eixo">${escHtml(e)}</h3><table><thead><tr><th style="width:30%">Assunto</th><th style="width:22%">Habilidades BNCC</th><th>O que o assunto trabalha</th></tr></thead><tbody>${l.map(id=>{const m=modMeta(id);return `<tr><td>${escHtml(m.nome)}</td><td>${codHtml(codigosBncc(id))}</td><td>${(m.objetivos||[]).map(escHtml).join('; ')||'—'}</td></tr>`}).join('')}</tbody></table>`).join('')+
+    `<p style="font-size:8.5pt;color:#444">Os códigos vêm do mapeamento de cada assunto do MathLab. Indicam o que foi praticado, não que a habilidade esteja consolidada.</p></div>`;
+}
+/* Regras: apoio (assunto com ${MIN_Q}+ questões e menos de 50%) pede revisão dos pré-requisitos ainda não consolidados;
+   bom desempenho (80% ou mais) abre os próximos assuntos que ainda não foram praticados. Só entram módulos que existem. */
+function passosSeguintes(r){
+  const dom=id=>{const m=r.porMod[id];return m&&m.qs>=MIN_Q?pct(m.ok1,m.qs):null};
+  const L=[],vistos=new Set();
+  const add=(k,t)=>{if(!vistos.has(k)){vistos.add(k);L.push(t)}};
+  Object.keys(r.porMod).filter(id=>modMeta(id)&&dom(id)!==null&&dom(id)<50).sort((a,b)=>dom(a)-dom(b)).forEach(id=>{
+    const m=modMeta(id),pre=(m.prereq||[]).filter(p=>modMeta(p)&&!(dom(p)>=80));
+    if(pre.length){
+      const txt=pre.map(p=>{const d=dom(p);return `<b>${escHtml(modMeta(p).nome)}</b> (${d===null?'sem registro suficiente':d+'% na 1ª tentativa'})`}).join(', ');
+      add('p'+id,`<b>${escHtml(m.nome)}</b>: ${dom(id)}% na primeira tentativa. Antes de insistir neste assunto, vale revisar ${txt}.`);
+    }else add('r'+id,`<b>${escHtml(m.nome)}</b>: ${dom(id)}% na primeira tentativa, com os pré-requisitos em dia. Vale retomar o próprio assunto com apoio.`);
+  });
+  Object.keys(r.porMod).filter(id=>modMeta(id)&&dom(id)!==null&&dom(id)>=80).forEach(id=>{
+    const m=modMeta(id),nx=(m.proximo||[]).filter(p=>modMeta(p)&&!(dom(p)!==null));
+    if(nx.length)add('n'+id,`<b>${escHtml(m.nome)}</b>: desempenho consolidado (${dom(id)}%). Próximos passos: ${nx.map(p=>`<b>${escHtml(modMeta(p).nome)}</b>`).join(', ')}.`);
+  });
+  return L.slice(0,6);
+}
+function secProximos(r){
+  const L=passosSeguintes(r);
+  return `<div class="bl-sec"><h2>O que estudar em seguida</h2>${L.length?`<ul class="bl-leit">${L.map(t=>`<li>${t}</li>`).join('')}</ul>`:`<p>Ainda não há dados suficientes para sugerir um caminho (assuntos com ${MIN_Q} ou mais questões). Continue praticando e gere o boletim de novo.</p>`}<p style="font-size:8.5pt;color:#444">Sugestão baseada no período escolhido e na ordem de pré-requisitos dos assuntos. Complementa o olhar do professor, não o substitui.</p></div>`;
+}
+function secMapa(rs){
+  const alunos=new Set(rs.map(chaveAl)),nAl=alunos.size;
+  const porMod={};
+  rs.forEach(x=>{(porMod[x.modulo]=porMod[x.modulo]||{qs:new Set(),al:{}});const o=porMod[x.modulo];const q=x.questaoId||x.id;o.qs.add(q);
+    const k=chaveAl(x);(o.al[k]=o.al[k]||new Set()).add(q)});
+  const cod={};
+  MODS.forEach(m=>(m.bncc||[]).forEach(c=>{const o=cod[c]=cod[c]||{mods:[],eixos:new Set(),q:0,al:new Set(),alMin:new Set()};
+    o.mods.push(m.nome);o.eixos.add(m.eixo||'Outros');
+    const d=porMod[m.id];if(d){o.q+=d.qs.size;Object.entries(d.al).forEach(([k,qs])=>{o.al.add(k);if(qs.size>=MIN_Q)o.alMin.add(k)})}}));
+  const todos=Object.keys(cod).sort();
+  if(!todos.length)return '';
+  const praticadas=todos.filter(c=>cod[c].q>0),sem=todos.filter(c=>cod[c].q===0);
+  const eixoDoCod=c=>[...cod[c].eixos][0];
+  const mapaEixo={};todos.forEach(c=>{const e=eixoDoCod(c);(mapaEixo[e]=mapaEixo[e]||[]).push(c)});
+  const ordem=Object.keys(mapaEixo).sort((a,b)=>{const i=EIXOS.indexOf(a),j=EIXOS.indexOf(b);return (i<0?99:i)-(j<0?99:j)});
+  return `<div class="bl-sec"><h2>Mapa curricular: habilidades BNCC praticadas</h2>
+   <p>${praticadas.length} de ${todos.length} habilidades mapeadas nos assuntos do MathLab tiveram prática da turma neste filtro.</p>`+
+   ordem.map(e=>`<h3 class="bl-eixo">${escHtml(e)}</h3><table><thead><tr><th style="width:16%">Código</th><th>Assuntos que trabalham</th><th class="n">Questões</th><th class="n">Estudantes que praticaram</th><th class="n">Com ${MIN_Q}+ questões</th></tr></thead><tbody>${mapaEixo[e].map(c=>{const o=cod[c];
+     return `<tr><td><span class="cod-bncc">${escHtml(c)}</span></td><td>${escHtml(o.mods.join('; '))}</td><td class="n">${o.q||'—'}</td><td class="n">${o.q?`${o.al.size}/${nAl}`:'—'}</td><td class="n">${o.q?`${o.alMin.size}/${nAl}`:'—'}</td></tr>`}).join('')}</tbody></table>`).join('')+
+   `<p style="font-size:8.5pt;color:#444">${sem.length?`Sem prática da turma neste filtro: ${sem.map(escHtml).join(', ')}. `:''}O código é atribuído ao assunto, não a cada questão. Um assunto pode trabalhar só parte da habilidade. Use como mapa de cobertura, não como certificação.</p></div>`;
+}
 function htmlAluno(rs,nome,turma,ini,fim,cfg){
   const r=resumo(rs);
   const id=`<div class="bl-id"><div><b>Estudante:</b> ${escHtml(nome)}</div><div><b>Turma:</b> ${escHtml(turma||'—')}</div><div><b>Período:</b> ${ini||fim?`${fmtData(ini)||'início'} a ${fmtData(fim)||'hoje'}`:(r.ultima?'todo o histórico':'—')}</div></div>`;
@@ -2363,8 +2463,10 @@ function htmlAluno(rs,nome,turma,ini,fim,cfg){
   return cabecalho('Boletim de estudo do aluno',cfg,id)+kp+
    `<div class="bl-sec"><h2>Desempenho por assunto</h2>${tabelaModulos(r,nome,turma,true)}</div>`+
    `<div class="bl-sec"><h2>Evolução por dia de prática</h2>${linhaEvolucao(r.porDia)}</div>`+
+   secObjetivos(r)+
    `<div class="bl-sec"><h2>Erros mais frequentes</h2>${erros.length?`<table><thead><tr><th>Assunto</th><th>O que aconteceu</th><th class="n">Vezes</th></tr></thead><tbody>${erros.map(e=>`<tr><td>${escHtml(nomeModulo(e.mod))}</td><td>${escHtml(e.txt)}</td><td class="n">${e.n}</td></tr>`).join('')}</tbody></table>`:'<p>Nenhum erro típico registrado no período.</p>'}</div>`+
    `<div class="bl-sec"><h2>Leitura pedagógica</h2><ul class="bl-leit">${leitura(r).map(t=>`<li>${t}</li>`).join('')}</ul>${r.legado?`<p style="font-size:8.5pt;color:#444">${r.legado} registros antigos, sem identificação da questão, não entram nos percentuais.</p>`:''}</div>`+
+   secProximos(r)+
    adaSec(cfg)+`<div class="bl-sec"><h2>Observações do professor</h2><div class="bl-nota">${escHtml(cfg.obs||'')}</div><div class="bl-ass"><div>Assinatura do professor</div><div>Data</div></div></div>`+rodape();
 }
 function htmlTurma(rs,turma,ini,fim,cfg){
@@ -2379,6 +2481,7 @@ function htmlTurma(rs,turma,ini,fim,cfg){
    `<div class="bl-sec"><h2>Evolução da turma por dia de prática</h2>${linhaEvolucao(r.porDia)}</div>`+
    `<div class="bl-sec"><h2>O que a turma mais errou</h2>${errTurma.length?`<table><thead><tr><th>Assunto</th><th>Erro típico</th><th class="n">Vezes</th><th class="n">Estudantes</th></tr></thead><tbody>${errTurma.map(e=>`<tr><td>${escHtml(nomeModulo(e.mod))}</td><td>${escHtml(e.txt)}</td><td class="n">${e.n}</td><td class="n">${e.pessoas}</td></tr>`).join('')}</tbody></table>`:'<p>Nenhum erro típico registrado.</p>'}</div>`+
    `<div class="bl-sec"><h2>Estudantes</h2><table><thead><tr><th>Nome</th><th>Turma</th><th class="n">Questões</th><th style="width:22%">Acerto na 1ª tentativa</th><th class="n">%</th><th class="n">Assuntos</th><th class="n">Última</th><th>Situação</th></tr></thead><tbody>${linhas.map(x=>`<tr><td>${escHtml(x.nome)}</td><td>${escHtml(x.turma||'—')}</td><td class="n">${x.m.qs}</td><td>${barraHtml(x.p)}</td><td class="n">${x.p==null?'—':x.p+'%'}</td><td class="n">${x.mods}</td><td class="n">${fmtData(x.m.ultima).slice(0,5)}</td><td class="bl-sit">${x.s[0]} ${x.s[1]}</td></tr>`).join('')||'<tr><td colspan="8">Sem registros.</td></tr>'}</tbody></table><p style="font-size:8.5pt;color:#444">Uso do professor. Situação baseada na 1ª tentativa e só calculada com 5 ou mais questões.</p></div>`+
+   secMapa(rs)+
    adaSec(cfg)+`<div class="bl-sec"><h2>Observações do professor</h2><div class="bl-nota">${escHtml(cfg.obs||'')}</div><div class="bl-ass"><div>Assinatura do professor</div><div>Data</div></div></div>`+rodape();
 }
 const adaSec=cfg=>cfg.ada?`<div class="bl-sec"><h2>Parecer da ADA (assistente de IA)</h2><p style="white-space:pre-wrap">${escHtml(cfg.ada)}</p><p style="font-size:8.5pt;color:#444">Texto gerado por inteligência artificial a partir de indicadores agregados dos filtros do painel no momento da consulta. É uma hipótese de trabalho, não um diagnóstico: o professor revisa antes de usar.</p></div>`:'';
@@ -2425,7 +2528,7 @@ function abrirRelatorioPdf(modo){
   };
   pagina();$('blImp').focus();
 }
-window.abrirRelatorioPdf=abrirRelatorioPdf;window.__bl={resumo,htmlAluno,htmlTurma,SIT};
+window.abrirRelatorioPdf=abrirRelatorioPdf;window.__bl={resumo,htmlAluno,htmlTurma,SIT,passosSeguintes,secMapa,secObjetivos};
 
 const homeAntes=home;
 home=function(){
@@ -2471,7 +2574,49 @@ rodapeHome=function(){
   } else {
     h += '<p style="color:var(--mu)">Resolva alguns desafios e aqui aparecem os erros mais comuns.</p>';
   }
-  return h+'<p style="margin-top:1.2rem"><button class="btn" onclick="zerar(event)">🗑️ Zerar progresso</button></p>';
+  return h;
+};
+
+/* ===== FASE 2: MODO PROFESSOR (sem senha) ===== */
+function aplicarModoProf(){
+  const on=!!S.modoProfessor,main=$('main');
+  document.body.classList.toggle('modo-prof',on);
+  const b=$('bp');
+  if(b){b.setAttribute('aria-pressed',String(on));b.classList.toggle('on',on);b.title=on?'Sair do modo professor':'Entrar no modo professor (sem senha)';b.setAttribute('aria-label',on?'Sair do modo professor':'Entrar no modo professor')}
+  const t=$('mlTitulo');if(t)t.textContent=on?'👩‍🏫 Painel do professor':'👤 Identificação';
+  if(on&&main&&$('mlExtras')){
+    [...main.children].forEach(c=>{if(c.id!=='mlExtras'&&c.id!=='mlAvisoLeitura')c.remove()});
+    if(!$('mlBannerProf')){
+      const s=document.createElement('section');s.className='box';s.id='mlBannerProf';s.setAttribute('role','status');
+      s.innerHTML='<h2>👩‍🏫 Modo professor ativo</h2><p>Esta tela mostra só o painel do docente. O modo apenas organiza a tela: <b>não tem senha e não protege dados</b>. Qualquer pessoa que use este navegador pode ativá-lo ou desativá-lo. Ele se desliga sozinho após 20 minutos sem uso.</p><button class="btn" id="mlSairProf">Voltar à visão do aluno</button>';
+      main.insertBefore(s,main.firstChild);
+      $('mlSairProf').onclick=alternarModoProfessor;
+    }
+  }
+}
+let PROF_INATIVO_MS=20*60*1000;
+function marcarAtividadeProf(){if(!S.modoProfessor)return;const t=Date.now();if(t-(S.modoProfAtividade||0)>15000){S.modoProfAtividade=t;save()}}
+function checarExpiracaoProf(){
+  if(S.modoProfessor&&Date.now()-(S.modoProfAtividade||0)>PROF_INATIVO_MS){S.modoProfessor=false;S.modoProfAtividade=0;save();window.__profExpirou=true;return true}
+  return false;
+}
+['click','keydown','input','touchstart'].forEach(ev=>document.addEventListener(ev,marcarAtividadeProf,{passive:true,capture:true}));
+setInterval(()=>{if(checarExpiracaoProf()&&!cur)home()},30000);
+function alternarModoProfessor(){
+  S.modoProfessor=!S.modoProfessor;S.modoProfAtividade=S.modoProfessor?Date.now():0;save();
+  home();window.scrollTo(0,0);
+  const alvo=S.modoProfessor?$('mlSairProf'):$('bp');if(alvo&&alvo.focus)alvo.focus();
+}
+window.alternarModoProfessor=alternarModoProfessor;
+const homeF2=home;
+home=function(){
+  checarExpiracaoProf();homeF2();aplicarModoProf();
+  if(window.__profExpirou&&!S.modoProfessor&&$('main')){
+    window.__profExpirou=false;
+    const a=document.createElement('p');a.id='mlAvisoExp';a.className='box';a.setAttribute('role','status');
+    a.textContent='O modo professor foi encerrado por inatividade, para a tela não ficar aberta ao próximo estudante.';
+    $('main').insertBefore(a,$('main').firstChild);
+  }
 };
 
 save();
@@ -2481,15 +2626,16 @@ stats();home();ui();
 </script>
 
 <!-- ===== MATHLAB ADA 1 — INTEGRAÇÃO COM O WORKER ===== -->
-<section id="adaPanel" class="box" style="margin:1.5rem 0">
+<section id="adaPanel" class="box" style="margin:1.5rem 0 0">
   <h2>🤖 ADA 1 — Assistente de Diagnóstico e Aprendizagem</h2>
   <p>
     Analise os indicadores do histórico para identificar dificuldades,
-    planejar mediações e sugerir intervenções pedagógicas.
+    planejar mediações e sugerir intervenções pedagógicas. Antes de cada envio você vê
+    exatamente o que vai e o que não vai para o serviço, e confirma.
   </p>
 
   <label for="adaFoco">Foco adicional para a análise (opcional)</label>
-  <small style="display:block;color:var(--mu)">Não escreva nomes de estudantes aqui: o texto é enviado ao serviço da ADA junto com os indicadores.</small>
+  <small style="display:block;color:var(--mu)">Não escreva nomes de estudantes aqui: o foco é enviado como você digitar, junto com os indicadores.</small>
   <textarea id="adaFoco" rows="3" maxlength="1500"
     placeholder="Ex.: priorize erros de frações e proponha perguntas mediadoras."
     style="width:100%;padding:.8rem;border-radius:8px;background:var(--bg);color:var(--tx);border:1px solid var(--bd)"></textarea>
@@ -2508,6 +2654,13 @@ stats();home();ui();
 
   <article id="adaResultado" hidden
     style="white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;padding:1rem;border:1px solid var(--bd);border-radius:12px;background:var(--bg)"></article>
+
+  <details id="adaLogBox">
+    <summary>Registro local de consultas (<span id="adaLogN">0</span>)</summary>
+    <p style="color:var(--mu)">Cada envio fica anotado só neste navegador: quem consultou, quando e a mensagem exata enviada. O registro não contém nomes de estudantes e entra no backup JSON.</p>
+    <div id="adaLogLista"></div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap"><button type="button" class="btn" id="adaLogCsv">Exportar registro (CSV)</button><button type="button" class="btn" id="adaLogLimpar">Limpar registro</button></div>
+  </details>
 </section>
 
 <script>
@@ -2673,6 +2826,156 @@ stats();home();ui();
     return (topo + dados + fim).slice(0, 950);
   }
 
+  /* ===== FASE 2: transparência — confirmação antes do envio e registro local ===== */
+  const ADA_LOG_MAX = 50;
+  const esc = v => (typeof escHtml === 'function'
+    ? escHtml(v)
+    : String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
+
+  function hostDoEndpoint() {
+    try { return new URL(ADA_ENDPOINT).host; } catch { return ADA_ENDPOINT; }
+  }
+
+  /* nomes de estudantes que o professor pode ter digitado no campo de foco */
+  function nomesNoFoco(foco) {
+    if (!foco) return [];
+    const parada = new Set(['dos', 'das', 'de', 'da', 'do', 'e']);
+    const nomes = new Set();
+    (S.hist || []).forEach(r => {
+      const n = String(r.estudante || '').trim();
+      if (!n || n === 'Não identificado') return;
+      nomes.add(n);
+      n.split(/\s+/).forEach(p => { if (p.length >= 3 && !parada.has(p.toLowerCase())) nomes.add(p); });
+    });
+    const achados = [];
+    for (const n of nomes) {
+      const seguro = n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      try {
+        if (new RegExp('(^|[^\\p{L}\\p{N}])' + seguro + '([^\\p{L}\\p{N}]|$)', 'iu').test(foco)) achados.push(n);
+      } catch { /* ignora nomes que não viram expressão */ }
+    }
+    return achados;
+  }
+
+  function confirmarEnvio({ corpo, question, foco, regs }) {
+    return new Promise(resolve => {
+      const velho = $ada('adaConf'); if (velho) velho.remove();
+      const foi = document.activeElement;
+      const nEst = new Set(regs.map(r => r.estudante || 'Não identificado')).size;
+      const fEst = ($('mlFilterStudent')?.value || '').trim();
+      const fTur = ($('mlFilterClass')?.value || '').trim();
+      const nomes = nomesNoFoco(foco);
+      const contato = /\S+@\S+\.\S+|\d{4,}/.test(foco);
+      const cfg = (S.relCfg && typeof S.relCfg === 'object') ? S.relCfg : {};
+      const alertas = [];
+      if (nEst === 1) alertas.push('Os dados vêm de <b>um único estudante</b>. Mesmo sem o nome, o parecer descreve uma pessoa. Prefira analisar a turma inteira.');
+      else if (fEst || fTur) alertas.push('Há filtro de estudante ou turma ativo. O nome do filtro não é enviado, mas um grupo pequeno pode ser reconhecível.');
+      if (nomes.length) alertas.push('O campo de foco parece conter o nome de estudante: <b>' + nomes.slice(0, 4).map(esc).join(', ') + '</b>. Volte e edite o foco, ou confirme abaixo que não identifica ninguém.');
+      if (contato) alertas.push('O campo de foco parece conter e-mail, telefone ou código longo. Confira antes de enviar.');
+      const exigeCheck = nomes.length > 0;
+
+      const ov = document.createElement('div');
+      ov.id = 'adaConf'; ov.className = 'ada-ov';
+      ov.innerHTML = `<div class="ada-dlg" role="dialog" aria-modal="true" aria-labelledby="adaConfT" aria-describedby="adaConfD">
+        <h2 id="adaConfT">Confirmar envio para a ADA</h2>
+        <p id="adaConfD">O texto abaixo será enviado para o serviço da ADA (<b>${esc(hostDoEndpoint())}</b>). Confira antes de enviar. Nada sai do seu navegador sem este “Enviar”.</p>
+        ${alertas.map(a => `<div class="ada-alerta" role="alert">⚠ ${a}</div>`).join('')}
+        <div class="ada-vai"><h3>O que vai</h3><ul>
+          <li>Números agregados de <b>${regs.length}</b> tentativas (${nEst} estudante${nEst === 1 ? '' : 's'} no filtro atual), resumidos por assunto.</li>
+          <li>Os erros típicos mais frequentes de cada assunto, como frases do próprio MathLab.</li>
+          <li>${foco ? 'O foco que você digitou, como está (até 110 caracteres).' : 'Nenhum foco adicional: só os números e erros acima.'}</li>
+        </ul>
+        <p style="margin:.4rem 0 0"><b>Mensagem, como será enviada:</b></p>
+        <blockquote id="adaConfMsg">${esc(question)}</blockquote></div>
+        <div class="ada-nao"><h3>O que não vai</h3><ul>
+          <li>Nome ou código de qualquer estudante e a turma.</li>
+          <li>As respostas escolhidas e os enunciados das questões.</li>
+          <li>Datas, horários e identificadores dos registros.</li>
+          <li>O seu nome abaixo (fica só no registro local).</li>
+        </ul>
+        <p style="margin:.4rem 0 0;font-size:.88rem">A conexão mostra o endereço de rede (IP) ao serviço, como em qualquer site. O que o serviço faz depois de receber o texto este arquivo não controla.</p></div>
+        <pre id="adaConfJson" hidden></pre>
+        <label for="adaConfQuem">Quem está consultando (para o registro local)</label>
+        <input type="text" id="adaConfQuem" maxlength="80" value="${esc(cfg.prof || '')}" placeholder="Seu nome">
+        ${exigeCheck ? '<label class="ada-chk"><input type="checkbox" id="adaConfOk"> <span>Confirmo que o foco não identifica nenhum estudante.</span></label>' : ''}
+        <div class="ada-btns">
+          <button type="button" class="btn" id="adaConfVer" aria-expanded="false">Ver JSON exato</button>
+          <button type="button" class="btn" id="adaConfNao">Cancelar</button>
+          <button type="button" class="go" id="adaConfSim" ${exigeCheck ? 'disabled' : ''}>Enviar</button>
+        </div></div>`;
+      document.body.appendChild(ov);
+
+      const dlg = ov.querySelector('.ada-dlg');
+      const fechar = ok => {
+        const quem = ($ada('adaConfQuem')?.value || '').trim();
+        document.removeEventListener('keydown', tecla, true);
+        ov.remove();
+        if (foi && foi.focus) foi.focus();
+        resolve({ ok, quem });
+      };
+      const tecla = e => {
+        if (e.key === 'Escape') { e.preventDefault(); fechar(false); return; }
+        if (e.key !== 'Tab') return;
+        const foc = [...dlg.querySelectorAll('button:not([disabled]),input,textarea')];
+        if (!foc.length) return;
+        const p = foc[0], u = foc[foc.length - 1];
+        if (e.shiftKey && document.activeElement === p) { e.preventDefault(); u.focus(); }
+        else if (!e.shiftKey && document.activeElement === u) { e.preventDefault(); p.focus(); }
+      };
+      document.addEventListener('keydown', tecla, true);
+
+      $ada('adaConfVer').onclick = () => {
+        const pre = $ada('adaConfJson'), aberto = !pre.hidden;
+        if (aberto) { pre.hidden = true; }
+        else {
+          pre.textContent = 'POST ' + ADA_ENDPOINT + '\nContent-Type: application/json\n\n' + JSON.stringify(JSON.parse(corpo), null, 2);
+          pre.hidden = false;
+        }
+        $ada('adaConfVer').setAttribute('aria-expanded', String(!aberto));
+        $ada('adaConfVer').textContent = aberto ? 'Ver JSON exato' : 'Ocultar JSON';
+      };
+      $ada('adaConfNao').onclick = () => fechar(false);
+      $ada('adaConfSim').onclick = () => fechar(true);
+      const chk = $ada('adaConfOk');
+      if (chk) chk.onchange = () => { $ada('adaConfSim').disabled = !chk.checked; };
+      $ada('adaConfNao').focus();
+    });
+  }
+
+  function registrarConsulta(info) {
+    if (!Array.isArray(S.adaLog)) S.adaLog = [];
+    const e = Object.assign({ id: (typeof mlId === 'function' ? mlId() : Date.now().toString(36)), quando: new Date().toISOString() }, info);
+    S.adaLog.push(e);
+    if (S.adaLog.length > ADA_LOG_MAX) S.adaLog.splice(0, S.adaLog.length - ADA_LOG_MAX);
+    if (typeof save === 'function') save();
+    renderLog();
+    return e;
+  }
+
+  function renderLog() {
+    const lista = $ada('adaLogLista'), n = $ada('adaLogN');
+    if (!lista) return;
+    const log = Array.isArray(S.adaLog) ? S.adaLog : [];
+    if (n) n.textContent = String(log.length);
+    if (!log.length) { lista.innerHTML = '<p style="color:var(--mu)">Nenhuma consulta feita neste navegador.</p>'; return; }
+    const quando = iso => { const d = new Date(iso); return isNaN(d) ? '—' : d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); };
+    lista.innerHTML = `<div class="mlTable"><table><thead><tr><th>Quando</th><th>Quem</th><th>Dados enviados</th><th>Resultado</th></tr></thead><tbody>${[...log].reverse().map(e => {
+      const f = e.filtros || {};
+      const filtro = [f.estudante ? 'filtro de estudante' : '', f.turma ? 'turma ' + f.turma : '', f.modulo ? 'assunto ' + f.modulo : '', f.inicio || f.fim ? (f.inicio || '…') + ' a ' + (f.fim || '…') : ''].filter(Boolean).join(', ') || 'sem filtro';
+      return `<tr><td>${esc(quando(e.quando))}</td><td>${esc(e.quem || 'Não informado')}${e.modoProfessor ? '<br><small>modo professor</small>' : ''}</td><td>${esc(e.registros)} tentativas, ${esc(e.estudantes)} estudante(s)<br><small>${esc(filtro)}</small><details><summary>ver mensagem enviada</summary><pre>${esc(e.mensagem || '')}</pre></details></td><td>${esc(e.resultado || '—')}${e.http ? '<br><small>HTTP ' + esc(e.http) + '</small>' : ''}</td></tr>`;
+    }).join('')}</tbody></table></div>`;
+  }
+  window.__adaRenderLog = renderLog;
+
+  function exportarLog() {
+    const log = Array.isArray(S.adaLog) ? S.adaLog : [];
+    if (!log.length) { $ada('adaStatus').textContent = 'Não há consultas para exportar.'; return; }
+    const cols = ['id', 'quando', 'quem', 'modoProfessor', 'registros', 'estudantes', 'resultado', 'http', 'foco', 'mensagem'];
+    const cell = v => { let t = String(v ?? ''); if (/^[=+@\t\r-]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
+    const csv = '﻿' + [cols.join(';'), ...log.map(e => cols.map(c => cell(e[c])).join(';'))].join('\r\n');
+    if (typeof downloadFile === 'function') downloadFile(csv, 'text/csv;charset=utf-8', 'mathlab-ada-registro-' + dataLocal() + '.csv');
+  }
+
   async function consultarADA() {
     if (consultando) return;
 
@@ -2685,18 +2988,50 @@ stats();home();ui();
     botao.disabled = true;
     copiar.disabled = true;
     resultado.hidden = true;
-    status.textContent = '⏳ Calculando indicadores e consultando a ADA…';
+    status.textContent = '⏳ Calculando indicadores…';
 
+    let entrada = null;
     try {
       const indicadores = obterIndicadores();
       const foco = textoSeguro($ada('adaFoco').value);
       const question = montarPerguntaCompacta(indicadores, foco);
+      const corpo = JSON.stringify({ message: question });   /* exatamente o que será enviado */
+      const regs = typeof registrosFiltrados === 'function' ? registrosFiltrados() : S.hist;
+
+      const decisao = await confirmarEnvio({ corpo, question, foco, regs });
+      if (!decisao.ok) {
+        status.textContent = 'Envio cancelado. Nada foi enviado.';
+        return;
+      }
+      if (decisao.quem) {
+        if (!S.relCfg || typeof S.relCfg !== 'object') S.relCfg = {};
+        if (!S.relCfg.prof) S.relCfg.prof = decisao.quem;
+      }
+      entrada = registrarConsulta({
+        quem: decisao.quem || 'Não informado',
+        modoProfessor: !!S.modoProfessor,
+        filtros: {
+          estudante: !!($('mlFilterStudent')?.value || '').trim(),
+          turma: ($('mlFilterClass')?.value || '').trim(),
+          modulo: $('mlFilterModule')?.value || '',
+          bncc: $('mlFilterBncc')?.value || '',
+          inicio: $('mlStart')?.value || '',
+          fim: $('mlEnd')?.value || ''
+        },
+        registros: regs.length,
+        estudantes: new Set(regs.map(r => r.estudante || 'Não identificado')).size,
+        foco: foco.slice(0, 110),
+        mensagem: question,
+        resultado: 'enviando'
+      });
+      status.textContent = '⏳ Consultando a ADA…';
 
       const resposta = await fetch(ADA_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: question })
+        body: corpo
       });
+      entrada.http = resposta.status;
 
       const textoResposta = await resposta.text();
       let dados = {};
@@ -2717,14 +3052,30 @@ stats();home();ui();
       resultado.textContent = ultimoParecer;
       resultado.hidden = false;
       copiar.disabled = false;
+      entrada.resultado = 'parecer recebido';
       status.textContent = '✅ Parecer recebido. Revise as sugestões antes de aplicá-las.';
     } catch (erro) {
+      if (entrada && entrada.resultado === 'enviando') entrada.resultado = 'falhou: ' + String(erro.message || 'erro inesperado').slice(0, 120);
       status.textContent = '❌ Não foi possível concluir a consulta: ' + (erro.message || 'erro inesperado') + ' Verifique a conexão e o formato esperado pelo Worker.';
     } finally {
+      if (entrada) { if (typeof save === 'function') save(); renderLog(); }
       consultando = false;
       botao.disabled = false;
     }
   }
+
+  $ada('adaLogLimpar').addEventListener('click', function () {
+    if (!this.dataset.sim) {
+      this.dataset.sim = 1; const t = this.textContent;
+      this.textContent = 'Clique de novo para apagar o registro';
+      setTimeout(() => { delete this.dataset.sim; this.textContent = t; }, 6000);
+      return;
+    }
+    delete this.dataset.sim; this.textContent = 'Limpar registro';
+    S.adaLog = []; if (typeof save === 'function') save(); renderLog();
+  });
+  $ada('adaLogCsv').addEventListener('click', exportarLog);
+  renderLog();
 
   $ada('adaConsultar').addEventListener('click', consultarADA);
 
@@ -2738,6 +3089,10 @@ stats();home();ui();
     }
   });
 })();
+</script>
+<script>
+/* Fase 2: a ADA vive dentro do painel docente (#mlExtras > #mlDocente), nunca solta na tela do aluno */
+(()=>{const n=document.getElementById('adaPanel');if(!n)return;window.__adaNode=n;n.remove();if(typeof home==='function')home()})();
 </script>
 <!-- ===== FIM DA INTEGRAÇÃO ADA 1 ===== -->
 </body>
