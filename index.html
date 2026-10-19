@@ -188,6 +188,7 @@ body.modo-prof .so-aluno{display:none!important}
 .ada-dlg .ada-btns{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem;justify-content:flex-end}
 .ada-dlg .ada-btns button:disabled{opacity:.5;cursor:not-allowed}
 #adaLogBox{margin-top:1rem}
+.ft .dir{font-size:.72rem;opacity:.75;margin-top:.4rem;max-width:34rem}
 #adaLogBox summary{cursor:pointer;font-weight:700}
 #adaLogBox table{width:100%;border-collapse:collapse;font-size:.82rem;margin:.5rem 0}
 #adaLogBox th,#adaLogBox td{border-bottom:1px solid var(--bd);padding:.4rem;text-align:left;vertical-align:top}
@@ -222,7 +223,7 @@ body.modo-prof .so-aluno{display:none!important}
       <img src="https://lh3.googleusercontent.com/d/1V9pEWzeeHIoNNreWR3CFhyENKkv7Kgrp" alt="Prof. Alê Chocolate" onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/bottts/svg?seed=AleChocolate'">
       <div><h4>Prof. Alê Chocolate 🔍</h4><p>Ensinar • Investigar • Incluir • Transformar</p><span>🐶 Mascotes: Oreo & Julieta</span></div>
     </div>
-    <div class="fq"><p>☕ <em>"Café, Matemática, Planos, Projetos, Vida."</em></p><p><b>MathLab • Matemática em Investigação</b></p></div>
+    <div class="fq"><p>☕ <em>"Café, Matemática, Planos, Projetos, Vida."</em></p><p><b>MathLab • Matemática em Investigação</b></p><p class="dir">© 2026 Prof. Alessandro Barbosa dos Santos (Prof. Alê Chocolate). Todos os direitos reservados. Uso gratuito, mas é proibido usar, alterar ou distribuir sem dar o crédito devido ao autor.</p></div>
   </div>
 </footer>
 
@@ -239,6 +240,9 @@ body.modo-prof .so-aluno{display:none!important}
       <hr style="border:0; border-top:1px solid var(--bd); margin:0.8rem 0;">
       <p style="font-size:0.88rem; color:var(--mu);">
         O <strong>MathLab</strong> é um laboratório interativo desenvolvido para estimular o aprendizado investigador, a autonomia e a inclusão visual no ensino fundamental de Matemática.
+      </p>
+      <p style="font-size:0.82rem; color:var(--mu);">
+        © 2026 Prof. Alessandro Barbosa dos Santos (Prof. Alê Chocolate). Todos os direitos reservados. O uso é gratuito, mas é proibido usar, alterar ou distribuir sem dar o crédito devido ao autor.
       </p>
     </div>
   </div>
@@ -1398,9 +1402,7 @@ const MODS=[
  rod:8,gens:INT_GENS}
 ];
 
-const SOON=[
-  {ano:9,ic:'📊',nome:'Funções afim e quadrática',eixo:'Álgebra'}
-];
+const SOON=[];
  /* ===== SÓLIDOS GEOMÉTRICOS ===== */
 const SOLID_GENS={
   1:[
@@ -3550,6 +3552,189 @@ MODS.push({id:'med',ano:6,ic:'🌡️',nome:'Medidas',sub:'Comprimento, massa, t
   c.font='12px sans-serif';c.fillStyle=k.m;c.fillText(r===1?'mesma unidade':r>1?`cada ${U[v.de][0]} vale ${mdF(r)} ${U[v.para][0]}: multiplica`:`cada ${U[v.para][0]} vale ${mdF(1/r)} ${U[v.de][0]}: divide`,W/2,yy+26);c.textAlign='left'},
  rod:8,gens:MED_GENS});
 
+/* ---------- FUNÇÕES (Fase 4.7) ---------- */
+const fnMn=n=>n<0?'−'+(-n):String(n);
+const fnNum=n=>String(Math.round(n*100)/100).replace('.',',').replace('-','−');
+const fnPar=(x,y)=>`(${fnMn(x)}, ${fnMn(y)})`;
+const fnPr=n=>n<0?`(${fnMn(n)})`:String(n);
+const fnRhs=(a,b)=>{if(!a)return fnMn(b);const t=a===1?'x':a===-1?'−x':fnMn(a)+'x';return b?t+(b>0?' + '+b:' − '+(-b)):t};
+const fnQ=(a,b,c,x='x')=>{let s=a===1?x+'²':a===-1?'−'+x+'²':fnMn(a)+x+'²';if(b)s+=b===1?' + '+x:b===-1?' − '+x:b>0?` + ${b}${x}`:` − ${-b}${x}`;if(c)s+=c>0?` + ${c}`:` − ${-c}`;return s};
+const fnExp=(a,b,n='f')=>`${n}(x) = ${fnRhs(a,b)}`;
+const fnQExp=(a,b,c,n='f',x='x')=>`${n}(${x}) = ${fnQ(a,b,c,x)}`;
+const fnNz=m=>{let n=0;while(n===0)n=rnd(-m,m);return n};
+const fnA=(lo,hi)=>rnd(lo,hi)*pick([1,-1]);
+const fnPares=p=>'{'+p.map(q=>`(${q[0]}, ${q[1]})`).join(', ')+'}';
+/* conjuntos de pares para "é função ou não" */
+const fnEFuncao=rep=>{const xs=shuf([1,2,3,4,5,6,7,8]).slice(0,4).sort((p,q)=>p-q),ys=xs.map(()=>rnd(1,9));if(rep){ys[1]=ys[0]}return xs.map((x,i)=>[x,ys[i]])};
+const fnNaoFuncao=()=>{const xs=shuf([1,2,3,4,5,6,7,8]).slice(0,3).sort((p,q)=>p-q),j=rnd(0,2),ys=xs.map(()=>rnd(1,9));let y2;do{y2=rnd(1,9)}while(y2===ys[j]);
+ const P=xs.map((x,i)=>[x,ys[i]]);P.push([xs[j],y2]);P.sort((p,q)=>p[0]-q[0]||p[1]-q[1]);return{P,x:xs[j]}};
+const fnCtx=[
+ {s:'Um táxi cobra',fixo:'de bandeirada',var:'por km rodado',x:'quilômetros rodados',custo:d=>`uma corrida de ${d} km`},
+ {s:'Uma locadora de bicicletas cobra',fixo:'de taxa de retirada',var:'por hora de uso',x:'horas de uso',custo:d=>`${d} horas de uso`},
+ {s:'Uma gráfica cobra',fixo:'de taxa de arte',var:'por cartaz impresso',x:'cartazes impressos',custo:d=>`${d} cartazes`},
+ {s:'Um buffet cobra',fixo:'de taxa de entrega',var:'por marmita',x:'marmitas',custo:d=>`${d} marmitas`}
+];
+const FUNC_GENS={
+1:[
+ /* tabela para expressão */
+ ()=>{const a=fnA(2,4);let b=fnA(1,6);if(Math.abs(b)===Math.abs(a))b=b>0?b+1:b-1;
+  const x0=pick([0,-1,-2]),xs=[x0,x0+1,x0+2,x0+3],ys=xs.map(x=>a*x+b),ok=fnExp(a,b);
+  return mk({q:`Em uma função afim, quando x vale ${xs.map(fnMn).join(', ')}, o valor de y é ${ys.map(fnMn).join(', ')}, nessa ordem. Qual é a expressão da função?`,ok,
+   bad:[[fnExp(b,a),'trocou o papel de a e b',`Veja quanto y muda a cada passo de x: muda ${Math.abs(a)}, então a = ${fnMn(a)}. O b é o valor de y quando x = 0.`],[fnExp(a,-b),'errou o sinal do termo independente',`Teste x = ${xs[0]}: ${fnMn(a)} · ${fnPr(xs[0])} ${b>0?'+':'−'} ${Math.abs(b)} precisa dar ${fnMn(ys[0])}.`],[fnExp(-a,b),'errou o sinal do coeficiente angular',`A cada passo de x, y ${a>0?'sobe':'desce'} ${Math.abs(a)}.`],[fnExp(a,0),'esqueceu o termo independente','Teste um ponto da tabela: a expressão precisa dar o mesmo y.']],
+   fill:()=>fnExp(fnNz(5),fnNz(8)),
+   h:['Veja quanto y muda quando x aumenta 1: esse é o coeficiente a.','Depois teste um ponto da tabela para achar b.'],
+   e:`y muda ${fnMn(a)} a cada passo de x, então a = ${fnMn(a)}. Em x = ${xs[0]}, y = ${fnMn(ys[0])}: ${fnMn(ys[0])} = ${fnMn(a)} · ${fnPr(xs[0])} + b, logo b = ${fnMn(b)}. A expressão é ${ok}.`,s:{modo:0,a,b,oc:1}})},
+ /* expressão para valor */
+ ()=>{const a=fnA(2,5),b=fnNz(9);let x=0;while(x===0)x=rnd(-4,6);const v=a*x+b;
+  return mk({q:`Se f(x) = ${fnRhs(a,b)}, quanto vale f(${fnMn(x)})?`,ok:fnMn(v),
+   bad:[[fnMn(a*x-b),'errou o sinal do termo independente',`Substitua x e some ${fnMn(b)}: ${fnMn(a)} · ${fnPr(x)} + ${fnPr(b)}.`],[fnMn(a*x),'esqueceu de somar o termo independente',`Depois de multiplicar, falta somar ${fnMn(b)}.`],[fnMn(a+x+b),'somou em vez de multiplicar',`O ${fnMn(a)} multiplica x: ${fnMn(a)} · ${fnPr(x)}.`],[fnMn(a*(x+b)),'multiplicou a soma inteira','O coeficiente multiplica só o x, não o termo independente.']],
+   fill:()=>fnMn(rnd(-30,40)),
+   h:['Troque o x pelo número dado, sem esquecer dos parênteses se ele for negativo.','Primeiro multiplique, depois some o termo independente.'],
+   e:`f(${fnMn(x)}) = ${fnMn(a)} · ${fnPr(x)} ${b>0?'+':'−'} ${Math.abs(b)} = ${fnMn(a*x)} ${b>0?'+':'−'} ${Math.abs(b)} = ${fnMn(v)}.`,s:{modo:0,a,b,oc:0}})},
+ /* ler valor no gráfico */
+ ()=>{let a,b,x,v,t=0;do{a=fnA(1,3);b=fnNz(5);x=fnNz(4);v=a*x+b;t++}while((Math.abs(v)>9||v===b||v===x)&&t<200);
+  return mk({q:`No gráfico do simulador, qual é o valor de f(x) quando x = ${fnMn(x)}?`,ok:fnMn(v),
+   bad:[[fnMn(b),'leu onde a reta corta o eixo y','Esse é o valor para x = 0. Ande até x = '+fnMn(x)+' antes de ler a altura.'],[fnMn(x),'leu o x em vez do y','Você já sabe o x. A pergunta é a altura da reta nesse x.'],[fnMn(-v),'errou o lado do eixo x',`A reta passa ${v>0?'acima':'abaixo'} do eixo x nesse ponto.`],[fnMn(v+a),'leu um passo ao lado',`Confira se você está mesmo em x = ${fnMn(x)}.`]],
+   fill:()=>fnMn(rnd(-9,9)),
+   h:['Ache x no eixo horizontal e suba ou desça até encontrar a reta.','A altura em que a reta está é o valor de f(x).'],
+   e:`Em x = ${fnMn(x)}, a reta está na altura ${fnMn(v)}. A função é ${fnExp(a,b)}: ${fnMn(a)} · ${fnPr(x)} ${b>0?'+':'−'} ${Math.abs(b)} = ${fnMn(v)}.`,s:{modo:0,a,b,oc:1}})},
+ /* reconhecer função */
+ ()=>{const nao=Math.random()<.5,seen=new Set();
+  if(!nao){const ok=fnEFuncao(Math.random()<.5),bad=[];let t=0;while(bad.length<3&&t++<60){const r=fnNaoFuncao(),tx=fnPares(r.P);if(!seen.has(tx)){seen.add(tx);bad.push([tx,'aceitou um x com dois valores de y',`No conjunto ${tx}, o x = ${r.x} aparece com dois y diferentes. Função exige um só y para cada x.`])}}
+   return mk({q:'Qual destes conjuntos de pares (x, y) é uma função de x em y?',ok:fnPares(ok),bad,
+    h:['Função: cada x tem um único y.','Procure um x que apareça duas vezes com y diferentes.'],e:`Em ${fnPares(ok)}, cada x aparece uma vez só. Cada x tem um único y, então é função.`})}
+  const r=fnNaoFuncao(),ok=fnPares(r.P),bad=[];let t=0;while(bad.length<3&&t++<60){const e=fnEFuncao(Math.random()<.5),tx=fnPares(e),rep=e[0][1]===e[1][1];if(tx!==ok&&!seen.has(tx)){seen.add(tx);bad.push([tx,rep?'achou que y repetido impede de ser função':'não procurou um x repetido',rep?'Dois x diferentes podem ter o mesmo y. O que impede a função é o mesmo x com dois y.':'Aqui cada x aparece uma vez só, então é função.'])}}
+  return mk({q:'Qual destes conjuntos de pares (x, y) NÃO é uma função de x em y?',ok,bad,
+   h:['Função: cada x tem um único y.','Procure um x que apareça duas vezes com y diferentes.'],e:`Em ${ok}, o x = ${r.x} aparece com dois y diferentes. Então não é função.`})}
+],
+2:[
+ /* coeficientes a e b */
+ ()=>{const a=fnA(1,5);let b=fnNz(9);if(Math.abs(b)===Math.abs(a))b=b>0?b+1:b-1;const f=fnExp(a,b),v=rnd(0,2);
+  if(v===0)return mk({q:`Na função ${f}, qual é o coeficiente angular a, o número que multiplica x?`,ok:fnMn(a),
+   bad:[[fnMn(b),'confundiu a com b','O b é o número solto, sem x.'],[fnMn(-a),'errou o sinal de a','Leia o sinal junto do número que acompanha x.'],[fnMn(a+b),'somou a e b','São coeficientes diferentes, um para cada papel.']],
+   fill:()=>fnMn(fnNz(9)),h:['O coeficiente angular é o número colado no x.','Ele traz o próprio sinal.'],e:`Em ${f}, o número que multiplica x é ${fnMn(a)}. Então a = ${fnMn(a)}.`,s:{modo:0,a,b,oc:0}});
+  if(v===1)return mk({q:`Na função ${f}, qual é o termo independente b, o número que não acompanha x?`,ok:fnMn(b),
+   bad:[[fnMn(a),'confundiu b com a','O a é o número que multiplica x.'],[fnMn(-b),'errou o sinal de b','Leia o sinal junto do número solto.'],[fnMn(a+b),'somou a e b','São coeficientes diferentes, um para cada papel.']],
+   fill:()=>fnMn(fnNz(9)),h:['O termo independente é o número sem x.','Ele traz o próprio sinal.'],e:`Em ${f}, o número solto é ${fnMn(b)}. Então b = ${fnMn(b)}, e é onde o gráfico corta o eixo y.`,s:{modo:0,a,b,oc:0}});
+  return mk({q:`Em que ponto o gráfico de ${f} corta o eixo y?`,ok:fnPar(0,b),
+   bad:[[fnPar(b,0),'trocou x por y','No eixo y, a primeira coordenada (x) vale 0.'],[fnPar(0,a),'confundiu a com b','Quem dá a altura em x = 0 é o b, não o a.'],[fnPar(0,-b),'errou o sinal de b','Com x = 0, f(0) é o próprio b, com o seu sinal.']],
+   fill:()=>fnPar(0,fnNz(9)),h:['No eixo y, x vale 0.','Calcule f(0): só sobra o termo independente.'],e:`f(0) = ${fnMn(b)}, então o gráfico corta o eixo y no ponto ${fnPar(0,b)}.`,s:{modo:0,a,b,oc:0}})},
+ /* crescente ou decrescente */
+ ()=>{const cons=Math.random()<.17,a=cons?0:fnA(1,5),b=fnNz(9),f=fnExp(a,b);
+  const ok=cons?'constante':a>0?'crescente':'decrescente',T=['crescente','decrescente','constante','depende do valor de x'];
+  const tag={crescente:b<0&&a<0?'olhou o sinal de b em vez do de a':'achou que a negativo faz a função subir',decrescente:b<0&&a>0?'olhou o sinal de b em vez do de a':'achou que a positivo faz a função descer',constante:'achou que o termo independente deixa a função parada','depende do valor de x':'achou que o sentido muda ao longo do gráfico'};
+  const msg=cons?'Sem x na expressão, o valor nunca muda.':'Só o sinal de a decide: positivo sobe, negativo desce.';
+  return mk({q:`A função ${f} é crescente, decrescente ou constante?`,ok,bad:T.filter(t=>t!==ok).map(t=>[t,tag[t],msg]),
+   h:['Olhe só o coeficiente que multiplica x.','Positivo: sobe da esquerda para a direita. Negativo: desce.'],
+   e:cons?`Não há x na expressão: f(x) vale sempre ${fnMn(b)}. É constante.`:`O coeficiente de x é ${fnMn(a)}, ${a>0?'positivo':'negativo'}. A função é ${ok}.`,s:{modo:0,a,b,oc:0}})},
+ /* zero da função */
+ ()=>{let a,z,b,t=0;do{a=fnA(2,5);z=fnNz(5);b=-a*z;t++}while(Math.abs(b)>10&&t<200);const f=fnExp(a,b);
+  return mk({q:`Qual é o zero da função ${f}, isto é, o valor de x em que f(x) = 0?`,ok:fnMn(z),
+   bad:[[fnMn(-z),'esqueceu de trocar o sinal ao passar b para o outro lado',`De ${fnRhs(a,b)} = 0 sai ${fnMn(a)}x = ${fnMn(-b)}.`],[fnMn(b),'tomou b como zero','O b é a altura em x = 0. O zero é o x em que a altura vale 0.'],[fnMn(a),'tomou a como zero','O a é a inclinação. Resolva a equação.'],[fnMn(-b),'esqueceu de dividir por a',`Depois de ${fnMn(a)}x = ${fnMn(-b)}, divida por ${fnMn(a)}.`]],
+   fill:()=>fnMn(fnNz(9)),h:['Faça f(x) = 0 e resolva a equação do 1º grau.','Passe b para o outro lado trocando o sinal e depois divida por a.'],
+   e:`${fnRhs(a,b)} = 0, então ${fnMn(a)}x = ${fnMn(-b)} e x = ${fnMn(-b)} ÷ ${fnPr(a)} = ${fnMn(z)}. É onde a reta corta o eixo x.`,s:{modo:0,a,b,oc:0}})},
+ /* contexto */
+ ()=>{const c=pick(fnCtx),p=rnd(1,5),B=rnd(2,10),v=rnd(0,2),d=rnd(3,9),intro=`${c.s} R$ ${B},00 ${c.fixo} mais R$ ${p},00 ${c.var}.`;
+  if(v===0)return mk({q:`${intro} Qual expressão dá o custo C, em reais, em função de x (${c.x})?`,ok:fnExp(p,B,'C'),
+   bad:[[fnExp(B,p,'C'),'trocou a parte fixa pela parte que varia',`O valor de R$ ${p},00 se repete a cada unidade usada, então multiplica x.`],[fnExp(p+B,0,'C'),'somou os dois valores num só coeficiente','A taxa fixa é paga uma vez só, não multiplica x.'],[fnExp(p,-B,'C'),'usou menos em vez de mais','A taxa fixa soma ao custo.']],
+   fill:()=>fnExp(rnd(1,9),rnd(1,9),'C'),h:['Uma parte do preço se repete a cada unidade: ela multiplica x.','A outra parte é paga uma vez só: ela soma.'],
+   e:`R$ ${p},00 por unidade dá ${p}x. A taxa de R$ ${B},00 é paga uma vez. Então C(x) = ${p}x + ${B}.`,s:{modo:0,a:p,b:B,oc:0}});
+  if(v===1)return mk({q:`${intro} Qual é o custo de ${c.custo(d)}?`,ok:`R$ ${p*d+B},00`,
+   bad:[[`R$ ${p*d},00`,'esqueceu da taxa fixa',`Falta somar a parte fixa de R$ ${B},00.`],[`R$ ${(p+B)*d},00`,'multiplicou também a taxa fixa','A taxa fixa é paga uma vez, não a cada unidade.'],[`R$ ${p+B+d},00`,'somou tudo sem multiplicar',`Os R$ ${p},00 se repetem ${d} vezes.`],[`R$ ${B*d+p},00`,'trocou a taxa fixa pelo valor por unidade',`R$ ${p},00 é o valor que se repete.`]],
+   fill:()=>`R$ ${rnd(8,60)},00`,h:['Multiplique o valor por unidade pela quantidade.','Depois some a taxa fixa uma vez.'],e:`${p} · ${d} + ${B} = ${p*d} + ${B} = ${p*d+B}. O custo é R$ ${p*d+B},00.`,s:{modo:0,a:p,b:B,oc:0}});
+  const P=p*d+B;
+  return mk({q:`${intro} Se o custo total foi R$ ${P},00, quantos ${c.x} foram usados?`,ok:String(d),
+   bad:[[String(Math.round(P/p)),'esqueceu de descontar a taxa fixa',`Primeiro tire os R$ ${B},00 fixos, depois divida por ${p}.`],[String(P-B),'tirou a taxa fixa mas não dividiu pelo valor por unidade',`Falta dividir por ${p}.`],[String(Math.round((P+B)/p)),'somou a taxa fixa em vez de tirar',`A taxa fixa já está dentro de R$ ${P},00.`]],
+   fill:()=>String(rnd(2,20)),h:['Do total, tire a taxa fixa.','Divida o que sobrou pelo valor de cada unidade.'],e:`${P} − ${B} = ${P-B}. Depois ${P-B} ÷ ${p} = ${d}.`,s:{modo:0,a:p,b:B,oc:0}})}
+],
+3:[
+ /* interpretar o gráfico */
+ ()=>{const v=rnd(0,2);
+  if(v===0){const a=fnA(1,3),b=fnNz(6);
+   return mk({q:'A reta do simulador é o gráfico de uma função afim. Qual é a expressão dessa função?',ok:fnExp(a,b),
+    bad:[[fnExp(b,a),'trocou a e b','O corte no eixo y é o b; a inclinação é o a.'],[fnExp(a,-b),'errou onde a reta corta o eixo y',`A reta corta o eixo y em ${fnMn(b)}.`],[fnExp(-a,b),'errou o sentido da reta',`A reta ${a>0?'sobe':'desce'} da esquerda para a direita.`],[fnExp(a,0),'esqueceu o termo independente',`A reta não passa pela origem: corta o eixo y em ${fnMn(b)}.`]],
+    fill:()=>fnExp(fnNz(4),fnNz(7)),h:['Veja onde a reta corta o eixo y: esse é o b.','Ande 1 para a direita e veja quanto a reta sobe ou desce: esse é o a.'],
+    e:`A reta corta o eixo y em ${fnMn(b)}, então b = ${fnMn(b)}. A cada passo para a direita, ${a>0?'sobe':'desce'} ${Math.abs(a)}, então a = ${fnMn(a)}. A função é ${fnExp(a,b)}.`,s:{modo:0,a,b,oc:1}})}
+  if(v===1){let a,z,b,t=0;do{a=fnA(1,4);z=fnNz(5);b=-a*z;t++}while(Math.abs(b)>8&&t<200);
+   return mk({q:'A reta do simulador corta o eixo x em qual valor de x?',ok:fnMn(z),
+    bad:[[fnMn(-z),'errou o lado do eixo x',`A reta corta o eixo x ${z>0?'à direita':'à esquerda'} da origem.`],[fnMn(b),'leu onde a reta corta o eixo y','Esse é o corte no eixo y. Aqui a pergunta é sobre o eixo x.'],[fnMn(a),'confundiu o zero com a inclinação','A inclinação mede a subida. O zero é a posição no eixo x.'],[fnMn(b+z),'leu um ponto qualquer da reta','Procure o ponto em que a reta toca o eixo horizontal.']],
+    fill:()=>fnMn(fnNz(9)),h:['Procure o ponto em que a reta toca o eixo horizontal.','Nesse ponto y vale 0. O x desse ponto é o zero da função.'],
+    e:`A reta toca o eixo x em ${fnPar(z,0)}. O zero da função é x = ${fnMn(z)}. A função é ${fnExp(a,b)}.`,s:{modo:0,a,b,oc:1}})}
+  const a=fnA(1,4),b=fnNz(6);
+  return mk({q:'Qual é o coeficiente angular da reta do simulador, isto é, quanto y varia quando x aumenta 1?',ok:fnMn(a),
+   bad:[[fnMn(-a),'errou o sentido da reta',`A reta ${a>0?'sobe':'desce'} da esquerda para a direita.`],[fnMn(b),'leu onde a reta corta o eixo y','Esse é o b. O a é a variação de y por passo de x.'],[fnMn(a+b),'somou a e b','Cada um tem um papel: a é a inclinação.'],[fnMn(2*a),'contou dois passos de x','A pergunta é por 1 passo só.']],
+   fill:()=>fnMn(fnNz(6)),h:['Ande 1 para a direita sobre a reta.','Veja quanto você sobe (positivo) ou desce (negativo).'],
+   e:`A cada passo de 1 em x, y ${a>0?'sobe':'desce'} ${Math.abs(a)}. O coeficiente angular é ${fnMn(a)}. A função é ${fnExp(a,b)}.`,s:{modo:0,a,b,oc:1}})},
+ /* função quadrática */
+ ()=>{const a=pick([1,1,2,3,-1,-2]),b=rnd(-4,4),c=rnd(-8,8),x=fnNz(4),v=a*x*x+b*x+c,f=fnQExp(a,b,c),p1=`${fnMn(a)} · ${fnPr(x)}²`+(b?` ${b>0?'+':'−'} ${Math.abs(b)} · ${fnPr(x)}`:'')+(c?` ${c>0?'+':'−'} ${Math.abs(c)}`:''),p2=`${fnMn(a)} · ${x*x}`+(b?` ${b*x>0?'+':'−'} ${Math.abs(b*x)}`:'')+(c?` ${c>0?'+':'−'} ${Math.abs(c)}`:'');
+  return mk({q:`Se ${f}, quanto vale f(${fnMn(x)})?`,ok:fnMn(v),
+   bad:[[fnMn(a*2*x+b*x+c),'multiplicou x por 2 em vez de elevar ao quadrado',`x² é x · x = ${fnPr(x)} · ${fnPr(x)} = ${x*x}.`],[fnMn((a*x)*(a*x)+b*x+c),'elevou o coeficiente ao quadrado junto com x',`Só o x é elevado ao quadrado: ${fnMn(a)} · ${x*x}.`],[fnMn(-a*x*x+b*x+c),x<0?'achou que o quadrado de um negativo é negativo':'errou o sinal do termo ao quadrado',`${fnPr(x)}² = ${x*x}, sempre positivo.`],[fnMn(a*x*x+b*x),'esqueceu o termo independente',`Falta somar ${fnMn(c)}.`],[fnMn(a*x*x+c),'esqueceu o termo em x',`Falta o termo ${fnMn(b)} · ${fnPr(x)}.`]],
+   fill:()=>fnMn(rnd(-20,40)),h:['Troque todos os x pelo número dado, com parênteses se ele for negativo.','Faça primeiro a potência, depois as multiplicações e por último as somas.'],
+   e:`f(${fnMn(x)}) = ${p1} = ${p2} = ${fnMn(v)}.`,s:{modo:1,a,b,c,oc:0}})},
+ /* comparar funções */
+ ()=>{const a1=rnd(1,5);let a2;do{a2=rnd(1,5)}while(a2===a1);const b1=fnNz(6),b2=fnNz(6),maior=a1>a2?'f':'g',
+  OP=['f cresce mais rápido','g cresce mais rápido','as duas crescem na mesma velocidade','não dá para saber só pelas expressões'],ok=maior==='f'?OP[0]:OP[1],
+  tag={0:'comparou o termo independente, não a inclinação',1:'comparou o termo independente, não a inclinação',2:'achou que o ritmo não depende do coeficiente de x',3:'não percebeu que o ritmo de crescimento está no coeficiente de x'};
+  return mk({q:`Duas funções afim: ${fnExp(a1,b1)} e ${fnExp(a2,b2,'g')}. Qual cresce mais rápido?`,ok,bad:OP.map((t,i)=>[t,tag[i],'A velocidade de crescimento é o coeficiente de x: quanto maior, mais rápido y sobe.']).filter(x=>x[0]!==ok),
+   h:['Compare só os números que multiplicam x.','O termo independente só diz onde a reta começa, não a velocidade.'],
+   e:`${fnExp(a1,b1)} tem a = ${a1} e ${fnExp(a2,b2,'g')} tem a = ${a2}. O maior coeficiente é ${Math.max(a1,a2)}, então ${maior} cresce mais rápido.`,s:{modo:2,a:a1,b:b1,c:a2,d:b2}})},
+ /* bola */
+ ()=>{const p=pick([2,4,6]),f=fnQExp(-1,p,0,'h','t'),intro=`A altura de uma bola, em metros, é dada por ${f}, em que t é o tempo em segundos.`,v=rnd(0,2),S={modo:1,a:-1,b:p,c:0,oc:0};
+  if(v===0)return mk({q:`${intro} Em que instante a bola atinge a altura máxima?`,ok:`${p/2} s`,
+   bad:[[`${p} s`,'respondeu quando a bola volta ao chão','A altura máxima é no meio da subida e da descida.'],[`${p/2+1} s`,'contou um segundo a mais','Procure o ponto mais alto do gráfico.'],[`${p/2===1?3:p/2-1} s`,'contou um segundo a menos','Procure o ponto mais alto do gráfico.'],[`${p*2} s`,'dobrou em vez de dividir ao meio','O topo fica no meio do caminho entre a saída e a volta ao chão.']],
+   fill:()=>`${rnd(1,9)} s`,h:['No gráfico, procure o ponto mais alto da parábola.','Ele fica no meio entre os dois pontos em que a bola está no chão (h = 0).'],e:`A bola está no chão em t = 0 e em t = ${p}. O ponto mais alto fica no meio: t = ${p/2} s.`,s:S});
+  if(v===1)return mk({q:`${intro} Qual é a altura máxima atingida pela bola?`,ok:`${p*p/4} m`,
+   bad:[[`${p/2} m`,'respondeu o instante, não a altura','O instante do topo é no eixo do tempo. A altura é o valor de h nesse instante.'],[`${p} m`,'tomou o coeficiente de t como altura',`Calcule h(${p/2}).`],[`${p*p/2} m`,'calculou só o termo p · t',`Falta subtrair t²: h(${p/2}) = ${p*p/2} − ${p*p/4}.`],[`${p*p/4+1} m`,'errou a conta por um metro','Refaça: h(t) = −t² + p · t no instante do topo.']],
+   fill:()=>`${rnd(1,12)} m`,h:['Ache o instante do topo e calcule h nesse instante.','O topo fica no meio entre t = 0 e o instante em que a bola volta ao chão.'],e:`O topo é em t = ${p/2} s. h(${p/2}) = −${p*p/4} + ${p/2*p} = ${p*p/4} m.`,s:S});
+  return mk({q:`${intro} Depois de quantos segundos a bola volta ao chão?`,ok:`${p} s`,
+   bad:[[`${p/2} s`,'respondeu o instante do ponto mais alto','Esse é o topo. Voltar ao chão é h = 0 de novo, mais adiante.'],[`${p*2} s`,'dobrou o tempo além do necessário',`Resolva −t² + ${p}t = 0, isto é, t · (${p} − t) = 0.`],[`${p+1} s`,'contou um segundo a mais',`Teste t = ${p}: h(${p}) = −${p*p} + ${p*p} = 0.`],[`${p-1} s`,'contou um segundo a menos',`Teste t = ${p-1}: h não vale zero.`]],
+   fill:()=>`${rnd(1,12)} s`,h:['A bola está no chão quando h(t) = 0.','Fatore: −t² + p · t = t · (p − t). O que zera essa conta além de t = 0?'],e:`h(t) = t · (${p} − t) = 0 em t = 0 e em t = ${p}. A bola volta ao chão em ${p} s.`,s:S})}
+]};
+MODS.push({id:'func',ano:9,ic:'📈',nome:'Funções',sub:'Relação entre variáveis: tabela, expressão e gráfico',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 reta, 1 parábola, 2 duas retas)',min:0,max:2,v:0},{k:'a',l:'a (inclinação; x² no modo 1)',min:-5,max:5,v:1},{k:'b',l:'b (corte no eixo y; x no modo 1)',min:-10,max:10,v:0},{k:'c',l:'c (termo solto no modo 1; inclinação de g no modo 2)',min:-10,max:10,v:0},{k:'d',l:'d (corte no eixo y de g, modo 2)',min:-10,max:10,v:2}],
+ reset:{modo:0,a:1,b:0,c:0,d:2,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.modo=cl(v.modo,0,2);v.a=cl(v.a,-5,5);v.b=cl(v.b,-10,10);v.c=cl(v.c,-10,10);v.d=cl(v.d,-10,10);if(v.modo===1&&v.a===0)v.a=1;v.oc=v.oc?1:0},
+ info(v){const m=v.modo,a=v.a,b=v.b;
+  if(m===0){const e=fnExp(a,b);
+   if(v.oc&&!locked)return 'Gráfico de uma função afim · leia os valores no desenho';
+   if(!locked)return `${e} · mexa em a e b e veja a reta mudar`;
+   return `${e} · ${a>0?'crescente':a<0?'decrescente':'constante'} · corta o eixo y em ${fnMn(b)}${a?` · zero em x = ${fnNum(-b/a)}`:''}`}
+  if(m===1){const e=fnQExp(a,b,v.c);
+   if(v.oc&&!locked)return 'Gráfico de uma função · leia os valores no desenho';
+   if(!locked)return `${e} · mexa em a, b e c e veja a parábola mudar`;
+   const xv=-b/(2*a),yv=a*xv*xv+b*xv+v.c;return `${e} · abre para ${a>0?'cima':'baixo'} · ${a>0?'ponto mais baixo':'ponto mais alto'} em (${fnNum(xv)}, ${fnNum(yv)}) · corta o eixo y em ${fnMn(v.c)}`}
+  const e1=fnExp(a,b),e2=fnExp(v.c,v.d,'g');
+  if(v.oc&&!locked)return 'Gráfico de duas funções · leia os valores no desenho';
+  if(!locked)return `${e1} (azul) · ${e2} (rosa)`;
+  return `${e1} (azul) · ${e2} (rosa) · ${a===v.c?'mesma inclinação, retas paralelas':`as retas se cruzam em x = ${fnNum((v.d-b)/(a-v.c))}`}`},
+ draw(c,v,W,H,k){const R=10,th=Math.max(120,H-20),tw=W-th>=124?Math.min(136,W-th-8):0,Wl=W-tw,tam=Math.max(120,Math.min(Wl-24,H-20)),s=tam/(2*R+2),ox=Wl/2,oy=H/2,X=x=>ox+x*s,Y=y=>oy-y*s,ocu=v.oc&&!locked,m=v.modo,a=v.a,b=v.b;
+  const f1=m===1?(x=>a*x*x+b*x+v.c):(x=>a*x+b),f2=x=>v.c*x+v.d;
+  c.lineWidth=1;c.strokeStyle=k.m;c.globalAlpha=.25;
+  for(let i=-R;i<=R;i++){c.beginPath();c.moveTo(X(i),Y(-R));c.lineTo(X(i),Y(R));c.stroke();c.beginPath();c.moveTo(X(-R),Y(i));c.lineTo(X(R),Y(i));c.stroke()}
+  c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=2;c.beginPath();c.moveTo(X(-R-.8),Y(0));c.lineTo(X(R+.8),Y(0));c.moveTo(X(0),Y(-R-.8));c.lineTo(X(0),Y(R+.8));c.stroke();
+  c.fillStyle=k.m;c.font='10px sans-serif';c.textAlign='center';
+  for(let i=-R;i<=R;i+=2)if(i){c.fillText(String(i),X(i),Y(0)+13);c.textAlign='right';c.fillText(String(i),X(0)-5,Y(i)+3);c.textAlign='center'}
+  c.fillStyle=k.t;c.font='bold 12px sans-serif';c.fillText('x',X(R+.8)-4,Y(0)-6);c.fillText('y',X(0)+10,Y(R+.8)+8);
+  c.save();c.beginPath();c.rect(X(-R),Y(R),X(R)-X(-R),Y(-R)-Y(R));c.clip();
+  const curva=(f,col)=>{c.strokeStyle=col;c.lineWidth=3;c.beginPath();for(let i=0;i<=240;i++){const x=-R+i*2*R/240,y=f(x);if(i)c.lineTo(X(x),Y(y));else c.moveTo(X(x),Y(y))}c.stroke()};
+  curva(f1,k.c1);if(m===2)curva(f2,k.pk);
+  c.restore();
+  const pt=(x,y,col,rot)=>{if(Math.abs(x)>R||Math.abs(y)>R)return;c.fillStyle=col;c.beginPath();c.arc(X(x),Y(y),6,0,7);c.fill();c.strokeStyle='#fff';c.lineWidth=1.5;c.stroke();if(rot){c.fillStyle=k.t;c.font='bold 11px sans-serif';c.textAlign='left';c.fillText(rot,X(x)+9,Y(y)-8);c.textAlign='center'}};
+  if(!ocu){
+   pt(0,m===1?v.c:b,k.a,fnPar(0,m===1?v.c:b));
+   if(locked){
+    if(m===0&&a)pt(-b/a,0,k.gr,`(${fnNum(-b/a)}, 0)`);
+    if(m===1){const xv=-b/(2*a);pt(xv,f1(xv),k.gr,'vértice')}
+    if(m===2&&a!==v.c){const xc=(v.d-b)/(a-v.c);pt(xc,f1(xc),k.gr,'cruzam')}}}
+  if(tw){
+   const x0=Wl+10,y0=oy-72,col=m===2?3:2,cw=(tw-16)/col;c.textAlign='center';c.font='bold 12px sans-serif';
+   if(ocu){c.fillStyle=k.m;c.font='11px sans-serif';c.fillText('tabela escondida',Wl+tw/2,oy-4);c.fillText('até a resposta',Wl+tw/2,oy+12)}
+   else{c.fillStyle=k.t;['x','f(x)','g(x)'].slice(0,col).forEach((t,i)=>c.fillText(t,x0+cw*(i+.5),y0));
+    c.globalAlpha=.3;c.strokeStyle=k.m;c.lineWidth=1;c.beginPath();c.moveTo(x0,y0+6);c.lineTo(x0+tw-16,y0+6);c.stroke();c.globalAlpha=1;
+    c.font='12px sans-serif';[-2,-1,0,1,2].forEach((x,r)=>{const yy=y0+26+r*24;c.fillStyle=k.t;c.fillText(String(fnMn(x)),x0+cw*.5,yy);c.fillStyle=k.c1;c.fillText(fnMn(f1(x)),x0+cw*1.5,yy);if(m===2){c.fillStyle=k.pk;c.fillText(fnMn(f2(x)),x0+cw*2.5,yy)}})}}
+  c.textAlign='left'},
+ rod:8,gens:FUNC_GENS});
+
 const O6=['nat','adsub','muldiv','tabmul','tabdiv','fra','solidos'],ix=MODS.map((m,i)=>m.ano===6?i:-1).filter(i=>i>=0),st=ix.map(i=>MODS[i]).sort((x,y)=>{const a=O6.indexOf(x.id),b=O6.indexOf(y.id);return (a<0?99:a)-(b<0?99:b)});ix.forEach((i,j)=>{MODS[i]=st[j]});
 })();
 
@@ -3666,15 +3851,16 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
     alg:    { eixo:'Álgebra', bncc:['EF07MA13','EF07MA14','EF07MA15','EF07MA16','EF08MA06'], prereq:['muldiv'], proximo:['equiv','eq'], objetivos:['Traduzir linguagem natural em expressões','Identificar coeficiente e variável','Calcular valor numérico'], tempo:'3 aulas' },
     equiv:  { eixo:'Álgebra', bncc:['EF07MA16','EF08MA06','EF09MA09'], prereq:['alg'], proximo:['eq','eq2'], objetivos:['Aplicar a propriedade distributiva','Fatorar expressões simples','Reconhecer equivalência'], tempo:'3 aulas' },
     area:   { eixo:'Geometria', bncc:['EF07MA31','EF07MA32','EF08MA19'], prereq:['muldiv','solidos'], proximo:['pit'], objetivos:['Calcular área de figuras planas','Diferenciar área de perímetro','Resolver problemas com unidades'], tempo:'4 aulas' },
-    eq2:    { eixo:'Álgebra', bncc:['EF08MA09','EF09MA09'], prereq:['eq','equiv'], proximo:[], objetivos:['Resolver equações do 2º grau','Interpretar o discriminante','Relacionar raízes e gráfico'], tempo:'5 aulas' },
+    eq2:    { eixo:'Álgebra', bncc:['EF08MA09','EF09MA09'], prereq:['eq','equiv'], proximo:['func'], objetivos:['Resolver equações do 2º grau','Interpretar o discriminante','Relacionar raízes e gráfico'], tempo:'5 aulas' },
     tri:    { eixo:'Geometria', bncc:['EF06MA19','EF07MA24'], prereq:['ang'], proximo:['pit'], objetivos:['Somar ângulos internos','Classificar triângulos','Aplicar a desigualdade triangular'], tempo:'3 aulas' },
     pit:    { eixo:'Geometria', bncc:['EF09MA13','EF09MA14'], prereq:['area','tri'], proximo:['cart'], objetivos:['Aplicar o Teorema de Pitágoras','Calcular catetos e hipotenusa','Reconhecer ternas pitagóricas'], tempo:'4 aulas' },
     tales:  { eixo:'Geometria', bncc:['EF09MA14'], prereq:['fra','tri'], proximo:['pit'], objetivos:['Aplicar o Teorema de Tales','Resolver proporções com segmentos','Aplicar em problemas de sombra'], tempo:'3 aulas' },
     pot:    { eixo:'Números', bncc:['EF08MA01','EF08MA02','EF09MA02'], prereq:['muldiv'], proximo:['pit','eq2'], objetivos:['Ler potência como multiplicação repetida','Reconhecer quadrados perfeitos e calcular raiz quadrada','Operar com potências de 10'], tempo:'3 aulas' },
     expr:   { eixo:'Números', bncc:['EF06MA03'], prereq:['muldiv'], proximo:['alg','equiv'], objetivos:['Aplicar a prioridade das operações','Resolver expressões com parênteses','Resolver expressões com parênteses, colchetes e chaves'], tempo:'3 aulas' },
     dec:    { eixo:'Números', bncc:['EF06MA08','EF06MA11','EF06MA13','EF07MA02'], prereq:['fra'], proximo:['prob','med'], objetivos:['Converter entre fração, decimal e porcentagem','Operar com números decimais','Resolver problemas de porcentagem, desconto e aumento'], tempo:'4 aulas' },
-    cart:   { eixo:'Geometria', bncc:['EF06MA16','EF07MA19','EF07MA20','EF09MA16'], prereq:['int','sinais'], proximo:[], objetivos:['Localizar pontos com pares ordenados','Reconhecer quadrantes e eixos','Aplicar reflexões e deslocamentos','Calcular distância entre pontos'], tempo:'4 aulas' },
+    cart:   { eixo:'Geometria', bncc:['EF06MA16','EF07MA19','EF07MA20','EF09MA16'], prereq:['int','sinais'], proximo:['func'], objetivos:['Localizar pontos com pares ordenados','Reconhecer quadrantes e eixos','Aplicar reflexões e deslocamentos','Calcular distância entre pontos'], tempo:'4 aulas' },
     med:    { eixo:'Grandezas e Medidas', bncc:['EF06MA24','EF07MA29','EF08MA20','EF09MA18'], prereq:['nat','muldiv'], proximo:['prob','dec'], objetivos:['Converter unidades de medida','Operar com unidades mistas','Estimar ordem de grandeza'], tempo:'4 aulas' },
+    func:   { eixo:'Álgebra', bncc:['EF09MA06'], prereq:['alg','eq','cart'], proximo:[], objetivos:['Reconhecer função como relação em que cada x tem um só y','Ler tabela, expressão e gráfico da mesma função','Identificar coeficiente angular e termo independente','Resolver problemas com função afim e quadrática'], tempo:'4 aulas' },
     prob:   { eixo:'Probabilidade e Estatística', bncc:['EF06MA30','EF07MA34','EF07MA35','EF08MA22','EF08MA25'], prereq:['fra','dec'], proximo:[], objetivos:['Calcular probabilidade teórica','Comparar frequência relativa e probabilidade teórica','Calcular média, mediana e moda'], tempo:'4 aulas' }
 };
   for (const m of MODS) {
@@ -3684,7 +3870,7 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
   }
   window.__meta = META;
   /* Ordem pedagógica na home: dentro de cada eixo, do mais básico ao mais avançado */
-  const ORDEM_HOME=['nat','adsub','muldiv','tabmul','tabdiv','mmc','primos','fra','dec','pot','expr','int','sinais','alg','equiv','eq','eq2','solidos','ang','tri','area','pit','tales','cart','med','prob'];
+  const ORDEM_HOME=['nat','adsub','muldiv','tabmul','tabdiv','mmc','primos','fra','dec','pot','expr','int','sinais','alg','equiv','eq','eq2','func','solidos','ang','tri','area','pit','tales','cart','med','prob'];
   const pos=m=>{const i=ORDEM_HOME.indexOf(m.id);return i<0?999:i};
   MODS.sort((a,b)=>pos(a)-pos(b));
 })();
@@ -3849,6 +4035,12 @@ const DESC={
  cart:v=>`Plano cartesiano com eixos x e y de menos 8 a 8${v.modo===0?`, e o ponto A em x ${sg(v.x)}, y ${sg(v.y)}`:v.modo===2?`, com o ponto A em x ${sg(v.x)}, y ${sg(v.y)} e o ponto B em x ${sg(v.a)}, y ${sg(v.b)}`:''}`,
  med:()=>'Escada de unidades em ordem de tamanho, com o fator de conversão entre cada par de unidades vizinhas',
  prob:v=>v.modo===0?`Gráfico de barras com quantas vezes saiu cada face do dado em ${pl(v.n,'lançamento','lançamentos')}. Uma linha tracejada marca a probabilidade teórica`:v.modo===1?`Urna com ${pl(v.r,'bola vermelha','bolas vermelhas')}, ${pl(v.az,'azul','azuis')} e ${pl(v.vd,'verde','verdes')}, e um gráfico de barras com o resultado de ${pl(v.n,'sorteio','sorteios')} com reposição`:'Gráfico de pontos: cada bolinha é um valor do conjunto de dados'
+ ,func:v=>{const m=v.modo|0,base='Plano cartesiano com eixos de menos 10 a 10',tm=(n,t)=>`${n<0?'menos':'mais'} ${Math.abs(n)}${t}`,tab=f=>[-2,-1,0,1,2].map(x=>`x ${sg(x)}, y ${sg(f(x))}`).join('; ');
+  if(v.oc&&!locked)return base+(m===1?', com uma parábola':m===2?', com duas retas':', com uma reta')+'. A expressão e a tabela ficam escondidas até você responder';
+  if(m===1){const a=v.a||1,f=x=>a*x*x+v.b*x+v.c;return `${base}, com a parábola de f de x igual a ${sg(a)} x ao quadrado ${v.b?tm(v.b,' x')+' ':''}${v.c?tm(v.c,''):''}, que corta o eixo y em ${sg(v.c)}. Tabela: ${tab(f)}${locked?`. Abre para ${a>0?'cima':'baixo'}`:''}`}
+  if(m===2){const f=x=>v.a*x+v.b,g=x=>v.c*x+v.d;return `${base}, com duas retas: f, em azul, de f de x igual a ${sg(v.a)} x ${tm(v.b,'')}, e g, em rosa, de g de x igual a ${sg(v.c)} x ${tm(v.d,'')}. Tabela de f: ${tab(f)}. Tabela de g: ${tab(g)}`}
+  const f=x=>v.a*x+v.b;if(!v.a)return `${base}, com uma reta horizontal na altura ${sg(v.b)}, gráfico de f de x igual a ${sg(v.b)}. Tabela: ${tab(f)}`;
+  return `${base}, com a reta de f de x igual a ${sg(v.a)} x ${tm(v.b,'')}, que corta o eixo y em ${sg(v.b)}. Tabela: ${tab(f)}${locked?`. A reta é ${v.a>0?'crescente':'decrescente'}`:''}`}
 };
 MODS.forEach(m=>{if(DESC[m.id])m.desc=DESC[m.id]});
 window.__desc=DESC;
@@ -3856,7 +4048,7 @@ window.__desc=DESC;
 
 /* ===== BOLETIM DO ALUNO E RELATÓRIO DA TURMA (PDF por impressão) ===== */
 (()=>{
-const DICAS={prob:'Comparar no simulador a frequência observada com a probabilidade teórica e aumentar o número de lançamentos.',fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
+const DICAS={func:'Voltar ao gráfico do simulador: mexer em a e em b e observar o que muda na reta e na tabela.',prob:'Comparar no simulador a frequência observada com a probabilidade teórica e aumentar o número de lançamentos.',fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
 const fmtData=d=>d?String(d).split('-').reverse().join('/'):'';
 const pct=(n,d)=>d?Math.round(n*100/d):null;
 const pctT=(n,d)=>d?Math.round(n*100/d)+'%':'—';

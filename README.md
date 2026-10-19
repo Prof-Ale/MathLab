@@ -12,7 +12,7 @@ O MathLab é gratuito e continua sendo. Gratuito não quer dizer sem condições
 
 ## Assuntos disponíveis
 
-São 26 assuntos, organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
+São 27 assuntos, organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
 
 **Números**
 * 6º, Números naturais e sistema posicional: ordens, classes, valor posicional e comparação
@@ -34,6 +34,7 @@ São 26 assuntos, organizados pelos cinco eixos da BNCC. O ano indica a série e
 * 7º, Expressões equivalentes: duas máquinas, mesma saída, distributiva e fatoração
 * 7º, Equação do 1º grau: balança de dois pratos
 * 9º, Equação do 2º grau: parábola, raízes, discriminante e Bhaskara
+* 9º, Funções: tabela, expressão e gráfico, função afim (coeficiente angular, zero, crescimento) e noções de função quadrática
 
 **Geometria**
 * 6º, Sólidos geométricos: poliedros, corpos redondos e planificações, com cena 3D (GeoGebra)
@@ -49,8 +50,6 @@ São 26 assuntos, organizados pelos cinco eixos da BNCC. O ano indica a série e
 
 **Probabilidade e Estatística**
 * 8º, Probabilidade e estatística: dados, moedas e urnas, frequência relativa, média, mediana e moda
-
-Em desenvolvimento: Funções afim e quadrática.
 
 ## Recursos pedagógicos
 
@@ -214,7 +213,7 @@ Ele verifica a forma de cada questão, o texto (NaN, undefined, concordância), 
 ## Roteiro
 
 Concluído:
-* Eixos Números, Álgebra, Geometria, Grandezas e Medidas e Probabilidade e Estatística, com 26 assuntos
+* Eixos Números, Álgebra, Geometria, Grandezas e Medidas e Probabilidade e Estatística, com 27 assuntos, até Funções no 9º ano
 * Sólidos geométricos em 3D (GeoGebra), com planificação e construção
 * Questões sorteadas, alternativas embaralhadas e níveis adaptativos
 * Perfis, relatório docente, backup e restauração
@@ -225,7 +224,6 @@ Concluído:
 * Descrição dos desenhos para leitor de tela e tema do GeoGebra
 
 Em andamento:
-* Funções afim e quadrática
 * Refatoração do código (hooks no lugar de wrappers, lista "Em breve" como dados, repositório dividido com build e testes)
 * Leitura direta da interação do aluno no GeoGebra, em atividades 2D
 
