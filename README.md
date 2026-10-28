@@ -267,3 +267,20 @@ Este texto não substitui orientação jurídica. As imagens e marcas de terceir
 O MathLab tem duas aparências. A nova abre por padrão e traz abertura com o logo, os cinco eixos em cartões, saudação pelo horário e o botão da assistente ADA. O botão "Voltar ao Clássico", no topo, devolve a tela anterior sem perder o progresso. A escolha fica gravada no navegador. A abertura aparece uma vez por sessão e espera o clique em "Entrar no laboratório" (ou em Pular, ou a tecla Esc). Quem usa "reduzir movimento" no aparelho vê a abertura sem animação.
 
 A nova aparência é uma camada visual separada: não muda módulos, geradores, pontuação nem o registro de respostas. Dentro do código, ela ocupa um bloco de estilo (`skinCss`) e um bloco de script (`skinJs`) no fim do arquivo. Se o script falhar, o app continua no Clássico.
+
+## Arena MathLab (modo local, para a sala)
+
+A Arena é uma partida para projetor, em equipes ou individual, aberta pelo botão "Arena" no topo do MathLab (ou direto em `arena.html`).
+
+**Como joga.** O professor monta a partida: participantes (equipes ou apelidos, até 8), nível (progressivo ou fixo), quantidade de questões (5 a 20), tempo por questão (15 a 60 segundos ou sem limite) e os assuntos de qualquer ano. A questão aparece grande, com a figura do simulador quando há. Com duas ou mais equipes, o professor registra a resposta de cada uma nos botões A a D e revela quando quiser. Com um só participante, ele clica na alternativa ou usa as teclas A a D. Ao revelar, aparecem a resposta, a explicação e o placar.
+
+**Pontuação.** Acerto 100 pontos. Sequência de 3 acertos, mais 30. Sequência de 5 ou mais, mais 60. Erro ou sem resposta, zero. O bônus de rapidez (até 25 pontos) vem desligado: ele mede o tempo até o professor marcar a resposta, então só faz sentido se as equipes forem marcadas na ordem em que respondem. Empate fica empatado.
+
+**Fim da partida.** Pódio, classificação, os tipos de engano mais comuns da sala (vindos da classificação de erros do MathLab, sem nomes) e as questões que mais desafiaram, com a explicação. Dá para imprimir ou salvar em PDF.
+
+**Privacidade e isolamento.**
+- A Arena usa só apelidos ou nomes de equipe e não grava nada no progresso do MathLab (XP, níveis, histórico de respostas).
+- Guarda no aparelho apenas as últimas 30 partidas (data, quantidade de questões, primeiro lugar e pontos) e suas preferências (tema, fonte, som).
+- Fica em dois arquivos próprios, `arena.html` e `arena.js`. O `index.html` só ganhou uma ponte de uma linha (`arenaPonte`) que entrega os geradores à Arena. Se a Arena falhar, o MathLab segue normal.
+- O assunto Sólidos geométricos fica de fora, porque depende do 3D do GeoGebra.
+- Publique `index.html`, `arena.html`, `arena.js` e `sw.js` juntos. A Arena precisa abrir por endereço de internet (o site do MathLab) ou servidor local. Abrir o arquivo direto do computador é bloqueado pelo navegador.

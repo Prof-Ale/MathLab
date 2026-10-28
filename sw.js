@@ -5,9 +5,11 @@
    - Ícones e manifesto: cache primeiro.
    - GeoGebra (3D) e ADA ficam fora do cache: precisam de internet e o app já avisa.
    Mude VERSAO só quando alterar ESTE arquivo ou a lista SHELL. Isso mostra o aviso "nova versão". */
-const VERSAO = 'mathlab-2026-10-18-1';
+const VERSAO = 'mathlab-2026-10-28-1';
 const CRITICOS = ['./', 'index.html', 'manifest.webmanifest'];
-const EXTRAS = ['icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
+const EXTRAS = ['icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'arena.html', 'arena.js'];
+// Arena: arquivos que também tentam a rede primeiro, para atualizar sem mexer neste arquivo.
+const REDE_PRIMEIRO = ['arena.js', 'arena.html'];
 const IMAGENS_EXTERNAS = ['lh3.googleusercontent.com', 'api.dicebear.com'];
 
 self.addEventListener('install', e => {
@@ -34,14 +36,32 @@ function comTimeout(req, ms) {
   });
 }
 
+function chaveDe(url) {
+  const f = new URL(url).pathname.split('/').pop();
+  return REDE_PRIMEIRO.includes(f) ? f : 'index.html';
+}
+
 async function navegar(req) {
   const c = await caches.open(VERSAO);
+  const chave = chaveDe(req.url);
   try {
     const r = await comTimeout(req, 2500);
-    if (r && r.ok && r.type === 'basic') c.put('index.html', r.clone());
+    if (r && r.ok && r.type === 'basic') c.put(chave, r.clone());
     return r;
   } catch (_) {
-    return (await c.match('index.html')) || (await c.match('./')) || Response.error();
+    return (await c.match(chave)) || (await c.match('index.html')) || (await c.match('./')) || Response.error();
+  }
+}
+
+async function redePrimeiro(req) {
+  const c = await caches.open(VERSAO);
+  const chave = chaveDe(req.url);
+  try {
+    const r = await comTimeout(req, 2500);
+    if (r && r.ok && r.type === 'basic') c.put(chave, r.clone());
+    return r;
+  } catch (_) {
+    return (await c.match(chave)) || Response.error();
   }
 }
 
@@ -67,6 +87,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin === self.location.origin) {
     if (req.mode === 'navigate') e.respondWith(navegar(req));
+    else if (REDE_PRIMEIRO.includes(url.pathname.split('/').pop())) e.respondWith(redePrimeiro(req));
     else e.respondWith(cachePrimeiro(req).catch(() => Response.error()));
     return;
   }
