@@ -264,6 +264,6 @@ Este texto não substitui orientação jurídica. As imagens e marcas de terceir
 
 ## Nova aparência (skin v2)
 
-O MathLab tem duas aparências. A nova abre por padrão e traz abertura com o logo, os cinco eixos em cartões, saudação pelo horário e o botão da assistente ADA. O botão "Voltar ao Clássico", no topo, devolve a tela anterior sem perder o progresso. A escolha fica gravada no navegador. A abertura aparece uma vez por sessão e pode ser pulada. Quem usa "reduzir movimento" no aparelho vê a abertura sem animação.
+O MathLab tem duas aparências. A nova abre por padrão e traz abertura com o logo, os cinco eixos em cartões, saudação pelo horário e o botão da assistente ADA. O botão "Voltar ao Clássico", no topo, devolve a tela anterior sem perder o progresso. A escolha fica gravada no navegador. A abertura aparece uma vez por sessão e espera o clique em "Entrar no laboratório" (ou em Pular, ou a tecla Esc). Quem usa "reduzir movimento" no aparelho vê a abertura sem animação.
 
 A nova aparência é uma camada visual separada: não muda módulos, geradores, pontuação nem o registro de respostas. Dentro do código, ela ocupa um bloco de estilo (`skinCss`) e um bloco de script (`skinJs`) no fim do arquivo. Se o script falhar, o app continua no Clássico.
