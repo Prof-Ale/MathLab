@@ -321,6 +321,32 @@ const CONF = {
     if (/instante a bola atinge a altura máxima/.test(q.q)) return igual(certo(q), `${tm} s`);
     if (/volta ao chão/.test(q.q)) { let z = null; for (let t = 1; t <= 12; t++) if (h(t) === 0) { z = t; break; } return igual(certo(q), `${z} s`); }
     return 'variante não reconhecida';
+  },
+  // ---------- pi ----------
+  'pi:1:1': q => { const m = q.q.match(/tem (raio|diâmetro) (\d+) cm/); return igualNum(pt(certo(q)), m[1] === 'raio' ? 2 * +m[2] : +m[2] / 2); },
+  'pi:1:2': q => {
+    const t = q.q, esp = /volta completa/.test(t) ? 'circunferência' : /passa pelo centro/.test(t) ? 'diâmetro' : /liga o centro/.test(t) ? 'raio' : /espaço existe dentro/.test(t) ? 'área' : null;
+    return esp ? igual(certo(q), esp) : 'enunciado não reconhecido';
+  },
+  'pi:1:3': q => { const m = q.q.match(/volta de .*: ([\d,]+) cm\. O diâmetro mede (\d+) cm/); return igualNum(pt(certo(q)), pt(m[1]) / +m[2], 1e-3); },
+  'pi:1:4': q => { const D = +q.q.match(/diâmetro (\d+) cm/)[1]; return igualNum(pt(certo(q)), 3 * D); },
+  'pi:2:1': q => { const r = +q.q.match(/raio (\d+) cm/)[1]; return igualNum(pt(certo(q)), 2 * 3.14 * r, 1e-6); },
+  'pi:2:2': q => {
+    const d = +q.q.match(/diâmetro (\d+) cm/)[1];
+    const pi = /25\/8/.test(q.q) ? 25 / 8 : /22\/7/.test(q.q) ? 22 / 7 : 3.14;
+    return igualNum(pt(certo(q)), pi * d, 1e-6);
+  },
+  'pi:2:3': q => { const m = q.q.match(/raio (\d+) cm\. Quantos centímetros .* em (\d+) voltas/); return igualNum(pt(certo(q)), 2 * 3.14 * m[1] * m[2], 1e-6); },
+  'pi:2:4': q => { const C = pt(q.q.match(/mede ([\d,]+) cm/)[1]); return igualNum(pt(certo(q)), C / (2 * 3.14), 1e-6); },
+  'pi:3:1': q => { const m = q.q.match(/tem (raio|diâmetro) (\d+) cm/), r = m[1] === 'raio' ? +m[2] : +m[2] / 2; return igualNum(pt(certo(q)), 3.14 * r * r, 1e-6); },
+  'pi:3:2': q => { const m = q.q.match(/raio (\d+) cm é cortada .*?em (2|4) (?:metades|fatias)/); return igualNum(pt(certo(q)), 3.14 * m[1] * m[1] / m[2], 1e-6); },
+  'pi:3:3': q => {
+    const r = +q.q.match(/raio (\d+) m/)[1], p = +q.q.match(/R\$ (\d+),00 o metro/)[1];
+    return igualNum(pt(certo(q)), /cerca/.test(q.q) ? 2 * 3.14 * r * p : 3.14 * r * r * p, 1e-6);
+  },
+  'pi:3:4': q => {
+    const k = /quadruplica/.test(q.q) ? 4 : /triplica/.test(q.q) ? 3 : 2, circ = /circunferência\?/.test(q.q);
+    return igual(certo(q), `fica ${circ ? k : k * k} vezes maior`);
   }
 };
 // Avalia o lado direito de uma função escrita como no app: "3x − 5", "−x² + 4x", "t" também vale como variável.

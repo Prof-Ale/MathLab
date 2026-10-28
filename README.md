@@ -12,7 +12,7 @@ O MathLab é gratuito e continua sendo. Gratuito não quer dizer sem condições
 
 ## Assuntos disponíveis
 
-São 27 assuntos, organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
+São 28 assuntos, organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
 
 **Números**
 * 6º, Números naturais e sistema posicional: ordens, classes, valor posicional e comparação
@@ -39,6 +39,7 @@ São 27 assuntos, organizados pelos cinco eixos da BNCC. O ano indica a série e
 **Geometria**
 * 6º, Sólidos geométricos: poliedros, corpos redondos e planificações, com cena 3D (GeoGebra)
 * 7º, Ângulos: classificação, complementares e triângulos
+* 7º, O número π: volta do círculo desenrolada, tabela de raio, diâmetro, volta e razão C ÷ d, área do círculo, problemas históricos (25/8 dos babilônios, 22/7 de Arquimedes) e a história do π em nove paradas
 * 7º, Plano cartesiano: coordenadas, quadrantes, reflexões e distância entre pontos
 * 8º, Triângulos: soma dos ângulos, classificação e desigualdade triangular
 * 8º, Áreas e perímetros: retângulo, triângulo, paralelogramo, trapézio e círculo
@@ -213,7 +214,7 @@ Ele verifica a forma de cada questão, o texto (NaN, undefined, concordância), 
 ## Roteiro
 
 Concluído:
-* Eixos Números, Álgebra, Geometria, Grandezas e Medidas e Probabilidade e Estatística, com 27 assuntos, até Funções no 9º ano
+* Eixos Números, Álgebra, Geometria, Grandezas e Medidas e Probabilidade e Estatística, com 28 assuntos, de Números naturais ao número π e às Funções do 9º ano
 * Sólidos geométricos em 3D (GeoGebra), com planificação e construção
 * Questões sorteadas, alternativas embaralhadas e níveis adaptativos
 * Perfis, relatório docente, backup e restauração
@@ -260,3 +261,9 @@ Modelo de crédito:
 Pedidos de autorização ou dúvidas: pelo perfil do autor no GitHub (Prof-Ale), na aba Issues deste repositório.
 
 Este texto não substitui orientação jurídica. As imagens e marcas de terceiros citadas acima (GeoGebra, Google, Netlify e outros) pertencem aos seus respectivos titulares e seguem os termos deles.
+
+## Nova aparência (skin v2)
+
+O MathLab tem duas aparências. A nova abre por padrão e traz abertura com o logo, os cinco eixos em cartões, saudação pelo horário e o botão da assistente ADA. O botão "Voltar ao Clássico", no topo, devolve a tela anterior sem perder o progresso. A escolha fica gravada no navegador. A abertura aparece uma vez por sessão e pode ser pulada. Quem usa "reduzir movimento" no aparelho vê a abertura sem animação.
+
+A nova aparência é uma camada visual separada: não muda módulos, geradores, pontuação nem o registro de respostas. Dentro do código, ela ocupa um bloco de estilo (`skinCss`) e um bloco de script (`skinJs`) no fim do arquivo. Se o script falhar, o app continua no Clássico.
