@@ -284,3 +284,29 @@ A Arena é uma partida para projetor, em equipes ou individual, aberta pelo bot�
 - Fica em dois arquivos próprios, `arena.html` e `arena.js`. O `index.html` só ganhou uma ponte de uma linha (`arenaPonte`) que entrega os geradores à Arena. Se a Arena falhar, o MathLab segue normal.
 - O assunto Sólidos geométricos fica de fora, porque depende do 3D do GeoGebra.
 - Publique `index.html`, `arena.html`, `arena.js` e `sw.js` juntos. A Arena precisa abrir por endereço de internet (o site do MathLab) ou servidor local. Abrir o arquivo direto do computador é bloqueado pelo navegador.
+
+## Arena nos celulares (tempo real)
+
+Na tela de configuração da Arena, o bloco "Jogar com celulares, em tempo real" abre uma sala. Cada aluno entra pelo celular, escolhe um apelido e responde. O professor conduz pelo projetor, como no modo local.
+
+**Como joga.**
+1. O professor escolhe assuntos, nível, quantidade de questões e tempo, e clica em "Abrir sala para celulares".
+2. A tela mostra um código de 6 números e um QR Code. O aluno abre o endereço de `aluno.html`, digita o código e um apelido (ou aponta a câmera para o QR Code).
+3. O professor vê os alunos entrando e pode remover um apelido. Ao começar, a sala fecha para novos alunos. Quem cair da internet volta sozinho com o mesmo apelido.
+4. Em cada questão, o aluno vê o enunciado e quatro botões grandes (A, B, C, D, cada um com cor e forma). Figuras aparecem só no projetor. O professor acompanha quantos já responderam e revela quando quiser.
+5. Na revelação, cada celular mostra acerto ou erro, pontos ganhos, posição e a explicação. O professor vê quantos escolheram cada alternativa.
+6. No fim há pódio, classificação, tipos de engano mais comuns e as questões que mais desafiaram. "Encerrar a sala" apaga tudo do servidor.
+
+**Pontuação.** A mesma do modo local (100 por acerto, sequência de 3 mais 30, sequência de 5 ou mais mais 60). No modo celulares o bônus de rapidez (até 25) vem ligado e usa o relógio do servidor, do instante em que a questão aparece até a resposta chegar. O professor pode desligar.
+
+**Segurança e privacidade.**
+- Só apelidos. O filtro barra palavras ofensivas (palavra inteira, para não barrar "Cassio"), telefone e endereço de internet.
+- A resposta certa nunca vai para o servidor antes da revelação. A pontuação é calculada no computador do professor.
+- As regras do banco (`firebase/database.rules.json`) impedem que aluno leia as respostas dos colegas, responda duas vezes, responda por outro, forje o horário, mude pontos ou mexa na sala. Foram testadas com um simulador oficial de regras (mais de 75 verificações) e com partidas simuladas de até 30 alunos.
+- Cada sala é apagada quando o professor encerra. Se ele esquecer, a sala antiga é apagada na próxima vez que abrir uma.
+
+**Arquivos novos.** `arena-host.js` (tela do professor), `arena-live.js` (conexão com o Firebase), `arena-config.js` (dados públicos do projeto Firebase), `arena-qr.js` (gerador de QR Code, biblioteca MIT, funciona sem internet), `aluno.html` e `aluno.js` (tela do celular). Se algum faltar ou o Firebase estiver bloqueado, a Arena local continua funcionando igual.
+
+**Configuração única no Firebase.** Veja `firebase/LEIA-ME.md`. Resumo: ativar o login Anônimo, colar as regras de `firebase/database.rules.json` em Realtime Database, Regras, e conferir os domínios autorizados.
+
+**Limites do plano gratuito (Spark).** 100 conexões simultâneas somando todas as salas do projeto (uma turma de até uns 70 alunos cabe com folga; duas turmas ao mesmo tempo ficam perto do limite) e 360 MB de download por dia, o que uma aula usa em pequena parte. Se a rede da escola bloquear o Firebase, o aviso aparece na hora e o modo local continua disponível.

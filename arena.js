@@ -151,6 +151,7 @@ function telaConfig(){
   ${H.length?`<section class="ar-box" aria-labelledby="hH"><div class="ar-lin" style="justify-content:space-between"><h2 id="hH">Últimas partidas neste aparelho</h2><button class="ar-btn sec peq" type="button" onclick="ArenaUI.limpaHist()">Limpar</button></div>
     <div class="ar-tbw"><table class="ar-tb"><thead><tr><th>Data</th><th>Questões</th><th>Primeiro lugar</th><th>Pontos</th></tr></thead><tbody>${H.slice(-5).reverse().map(h=>`<tr><td>${esc(h.data)}</td><td>${h.questoes}</td><td><b>${esc(h.vencedor)}</b></td><td>${h.pontos}</td></tr>`).join('')}</tbody></table></div></section>`:''}`;
   const t=$('arT');if(t&&!E.focoConfig){E.focoConfig=true}
+  try{document.dispatchEvent(new CustomEvent('arena:config'))}catch(_){}
 }
 const UI={
   add(){const i=$('novoNome');const n=(i&&i.value||'').trim();if(!n)return;if(E.parts.length>=8){anunciar('Máximo de 8 participantes.');return}
@@ -364,4 +365,5 @@ function iniciarApp(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciarApp);else iniciarApp();
 window.__arenaEstado=E;
+window.__arenaInt={E,montar,desenharFigura,elegiveis,telaConfig,anunciar,som,esc,L,CORES,SIMB,corEixo,temFigura,fmt1,hist,HIST_KEY,EIXO_N,get PONTE(){return PONTE},get MODS(){return MODS}};
 })();
