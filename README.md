@@ -312,3 +312,26 @@ Na tela de configuração da Arena, o bloco "Jogar com celulares, em tempo real"
 **Configuração única no Firebase.** Veja `firebase/LEIA-ME.md`. Resumo: ativar o login Anônimo, colar as regras de `firebase/database.rules.json` em Realtime Database, Regras, e conferir os domínios autorizados.
 
 **Limites do plano gratuito (Spark).** 100 conexões simultâneas somando todas as salas do projeto (uma turma de até uns 70 alunos cabe com folga; duas turmas ao mesmo tempo ficam perto do limite) e 360 MB de download por dia, o que uma aula usa em pequena parte. Se a rede da escola bloquear o Firebase, o aviso aparece na hora e o modo local continua disponível.
+
+## Balança de equações (módulo novo)
+
+Módulo `balanca`, 7º ano, eixo Álgebra (BNCC EF06MA14 e EF07MA18). Complementa o módulo "Equação do 1º grau" sem alterá-lo.
+O simulador mostra uma balança de dois pratos com blocos de x e números soltos. Os controles definem a equação
+(ax + b = dx + e), o passo da resolução (0 a 3) e uma chave "mexer só no prato esquerdo", que desequilibra a balança.
+Números negativos aparecem como quadrados vazios. São 13 geradores em 3 níveis, todos elegíveis para a Arena
+(local e nos celulares). Os testes de resposta ficam em `testes-geradores.mjs`.
+
+## Probabilidade experimental (módulo novo)
+
+Módulo `probexp`, 8º ano, eixo Probabilidade e Estatística (BNCC EF07MA34, EF08MA22 e EF09MA20). Complementa "Probabilidade e estatística".
+Quatro modos: moeda (a frequência relativa se aproxima de 50% com mais lançamentos, a lei dos grandes números), roleta com
+setores de cores diferentes, tabela dos dois dados (soma igual, pelo menos ou no máximo) e a porta do prêmio (manter ou trocar).
+Os sorteios usam semente, então o mesmo estado mostra sempre o mesmo resultado. São 12 geradores em 3 níveis, elegíveis para a Arena.
+
+## Cartas surpresa (Arena nos celulares)
+
+Opção desligada por padrão, na seção "Jogar com celulares, em tempo real". Quando ligada, antes de algumas questões
+(cerca de 40% das transições, nunca duas seguidas, nunca antes da primeira) o professor sorteia uma carta para a turma toda
+e vira no projetor. Cartas: pontos em dobro, escudo da sequência (errar não zera a sequência), mais dez segundos, desafio da
+turma (70% de acertos dá 50 pontos para todos) e dica do professor. Só efeitos positivos. O efeito é aplicado pelo painel do
+professor, então os celulares e as regras do Firebase não mudam.

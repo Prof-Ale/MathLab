@@ -54,10 +54,35 @@ function salvar(){
   if(!LV||!LV.cod)return;
   try{sessionStorage.setItem(K,JSON.stringify({cod:LV.cod,cfg:LV.cfg,fase:LV.fase,qi:LV.qi,inicioEm:LV.inicioEm,tempoSeg:LV.tempoSeg,
     qs:(LV.qs||[]).map(x=>({id:x.mod.id,nivel:x.nivel,q:x.q})),placar:LV.placar,rodadas:LV.rodadas,erros:LV.erros,ultRes:LV.ultRes,dist:LV.dist,
-    sel:[...I().E.sel],nivel:I().E.nivel}))}catch(_){}
+    sel:[...I().E.sel],nivel:I().E.nivel,carta:LV.carta||null,cartaPend:LV.cartaPend===undefined?undefined:(LV.cartaPend||null)}))}catch(_){}
 }
 const lerSessao=()=>{try{return JSON.parse(sessionStorage.getItem(K)||'null')}catch(_){return null}};
 const limparSessao=()=>{try{sessionStorage.removeItem(K)}catch(_){}};
+
+/* ===== CARTAS SURPRESA (turma toda, só no painel do professor) ===== */
+const CARTAS=[
+ {id:'dobro',ic:'✨',nome:'Pontos em dobro',txt:'Nesta questão, cada acerto vale o dobro dos pontos.'},
+ {id:'escudo',ic:'🛡️',nome:'Escudo da sequência',txt:'Nesta questão, quem errar não perde a sequência de acertos.'},
+ {id:'tempo',ic:'⏳',nome:'Mais dez segundos',txt:'A turma ganha 10 segundos extras nesta questão.'},
+ {id:'desafio',ic:'🤝',nome:'Desafio da turma',txt:'Se pelo menos 70% da turma acertar, todos ganham 50 pontos.'},
+ {id:'dica',ic:'💡',nome:'Dica do professor',txt:'Você lê uma dica em voz alta antes de a turma responder.'}];
+const cartaPor=id=>CARTAS.find(c=>c.id===id)||null;
+function sortearCarta(qiProx){
+  if(!LV||!LV.cfg.cartas||LV.carta||Math.random()>=.4)return null;   // no máximo uma carta seguida de uma rodada sem carta
+  const it=LV.qs[qiProx];if(!it)return null;
+  const ok=CARTAS.filter(c=>c.id==='tempo'?(LV.cfg.tempo>0&&LV.cfg.tempo<=110):c.id==='dica'?!!(it.q.h&&it.q.h[0]):true);
+  return ok.length?ok[Math.floor(Math.random()*ok.length)]:null;
+}
+(()=>{const st=document.createElement('style');st.textContent=`
+.cs-cena{perspective:900px;display:grid;place-items:center;margin:1rem 0}
+.cs-carta{position:relative;width:min(300px,80vw);height:220px;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.cs-carta.virada{transform:rotateY(180deg)}
+.cs-lado{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:18px;display:grid;place-items:center;padding:1rem;text-align:center;border:3px solid var(--gold2,#f2b01e)}
+.cs-verso{background:linear-gradient(135deg,#12437f,#082752);color:var(--gold2,#f2b01e);font-size:5rem;font-weight:800}
+.cs-frente{background:var(--bg,#fff);color:var(--tx,#111);transform:rotateY(180deg);align-content:center;gap:.4rem}
+.cs-frente .cs-ic{font-size:3rem}.cs-frente b{font-size:1.35rem}
+.cs-aviso{margin:.4rem 0;padding:.5rem .8rem;border-radius:12px;border:2px dashed var(--gold2,#f2b01e);font-weight:600}
+@media (prefers-reduced-motion:reduce){.cs-carta{transition:none}}`;document.head.appendChild(st)})();
 
 /* ===== SEÇÃO NA TELA DE CONFIGURAÇÃO ===== */
 function inserirSecao(){
@@ -70,6 +95,7 @@ function inserirSecao(){
     <p class="ar-dica">Cada aluno entra pelo celular com um código ou QR Code, escolhe um apelido e responde. Você conduz pelo projetor. Usa os assuntos, o nível, as questões e o tempo escolhidos acima. Precisa de internet. Se a rede da escola bloquear, use o modo local.</p>
     ${ret?`<div class="lv-retomar"><span>Há uma sala aberta neste navegador (código <b>${esc(s.cod)}</b>).</span><span class="ar-lin"><button class="ar-go peq" type="button" onclick="ArenaHost.retomar()">Voltar para a sala</button><button class="ar-btn sec peq" type="button" onclick="ArenaHost.descartar()">Fechar essa sala</button></span></div>`:''}
     <label class="ar-chk"><input type="checkbox" id="lvBonus" ${bonus&&E.tempo>0?'checked':''} ${E.tempo===0?'disabled':''} onchange="ArenaHost.pref()"><span><b>Bônus de rapidez</b> (até 25 pontos). O tempo é medido pelo relógio do servidor, do instante em que a questão aparece até a resposta chegar.</span></label>
+    <label class="ar-chk"><input type="checkbox" id="lvCartas" ${p.cartas?'checked':''} onchange="ArenaHost.pref()"><span><b>Cartas surpresa</b> (opcional). De vez em quando você sorteia uma carta no projetor, para a turma toda: pontos em dobro, escudo da sequência, mais dez segundos, desafio da turma ou uma dica. Só efeitos positivos.</span></label>
     <div class="ar-lin"><button class="ar-go" type="button" onclick="ArenaHost.abrir()">Abrir sala para celulares</button></div>`;
   ref.parentNode.insertBefore(sec,ref.nextSibling);
 }
@@ -101,9 +127,9 @@ async function abrir(){
   const II=I(),E=II.E;
   if(!live()){alert('A camada em tempo real não carregou. Atualize a página.');return}
   if(!E.sel.size){alert('Marque pelo menos um assunto para a partida.');return}
-  const b=$('lvBonus');const bonus=!!(b&&b.checked&&E.tempo>0);
-  salvarPref({bonus:b?b.checked:pref().bonus!==false});
-  LV={cod:null,cfg:{total:E.total,tempo:E.tempo,bonus},sala:null,fase:'conectando',qi:0,qs:[],placar:{},rodadas:[],erros:{},dist:[],ultRes:null,timer:null,conectado:true};
+  const b=$('lvBonus');const bonus=!!(b&&b.checked&&E.tempo>0);const cb=$('lvCartas'),cartas=!!(cb&&cb.checked);
+  salvarPref({bonus:b?b.checked:pref().bonus!==false,cartas});
+  LV={cod:null,cfg:{total:E.total,tempo:E.tempo,bonus,cartas},sala:null,fase:'conectando',qi:0,qs:[],placar:{},rodadas:[],erros:{},dist:[],ultRes:null,timer:null,conectado:true};
   $('arMain').innerHTML=`<section class="ar-box" aria-live="polite"><h2 id="arT" tabindex="-1">Abrindo a sala</h2><p>Conectando ao servidor. Só um instante.</p></section>`;
   try{
     LV.cod=await live().prof.criarSala(LV.cfg);
@@ -212,10 +238,10 @@ async function comecar(){
 async function rodada(qi){
   const II=I(),E=II.E;
   clearInterval(LV.timer);
-  LV.qi=qi;E.qi=qi;E.revelada=false;LV.fase='questao';LV.revelando=false;LV.ultRes=null;LV.tempoSeg=LV.cfg.tempo;
+  LV.qi=qi;E.qi=qi;E.revelada=false;LV.fase='questao';LV.revelando=false;LV.ultRes=null;LV.tempoSeg=LV.cfg.tempo>0&&LV.carta==='tempo'?Math.min(120,LV.cfg.tempo+10):LV.cfg.tempo;
   const it=LV.qs[qi];
   try{
-    LV.inicioEm=await live().prof.publicarQuestao({qi,mod:it.mod.nome,ic:it.mod.ic,nivel:it.nivel,eixo:it.mod.eixo,q:it.q.q,o:it.q.o,fig:II.temFigura(it),tempoSeg:LV.cfg.tempo});
+    LV.inicioEm=await live().prof.publicarQuestao({qi,mod:it.mod.nome,ic:it.mod.ic,nivel:it.nivel,eixo:it.mod.eixo,q:it.q.q,o:it.q.o,fig:II.temFigura(it),tempoSeg:LV.tempoSeg});
   }catch(e){
     erroTela('Não consegui enviar a questão aos celulares',e&&e.message,`<button class="ar-go" type="button" onclick="ArenaHost.rodada(${qi})">Tentar de novo</button>`);return;
   }
@@ -253,6 +279,7 @@ function telaQuestao(){
     <div class="ar-top"><div class="ar-info"><span class="ar-pill"><b>Questão ${LV.qi+1}</b> de ${LV.qs.length}</span><span class="ar-pill eixo"><span aria-hidden="true">${it.mod.ic}</span> ${esc(it.mod.nome)} · Nível ${it.nivel}</span><span class="ar-pill">Sala <b>${esc(LV.cod)}</b></span></div>
       <div class="ar-lin"><button class="ar-btn sec peq" type="button" onclick="ArenaUI.ler()" aria-label="Ler a questão em voz alta">Ler em voz alta</button>
       <div class="ar-timer ${T?'':'sem'}" role="timer" aria-label="Tempo da questão"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="27" class="tr"/><circle id="arAnel" cx="32" cy="32" r="27" class="tp" style="stroke-dasharray:170;stroke-dashoffset:0"/></svg><span id="arTn">${T>0?T:'∞'}</span></div></div></div>
+    ${LV.carta&&cartaPor(LV.carta)?`<p class="cs-aviso"><span aria-hidden="true">${cartaPor(LV.carta).ic}</span> <b>Carta surpresa: ${esc(cartaPor(LV.carta).nome)}.</b> ${esc(cartaPor(LV.carta).txt)}${LV.carta==='dica'&&q.h&&q.h[0]?` <br><b>Dica:</b> ${esc(q.h[0])}`:''}</p>`:''}
     <div class="ar-grid ${fig?'com-fig':''}">
       ${fig?`<div class="ar-fig"><canvas id="arCv" role="img" aria-label="Figura da questão, sem a resposta"></canvas></div>`:''}
       <div class="ar-qc"><h2 id="arEnun" class="ar-enun" tabindex="-1">${esc(q.q)}</h2>
@@ -290,19 +317,21 @@ function calcular(it,resp,jogs){
     pl.apelido=p.apelido;
     const r=resp[p.uid];
     const valida=r&&r.qi===LV.qi&&Number.isInteger(r.op)&&r.op>=0&&r.op<4;
-    if(!valida){sem++;pl.seq=0;ganhos[p.uid]=0;return}
+    if(!valida){sem++;if(LV.carta!=='escudo')pl.seq=0;ganhos[p.uid]=0;return}
     dist[r.op]++;
     let t=(Number(r.t)-LV.inicioEm)/1000;if(!Number.isFinite(t))t=T||30;
     t=Math.max(.2,T>0?Math.min(T,t):t);
     if(r.op===q.c){
       acertos++;pl.acertos++;pl.seq++;pl.maxSeq=Math.max(pl.maxSeq,pl.seq);pl.somaTempo=Math.round((pl.somaTempo+t)*100)/100;
-      const s=core.pontuar(pl.seq,t,T,bonus);pl.pts+=s.total;ganhos[p.uid]=s.total;
+      const s=core.pontuar(pl.seq,t,T,bonus),tot=LV.carta==='dobro'?s.total*2:s.total;pl.pts+=tot;ganhos[p.uid]=tot;
     }else{
-      pl.seq=0;ganhos[p.uid]=0;
+      if(LV.carta!=='escudo')pl.seq=0;ganhos[p.uid]=0;
       if(q.tg&&q.tg[r.op]){const k=`${it.mod.nome}: ${q.tg[r.op]}`;LV.erros[k]=(LV.erros[k]||0)+1}
     }
   });
-  return {dist,sem,acertos,ganhos};
+  let desafio=null;
+  if(LV.carta==='desafio'&&jogs.length){desafio=acertos/jogs.length>=.7;if(desafio)jogs.forEach(p=>{const pl=LV.placar[p.uid];if(pl){pl.pts+=50;ganhos[p.uid]=(ganhos[p.uid]||0)+50}})}
+  return {dist,sem,acertos,ganhos,desafio};
 }
 function rankPlacar(){
   const arr=Object.keys(LV.placar).map(u=>Object.assign({uid:u},LV.placar[u]));
@@ -340,7 +369,7 @@ async function revelar(){
   LV.fase='resultado';
   LV.rodadas.push({q,modNome:it.mod.nome,nivel:it.nivel,acertos:res.acertos,total:jogs.length,dist:res.dist});
   LV.dist.push(res.dist);
-  LV.ultRes={dist:res.dist,sem:res.sem,acertos:res.acertos,total:jogs.length,ganhos:res.ganhos};
+  LV.ultRes={dist:res.dist,sem:res.sem,acertos:res.acertos,total:jogs.length,ganhos:res.ganhos,desafio:res.desafio};
   salvar();
   II.som(res.acertos?'ok':'fim');
   mostrarResultado();
@@ -359,6 +388,7 @@ function mostrarResultado(){
   $('arResultado').innerHTML=`<div class="ar-res"><h3 tabindex="-1" id="arRH">Resposta correta: ${L[q.c]}, ${esc(q.o[q.c])}</h3>
     <p><b>Por quê:</b> ${esc(q.e||'')}</p>
     <p><b>${R.acertos} de ${R.total}</b> acertaram${R.sem?` · ${R.sem} sem resposta`:''}.</p>
+    ${R.desafio===true?'<p><b>🤝 Desafio da turma cumprido!</b> Todos ganharam 50 pontos.</p>':R.desafio===false?'<p><b>🤝 Desafio da turma:</b> não foi desta vez, era preciso 70% de acertos.</p>':''}
     <div class="lv-dist" role="list" aria-label="Quantos escolheram cada alternativa">${[0,1,2,3].map(i=>`<div class="lv-d ${i===q.c?'ok':''}" role="listitem"><span class="l">${L[i]}</span><div class="b"><i style="width:${Math.round(100*R.dist[i]/mx)}%"></i></div><b>${R.dist[i]}</b></div>`).join('')}</div>
     <div class="ar-mini"><b>Placar:</b> ${topo.map(p=>`<span class="ar-ch">${p.pos}º ${esc(p.apelido)} · ${p.pts}${R.ganhos[p.uid]?` (+${R.ganhos[p.uid]})`:''}</span>`).join('')}${rk.length>5?`<span class="ar-ch">e mais ${rk.length-5}</span>`:''}</div>
     <div class="ar-lin" style="margin-top:.8rem"><button class="ar-go" type="button" id="arProx" onclick="ArenaHost.proxima()">${ult?'Ver o pódio':'Próxima questão'}</button></div></div>`;
@@ -368,7 +398,36 @@ function mostrarResultado(){
 }
 async function proxima(){
   if(!LV||LV.fase!=='resultado')return;
-  if(LV.qi+1<LV.qs.length){window.scrollTo(0,0);await rodada(LV.qi+1)}else await podio();
+  if(LV.qi+1<LV.qs.length){window.scrollTo(0,0);
+    if(LV.cfg.cartas){
+      if(LV.cartaPend===undefined){const c=sortearCarta(LV.qi+1);LV.cartaPend=c?c.id:null;salvar()}
+      if(LV.cartaPend){telaCarta(cartaPor(LV.cartaPend));return}
+    }
+    await cartaOk();
+  }else await podio();
+}
+function telaCarta(c){
+  const II=I();
+  $('arMain').innerHTML=`<section class="ar-box" aria-labelledby="arT"><h2 id="arT" tabindex="-1">Carta surpresa</h2>
+    <p>Antes da questão ${LV.qi+2}, sorteie uma carta para a turma toda. Os alunos não precisam fazer nada no celular: você anuncia o efeito em voz alta.</p>
+    <div class="cs-cena"><div class="cs-carta" id="csCarta"><div class="cs-lado cs-verso" aria-hidden="true">?</div>
+      <div class="cs-lado cs-frente" id="csFrente" aria-hidden="true"><span class="cs-ic" aria-hidden="true">${c.ic}</span><b>${esc(c.nome)}</b><span>${esc(c.txt)}</span></div></div></div>
+    <div class="ar-lin" style="justify-content:center"><button class="ar-go" type="button" id="csVirar" onclick="ArenaHost.virarCarta()">Virar a carta</button>
+      <button class="ar-go" type="button" id="csGo" hidden onclick="ArenaHost.cartaOk()">Começar a questão</button></div></section>`;
+  const t=$('csVirar');if(t)t.focus();
+  II.anunciar('Carta surpresa. Use o botão Virar a carta.');
+}
+function virarCarta(){
+  const II=I(),c=cartaPor(LV&&LV.cartaPend);if(!c)return;
+  const el=$('csCarta');if(el)el.classList.add('virada');
+  const f=$('csFrente');if(f)f.removeAttribute('aria-hidden');
+  const v=$('csVirar'),g=$('csGo');if(v)v.hidden=true;if(g){g.hidden=false;g.focus()}
+  II.som('ok');II.anunciar(`Carta sorteada: ${c.nome}. ${c.txt}`);
+}
+async function cartaOk(){
+  if(!LV||LV.fase!=='resultado')return;
+  LV.carta=LV.cfg.cartas&&LV.cartaPend?LV.cartaPend:null;LV.cartaPend=undefined;
+  await rodada(LV.qi+1);
 }
 
 /* ===== PÓDIO ===== */
@@ -416,7 +475,7 @@ async function retomar(){
   const mods=II.MODS;
   const qs=(s.qs||[]).map(x=>({mod:mods.find(m=>m.id===x.id),nivel:x.nivel,q:x.q}));
   if(qs.some(x=>!x.mod)){limparSessao();erroTela('Não consegui restaurar as questões','O MathLab foi atualizado desde que a sala abriu. Abra uma nova sala.',null);return}
-  LV={cod:s.cod,cfg:s.cfg,sala:null,fase:s.fase,qi:s.qi||0,qs,placar:s.placar||{},rodadas:s.rodadas||[],erros:s.erros||{},dist:s.dist||[],ultRes:s.ultRes||null,inicioEm:s.inicioEm,tempoSeg:(s.tempoSeg!=null?s.tempoSeg:s.cfg.tempo),timer:null,conectado:true};
+  LV={cod:s.cod,cfg:s.cfg,sala:null,fase:s.fase,qi:s.qi||0,qs,placar:s.placar||{},rodadas:s.rodadas||[],erros:s.erros||{},dist:s.dist||[],ultRes:s.ultRes||null,inicioEm:s.inicioEm,tempoSeg:(s.tempoSeg!=null?s.tempoSeg:s.cfg.tempo),timer:null,conectado:true,carta:s.carta||null,cartaPend:s.cartaPend===undefined?undefined:s.cartaPend};
   E.qs=qs;E.qi=LV.qi;E.ativa=LV.fase!=='podio'&&LV.fase!=='lobby';E.revelada=LV.fase==='resultado';
   if(s.sel)E.sel=new Set(s.sel);
   ligar();window.onbeforeunload=e=>{e.preventDefault();e.returnValue=''};
@@ -439,8 +498,8 @@ function voltar(){
   if(LV){LV.encerrando=true;clearInterval(LV.timer)}
   LV=null;window.onbeforeunload=null;I().E.ativa=false;I().telaConfig();
 }
-function prefChange(){const b=$('lvBonus');if(b)salvarPref({bonus:b.checked})}
+function prefChange(){const b=$('lvBonus'),c=$('lvCartas');salvarPref({bonus:b?b.checked:pref().bonus!==false,cartas:!!(c&&c.checked)})}
 
-window.ArenaHost={abrir,comecar,revelar,proxima,expulsar,bonus:mudarBonus,cancelar,fechar,retomar,descartar,voltar,rodada,rodadaAtual,maisTempo,pref:prefChange};
+window.ArenaHost={virarCarta,cartaOk,abrir,comecar,revelar,proxima,expulsar,bonus:mudarBonus,cancelar,fechar,retomar,descartar,voltar,rodada,rodadaAtual,maisTempo,pref:prefChange};
 window.__arenaHostEstado=()=>LV;
 })();

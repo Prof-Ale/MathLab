@@ -4008,6 +4008,404 @@ MODS.push({id:'pi',ano:7,ic:'🔵',nome:'O número π',sub:'Circunferência, di�
    if(i%2===0){c.moveTo(x,yb);c.lineTo(x+b,yb);c.lineTo(x+b/2,yb-h)}else{c.moveTo(x,yt);c.lineTo(x+b,yt);c.lineTo(x+b/2,yt+h)}c.closePath();c.fill();c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=1;c.stroke()}
   txt('r',x0-12,(yb+yt)/2+4,k.a,'bold 14px sans-serif');txt('base ≈ π × r',W/2,yb+16,k.a,'bold 13px sans-serif');c.textAlign='left'},
  rod:8,gens:PI_GENS});
+/* ===== Balança de equações (módulo novo, arquivo separado) ===== */
+const BAL_SG=n=>n<0?'−'+(-n):String(n);
+const BAL_G=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){const t=a%b;a=b;b=t}return a||1};
+const BAL_N=(n,d)=>{if(d<0){n=-n;d=-d}const g=BAL_G(n,d),p=n/g,q=d/g;return q===1?BAL_SG(p):BAL_SG(p)+'/'+q};
+const BAL_FM=(nx,c)=>{let t='';if(nx>0)t=nx===1?'x':nx+'x';if(c!==0)t+=t?(c>0?' + '+c:' − '+(-c)):BAL_SG(c);return t||'0'};
+const BAL_EQ=(a,b,d,e)=>BAL_FM(a,b)+' = '+BAL_FM(d,e);
+/* estado dos pratos em cada passo: l = prato esquerdo, r = prato direito, [blocos de x, unidades] */
+const BAL_ST=(v,p)=>{const D=v.a-v.d;
+ if(p<=0)return{l:[v.a,v.b],r:[v.d,v.e]};
+ if(p===1)return{l:[D,v.b],r:[0,v.e]};
+ if(p===2)return{l:[D,0],r:[0,v.e-v.b]};
+ const num=v.e-v.b;return{l:[1,0],r:[0,D===1?num:num/D],rt:BAL_N(num,D)}};
+const BAL_OCU=v=>v.oc===1&&!locked&&(v.p>=3||(v.p>=2&&v.a-v.d===1));
+const BAL_OP=b=>b>0?`Tirando ${b}`:`Somando ${-b}`;
+const BAL_X=v=>(v.e-v.b)/(v.a-v.d);
+const BAL_PASSO=(v,p)=>{const D=v.a-v.d;
+ if(p===0)return 'Equação original';
+ if(p===1)return v.d>0?`Passo 1: tirar ${v.d>1?v.d:''}x dos dois pratos`:'Passo 1: não há x no prato direito, nada a tirar';
+ if(p===2)return v.b>0?`Passo 2: tirar ${v.b} dos dois pratos`:v.b<0?`Passo 2: somar ${-v.b} nos dois pratos`:'Passo 2: não há número solto no prato esquerdo';
+ return D>1?`Passo 3: dividir os dois pratos por ${D}`:'Passo 3: o x já está sozinho'};
+
+const BAL_CTX=[{pl:'pacotes',sg:'pacote',it:'figurinhas'},{pl:'caixas',sg:'caixa',it:'lápis'},{pl:'sacos',sg:'saco',it:'bolinhas'}];
+const BAL_S=(a,d,b,e,p,so,oc)=>({a,d,b,e,p:p||0,so:so||0,oc:oc||0});
+const BAL_FILL=()=>String(rnd(-3,16));
+
+const BAL_GENS={
+1:[
+ /* x + b = e */
+ ()=>{const b=rnd(1,9),x=rnd(1,12),e=x+b;
+  return mk({q:`Na balança, x + ${b} = ${e}. Qual é o valor de x?`,ok:String(x),
+   bad:[[String(e+b),'somou em vez de tirar',`Para sobrar só o x, tire ${b} dos dois pratos: ${e} − ${b}.`],
+        [String(e),'não tirou o número do prato',`O ${b} também está no prato. É preciso tirar ${b} dos dois lados.`],
+        [String(b),'repetiu um número da equação','O valor de x é o que sobra depois de tirar a mesma quantidade dos dois pratos.'],
+        [String(x+1),'errou a conta da subtração',`Confira: ${e} − ${b}.`]],
+   fill:BAL_FILL,h:['Tire a mesma quantidade dos dois pratos.',`Calcule ${e} − ${b}.`],
+   e:`Tirando ${b} dos dois pratos, sobra x = ${e} − ${b} = ${x}.`,s:BAL_S(1,0,b,e,0,0,1)})},
+ /* ax = e */
+ ()=>{const a=rnd(2,6),x=rnd(1,9),e=a*x;
+  return mk({q:`${a} blocos iguais de x pesam ${e} juntos: ${a}x = ${e}. Qual é o valor de x?`,ok:String(x),
+   bad:[[String(e-a),'subtraiu em vez de dividir',`${a}x quer dizer ${a} vezes x. O contrário de multiplicar é dividir.`],
+        [String(e*a),'multiplicou em vez de dividir',`Para achar um bloco só, divida o peso total por ${a}.`],
+        [String(a),'repetiu um número da equação','Um bloco de x pesa a parte que cabe a cada bloco.'],
+        [String(x+1),'errou a conta da divisão',`Confira: ${e} ÷ ${a}.`]],
+   fill:BAL_FILL,h:['Divida os dois pratos pela mesma quantidade de blocos.',`Calcule ${e} ÷ ${a}.`],
+   e:`Dividindo os dois pratos por ${a}, cada bloco pesa x = ${e} ÷ ${a} = ${x}.`,s:BAL_S(a,0,0,e,0,0,1)})},
+ /* princípio da balança */
+ ()=>{const b=rnd(1,6),x=rnd(1,8),e=x+b;
+  return mk({q:`A balança está equilibrada: x + ${b} = ${e}. Você tira ${b} do prato esquerdo. O que fazer no prato direito para continuar equilibrada?`,ok:`Tirar ${b} também`,
+   bad:[[`Somar ${b}`,'trocou tirar por somar','Se um prato fica mais leve, somar no outro piora a diferença.'],
+        ['Não mexer em nada','achou que só um prato muda','Se só um prato muda, a balança tomba. Faça o mesmo nos dois.'],
+        [`Tirar ${e}`,'tirou o prato inteiro','Tire a mesma quantidade que saiu do outro prato, e não o prato todo.']],
+   fill:()=>`Tirar ${rnd(7,20)}`,h:['Olhe o simulador: tirando só de um lado, o que acontece?','A regra da balança é fazer a mesma coisa nos dois pratos.'],
+   e:`Para a balança continuar equilibrada, tudo que sai de um prato sai do outro: tirar ${b} também.`,s:BAL_S(1,0,b,e,2,1,0)})},
+ /* problema com caixa */
+ ()=>{const b=rnd(1,8),x=rnd(1,10),e=x+b,o=pick([['uma caixa fechada','caixa'],['uma mochila fechada','mochila'],['uma bolsa fechada','bolsa']]);
+  return mk({q:`Num prato está ${o[0]}, que pesa x, e mais um peso de ${b} kg. No outro prato há ${e} kg e a balança está equilibrada. Quanto pesa a ${o[1]}?`,ok:`${x} kg`,
+   bad:[[`${e+b} kg`,'somou em vez de tirar',`O peso solto de ${b} kg precisa sair dos dois pratos.`],
+        [`${e} kg`,'ignorou o peso solto',`A ${o[1]} não pesa o prato todo: tem mais ${b} kg junto.`],
+        [`${b} kg`,'repetiu um número do problema','Descubra o que sobra depois de tirar o peso solto dos dois lados.']],
+   fill:()=>`${rnd(1,20)} kg`,h:['Escreva a equação: x + peso solto = total.',`Calcule ${e} − ${b}.`],
+   e:`x + ${b} = ${e}. Tirando ${b} dos dois lados, x = ${e} − ${b} = ${x} kg.`,s:BAL_S(1,0,b,e,0,0,1)})}
+],
+2:[
+ /* ax + b = e */
+ ()=>{const a=rnd(2,5),x=rnd(1,9),b=rnd(1,9),e=a*x+b;
+  return mk({q:`Resolva: ${a}x + ${b} = ${e}.`,ok:String(x),
+   bad:[[BAL_N(e+b,a),'somou o número solto em vez de tirar',`Primeiro tire ${b} dos dois pratos: ${e} − ${b}.`],
+        [String(e-b),'esqueceu de dividir',`Depois de tirar ${b}, sobram ${a} blocos iguais. Divida por ${a}.`],
+        [BAL_N(e,a),'ignorou o número solto',`O ${b} também pesa. Tire ${b} antes de dividir.`],
+        [String(x+1),'errou uma conta','Confira a subtração e depois a divisão.']],
+   fill:BAL_FILL,h:[`Primeiro tire ${b} dos dois pratos.`,`Depois divida por ${a}.`],
+   e:`${a}x + ${b} = ${e}. Tirando ${b}: ${a}x = ${e-b}. Dividindo por ${a}: x = ${x}.`,s:BAL_S(a,0,b,e,0,0,1)})},
+ /* ax − b = e (número solto negativo) */
+ ()=>{const a=rnd(2,5),x=rnd(3,9),n=rnd(1,Math.min(9,a*x-1)),e=a*x-n;
+  return mk({q:`Resolva: ${a}x − ${n} = ${e}.`,ok:String(x),
+   bad:[[BAL_N(e-n,a),'subtraiu em vez de somar',`O − ${n} é uma falta. Para cancelar, some ${n} nos dois pratos.`],
+        [String(e+n),'esqueceu de dividir',`Depois de somar ${n}, divida por ${a}.`],
+        [BAL_N(e,a),'ignorou o número solto',`O − ${n} também conta. Some ${n} dos dois lados.`],
+        [String(x-1),'errou uma conta','Confira a soma e depois a divisão.']],
+   fill:BAL_FILL,h:[`Quadrado vazio vale −1. Para cancelar o − ${n}, some ${n} nos dois pratos.`,`Depois divida por ${a}.`],
+   e:`${a}x − ${n} = ${e}. Somando ${n}: ${a}x = ${e+n}. Dividindo por ${a}: x = ${x}.`,s:BAL_S(a,0,-n,e,0,0,1)})},
+ /* primeiro passo */
+ ()=>{const a=rnd(2,5),x=rnd(1,9),b=rnd(1,9),e=a*x+b;
+  return mk({q:`Para resolver ${a}x + ${b} = ${e}, qual é o melhor primeiro passo na balança?`,ok:`Tirar ${b} dos dois pratos`,
+   bad:[[`Dividir só o prato esquerdo por ${a}`,'dividiu só um lado','Dividir só um prato desequilibra a balança.'],
+        [`Tirar ${a} dos dois pratos`,'confundiu o número de blocos com o número solto',`Os ${a} são blocos de x. O número solto é o ${b}.`],
+        [`Somar ${b} nos dois pratos`,'somou em vez de tirar',`Para sumir com o ${b}, é preciso tirá-lo.`]],
+   fill:()=>`Tirar ${rnd(10,20)} dos dois pratos`,h:['Deixe os blocos de x sozinhos num prato.','O que está somado ao x precisa sair dos dois pratos.'],
+   e:`Tire ${b} dos dois pratos: ${a}x = ${e-b}. Só depois divida.`,s:BAL_S(a,0,b,e,0,0,0)})},
+ /* problema com pacotes */
+ ()=>{const a=rnd(2,6),x=rnd(2,9),b=rnd(1,9),e=a*x+b,c=pick(BAL_CTX);
+  return mk({q:`Lia tem ${a} ${c.pl} com a mesma quantidade de ${c.it} cada, e mais ${b} ${c.it} soltas. Ao todo são ${e} ${c.it}. Quantas ${c.it} há em cada ${c.sg}?`,ok:String(x),
+   bad:[[BAL_N(e+b,a),'somou as soltas em vez de tirar',`As ${b} soltas não estão nos ${c.pl}. Tire ${b} do total.`],
+        [String(e-b),'esqueceu de dividir',`Sobram ${e-b} ${c.it} nos ${a} ${c.pl}. Divida por ${a}.`],
+        [BAL_N(e,a),'dividiu o total sem tirar as soltas',`Primeiro tire as ${b} soltas.`]],
+   fill:BAL_FILL,h:[`A equação é ${a}x + ${b} = ${e}.`,`Tire ${b} e depois divida por ${a}.`],
+   e:`${a}x + ${b} = ${e}. Tirando ${b}: ${a}x = ${e-b}. Dividindo por ${a}: x = ${x}.`,s:BAL_S(a,0,b,e,0,0,1)})},
+ /* somar para cancelar a falta */
+ ()=>{const k=rnd(1,9),m=rnd(1,9);
+  return mk({q:`Na balança, o quadrado vazio vale −1. Para isolar o x em x − ${k} = ${m}, o que fazer?`,ok:`Somar ${k} nos dois pratos`,
+   bad:[[`Tirar ${k} dos dois pratos`,'tirou em vez de somar','Tirar mais uma falta aumenta a falta. Cancele somando.'],
+        [`Somar ${k} só no prato esquerdo`,'mexeu só em um prato','Se só um prato muda, a balança tomba.'],
+        [`Dividir os dois pratos por ${k}`,'confundiu soma com divisão',`O ${k} está somando (com falta), não multiplicando.`]],
+   fill:()=>`Somar ${rnd(10,20)} nos dois pratos`,h:['Uma falta de k é cancelada somando k.','Faça isso nos dois pratos.'],
+   e:`x − ${k} = ${m}. Somando ${k} nos dois pratos: x = ${m} + ${k} = ${m+k}.`,s:BAL_S(1,0,-k,m,2,0,0)})}
+],
+3:[
+ /* ax + b = dx + e */
+ ()=>{const d=rnd(1,4),D=rnd(1,4),a=d+D,x=rnd(1,8),b=rnd(-4,8)||3,e=D*x+b;
+  return mk({q:`Resolva: ${BAL_EQ(a,b,d,e)}.`,ok:String(x),
+   bad:[[BAL_N(e-b,a),'esqueceu de tirar o x do outro prato',`O ${d===1?'x':d+'x'} do prato direito também precisa sair dos dois pratos.`],
+        [BAL_N(e-b,a+d),'somou os x em vez de tirar',`Para juntar os x, tire ${d===1?'x':d+'x'} dos dois pratos.`],
+        [BAL_N(e+b,D),'errou o sinal do número solto',`Para tirar ${BAL_SG(b)} do prato esquerdo, faça a operação contrária nos dois pratos.`],
+        [String(e-b),'esqueceu de dividir',`Depois de juntar os x, divida por ${D}.`]],
+   fill:BAL_FILL,h:[`Tire ${d===1?'x':d+'x'} dos dois pratos para ficar com x só de um lado.`,'Depois resolva como uma equação comum.'],
+   e:`${BAL_EQ(a,b,d,e)}. Tirando ${d===1?'x':d+'x'}: ${BAL_EQ(D,b,0,e)}. ${BAL_OP(b)}: ${D===1?'x':D+'x'} = ${e-b}. ${D>1?`Dividindo por ${D}: `:''}x = ${x}.`,s:BAL_S(a,d,b,e,0,0,1)})},
+ /* primeiro passo com x nos dois lados */
+ ()=>{const d=rnd(1,4),D=rnd(1,4),a=d+D,x=rnd(1,8),b=rnd(1,8),e=D*x+b,dx=d===1?'x':d+'x';
+  return mk({q:`Em ${BAL_EQ(a,b,d,e)}, qual passo junta todos os x em um só prato?`,ok:`Tirar ${dx} dos dois pratos`,
+   bad:[[`Tirar ${dx} só do prato direito`,'mexeu só em um prato','Tirar de um prato só desequilibra a balança.'],
+        [`Somar ${dx} nos dois pratos`,'somou em vez de tirar',`Somar ${dx} aumenta os x dos dois lados. Para juntá-los, tire.`],
+        [`Dividir os dois pratos por ${d}`,'dividiu antes de juntar os x',`Dividir por ${d} não elimina o ${dx} do prato direito.`]],
+   fill:()=>`Tirar ${rnd(9,15)}x dos dois pratos`,h:['Há x nos dois pratos. Qual prato tem menos?','Tire essa quantidade de x dos dois pratos.'],
+   e:`O prato direito tem ${dx}. Tirando ${dx} dos dois pratos, os x ficam todos no prato esquerdo.`,s:BAL_S(a,d,b,e,0,0,0)})},
+ /* duas academias */
+ ()=>{const pA=rnd(3,5),df=rnd(1,4),pB=pA+df,n=rnd(2,9),tB=rnd(2,10),tA=tB+df*n;
+  return mk({q:`Duas academias cobram assim. A primeira: taxa de R$ ${tA} mais R$ ${pA} por aula. A segunda: taxa de R$ ${tB} mais R$ ${pB} por aula. Com quantas aulas as duas custam o mesmo?`,ok:`${n} aulas`,
+   bad:[[`${BAL_N(tA-tB,pA)} aulas`,'esqueceu o preço por aula do outro plano',`É preciso comparar a diferença de preço por aula: ${pB} − ${pA}.`],
+        [`${BAL_N(tA-tB,pA+pB)} aulas`,'somou os preços por aula',`Para juntar os x, tire ${pA}x dos dois pratos, em vez de somar.`],
+        [`${tA-tB} aulas`,'esqueceu de dividir',`A diferença de taxa é ${tA-tB}, e cada aula reduz R$ ${df} dessa diferença.`]],
+   fill:()=>`${rnd(1,20)} aulas`,h:[`Monte: ${pB}x + ${tB} = ${pA}x + ${tA}.`,`Tire ${pA}x e ${tB} dos dois pratos.`],
+   e:`${BAL_EQ(pB,tB,pA,tA)}. Tirando ${pA}x e ${tB}: ${df===1?'x':df+'x'} = ${tA-tB}. ${df>1?`Dividindo por ${df}: `:''}x = ${n}.`,s:BAL_S(pB,pA,tB,tA,0,0,1)})},
+ /* solução negativa */
+ ()=>{const D=rnd(1,4),d=rnd(1,4),a=D+d,x=-rnd(1,Math.floor(12/D)),b=rnd(1,9),e=D*x+b;
+  return mk({q:`Resolva: ${BAL_EQ(a,b,d,e)}.`,ok:BAL_SG(x),
+   bad:[[BAL_SG(-x),'errou o sinal do resultado',`Confira: ${BAL_SG(e-b)} dividido por ${D}. O sinal do resultado acompanha o sinal do número.`],
+        [BAL_N(e-b,a),'esqueceu de tirar o x do outro prato',`Tire ${d===1?'x':d+'x'} dos dois pratos antes de dividir.`],
+        [BAL_N(e+b,D),'errou o sinal do número solto',`Para tirar ${b} do prato esquerdo, tire ${b} do direito também.`]],
+   fill:()=>BAL_SG(rnd(-8,8)),h:['Junte os x tirando a mesma quantidade dos dois pratos.','O resultado pode ser negativo: tudo bem.'],
+   e:`${BAL_EQ(a,b,d,e)}. Tirando ${d===1?'x':d+'x'} e ${b}: ${D===1?'x':D+'x'} = ${BAL_SG(e-b)}. ${D>1?`Dividindo por ${D}: `:''}x = ${BAL_SG(x)}.`,s:BAL_S(a,d,b,e,0,0,1)})}
+]};
+
+MODS.push({id:'balanca',ano:7,ic:'⚖️',nome:'Balança de equações',sub:'Tire o mesmo dos dois pratos: números negativos e x nos dois lados',liveInfo:true,
+ ctl:[{k:'a',l:'Blocos de x no prato esquerdo',min:1,max:9,v:2},
+      {k:'b',l:'Número solto no prato esquerdo (negativo = falta)',min:-9,max:12,v:3},
+      {k:'d',l:'Blocos de x no prato direito',min:0,max:8,v:1},
+      {k:'e',l:'Número solto no prato direito',min:-12,max:60,v:7},
+      {k:'p',l:'Passo da resolução (0 a 3)',min:0,max:3,v:0},
+      {k:'so',l:'Mexer só no prato esquerdo (0 não · 1 sim)',min:0,max:1,v:0}],
+ reset:{a:2,b:3,d:1,e:7,p:0,so:0,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));
+  v.a=cl(v.a,1,9);v.b=cl(v.b,-9,12);v.e=cl(v.e,-12,60);v.d=cl(v.d,0,8);v.d=Math.min(v.d,v.a-1);
+  v.p=cl(v.p,0,3);v.so=cl(v.so,0,1);v.oc=cl(v.oc,0,2)},
+ info(v){const st=BAL_ST(v,v.p),ocu=BAL_OCU(v),so=v.so===1&&v.p>=1;
+  if(ocu)return `x = ? · ${BAL_PASSO(v,v.p)} · descubra o valor de x`;
+  const L=BAL_FM(st.l[0],st.l[1]),R=so?BAL_FM(v.d,v.e):(st.rt||BAL_FM(st.r[0],st.r[1]));
+  if(so)return `${L} ≠ ${R} · você mexeu só no prato esquerdo e a balança desequilibrou`;
+  return `${L} = ${R} · ${BAL_PASSO(v,v.p)}`},
+ desc(v){const so=v.so===1&&v.p>=1,ocu=BAL_OCU(v),st=BAL_ST(v,v.p),r0=BAL_ST(v,0).r;
+  const pr=(n,c)=>{const t=[];if(n>0)t.push(`${n} ${n===1?'bloco':'blocos'} de x`);if(c>0)t.push(`${c} ${c===1?'unidade':'unidades'}`);if(c<0)t.push(`${-c} ${c===-1?'falta':'faltas'} de 1 (valor negativo)`);return t.length?t.join(' e '):'nada'};
+  const dir=ocu?'um valor escondido até você responder':so?pr(r0[0],r0[1]):(st.rt&&!Number.isInteger(st.r[1])?`o valor ${st.rt}`:pr(st.r[0],st.r[1]));
+  return `Balança de dois pratos${so?' que ficou desequilibrada, porque só o prato esquerdo foi alterado':' em equilíbrio'}. Prato esquerdo: ${pr(st.l[0],st.l[1])}. Prato direito: ${dir}. ${BAL_PASSO(v,v.p)}.`},
+ draw(c,v,W,H,k){
+  const so=v.so===1&&v.p>=1,ocu=BAL_OCU(v),SP=BAL_ST(v,v.p),S0=BAL_ST(v,0),X=BAL_X(v);
+  const Lv=SP.l,Rv=so?S0.r:SP.r,wL=Lv[0]*X+Lv[1],wR=so?S0.r[0]*X+S0.r[1]:(SP.r[0]*X+SP.r[1]);
+  const diff=wL-wR,th=Math.abs(diff)<1e-9?0:Math.max(-.2,Math.min(.2,diff*.012));
+  const cx=W/2,by=Math.round(H*.28),bl=W*.34,ca=Math.cos(th),sa=Math.sin(th);
+  const lx=cx-bl*ca,ly=by+bl*sa,rx=cx+bl*ca,ry=by-bl*sa,rl=Math.round(H*.34),tw=Math.min(W*.30,230);
+  const txt=(t,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(t,x,y)};
+  let neg=false;
+  /* poste e base */
+  c.fillStyle=k.t;c.beginPath();c.moveTo(cx-34,H-8);c.lineTo(cx+34,H-8);c.lineTo(cx+12,H-32);c.lineTo(cx-12,H-32);c.closePath();c.fill();
+  c.strokeStyle=k.t;c.lineWidth=5;c.beginPath();c.moveTo(cx,by);c.lineTo(cx,H-32);c.stroke();
+  /* viga */
+  c.lineWidth=6;c.lineCap='round';c.beginPath();c.moveTo(lx,ly);c.lineTo(rx,ry);c.stroke();c.lineCap='butt';
+  c.fillStyle=k.a;c.beginPath();c.arc(cx,by,7,0,7);c.fill();
+  const pan=(px,py,pxEnd,pyEnd,l,nx,cc,rotulo,interro)=>{
+   const ty=pyEnd+rl;
+   c.strokeStyle=k.m;c.lineWidth=1.5;c.beginPath();c.moveTo(pxEnd,pyEnd);c.lineTo(px-tw/2,ty);c.moveTo(pxEnd,pyEnd);c.lineTo(px+tw/2,ty);c.stroke();
+   c.strokeStyle=k.t;c.lineWidth=4;c.beginPath();c.moveTo(px-tw/2,ty);c.lineTo(px+tw/2,ty);c.stroke();
+   let y=ty-3;
+   if(nx>0){const xb=Math.max(14,Math.min(30,(tw-6)/Math.min(nx,5)-2)),per=Math.max(1,Math.floor((tw-6)/(xb+2)));
+    for(let j=0;j<nx;j++){const r=Math.floor(j/per),q=j%per,inRow=Math.min(per,nx-r*per),x0=px-inRow*(xb+2)/2,xx=x0+q*(xb+2),yy=y-(r+1)*(xb+2)+2;
+     c.fillStyle=k.pk;c.fillRect(xx,yy,xb,xb);txt('x',xx+xb/2,yy+xb*.73,'#fff',`bold ${Math.round(xb*.62)}px sans-serif`)}
+    y-=Math.ceil(nx/per)*(xb+2)+1}
+   const n=Math.abs(cc),u=12,cols=Math.max(3,Math.floor((tw-6)/(u+2)));
+   if(interro||!Number.isInteger(cc)||Math.ceil(n/cols)>3){
+    if(interro||n>0){const bw=Math.min(tw-8,70),bh=24;c.strokeStyle=cc<0?k.a:k.c1;c.lineWidth=2;
+     if(cc<0){c.setLineDash([4,3]);c.strokeRect(px-bw/2,y-bh,bw,bh);c.setLineDash([])}else{c.fillStyle=k.c1;c.fillRect(px-bw/2,y-bh,bw,bh)}
+     txt(interro?'?':(Number.isInteger(cc)?BAL_SG(cc):rotulo),px,y-bh*.3,cc<0?k.a:'#fff','bold 14px sans-serif');if(cc<0)neg=true}}
+   else if(n>0){const rows=Math.ceil(n/cols);
+    for(let i=0;i<n;i++){const r=Math.floor(i/cols),q=i%cols,inRow=Math.min(cols,n-r*cols),x0=px-inRow*(u+2)/2,x=x0+q*(u+2),yy=y-(r+1)*(u+2);
+     if(cc>0){c.fillStyle=k.c1;c.fillRect(x,yy,u,u)}
+     else{neg=true;c.strokeStyle=k.a;c.lineWidth=1.5;c.setLineDash([3,2]);c.strokeRect(x+.5,yy+.5,u-1,u-1);c.setLineDash([]);txt('−',x+u/2,yy+u-2,k.a,'bold 11px sans-serif')}}}
+   txt(l,px,ty+18,k.t,'bold 13px sans-serif')};
+  const Ltxt=BAL_FM(Lv[0],Lv[1]),Rtxt=ocu?'?':so?BAL_FM(S0.r[0],S0.r[1]):(SP.rt||BAL_FM(SP.r[0],SP.r[1]));
+  pan(lx,ly,lx,ly,Ltxt,Lv[0],Lv[1],'');
+  pan(rx,ry,rx,ry,Rtxt,Rv[0],Rv[1],SP.rt||'',ocu);
+  /* título e legenda */
+  const tit=ocu?'x = ?':`${Ltxt} ${so&&Math.abs(diff)>1e-9?'≠':'='} ${Rtxt}`;
+  txt(tit,W/2,20,k.t,'bold 17px sans-serif');
+  txt(so?'Só um prato mudou: desequilibrou':BAL_PASSO(v,v.p),W/2,38,so?k.pk:k.m,'12px sans-serif');
+  if(neg)txt('quadrado vazio = −1',W-8,54,k.m,'11px sans-serif','right');
+  c.textAlign='left'},
+ rod:8,gens:BAL_GENS});
+
+/* ===== Probabilidade experimental (módulo novo, arquivo separado) ===== */
+const BP_G=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){const t=a%b;a=b;b=t}return a||1};
+const BP_F=(n,d)=>{if(n===0)return '0';const g=BP_G(n,d),p=n/g,q=d/g;return q===1?String(p):p+'/'+q};
+const BP_PC=x=>(Math.round(x*1000)/10).toString().replace('.',',')+'%';
+const BP_RNG=seed=>{let a=Math.imul(seed|0,2654435761)>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=Math.imul(a^a>>>15,1|a);t=(t+Math.imul(t^t>>>7,61|t))^t;return((t^t>>>14)>>>0)/4294967296}};
+const BP_COR=['#e5484d','#3b82f6','#22c55e'],BP_NCOR=['vermelho','azul','verde'];
+/* sorteios determinísticos (mesma semente, mesmo resultado) */
+const BP_CARAS=(n,sem)=>{const R=BP_RNG(sem+100),acc=[];let c=0;for(let i=0;i<n;i++){if(R()<.5)c++;acc.push(c)}return acc};
+const BP_ROL=(n,sem,T,cn)=>{const R=BP_RNG(sem+200),q=[0,0,0];for(let i=0;i<n;i++){let x=Math.floor(R()*T),j=0;while(x>=cn[j]){x-=cn[j];j++}q[j]++}return q};
+const BP_MONTY=(n,sem)=>{const R=BP_RNG(sem+300);let k=0;for(let i=0;i<n;i++){if(Math.floor(R()*3)===0)k++}return k};
+const BP_SOMA=(s,cmp)=>{let c=0;for(let i=1;i<=6;i++)for(let j=1;j<=6;j++){const t=i+j;if(cmp===0?t===s:cmp===1?t>=s:t<=s)c++}return c};
+const BP_CMPT=['soma igual a','soma de pelo menos','soma de no máximo'];
+const BP_OCU=v=>v.oc===1&&!locked;
+const BP_S=o=>Object.assign({modo:0,n:20,sem:7,r:3,az:2,vd:1,soma:7,cmp:0,oc:0},o);
+const BP_FILLP=()=>BP_PC(rnd(5,95)/100);
+
+const BP_GENS={
+1:[
+ /* dado: evento simples */
+ ()=>{const ev=pick([
+   ['sair um número par',3,'um número par'],['sair um número ímpar',3,'um número ímpar'],['sair um múltiplo de 3',2,'um múltiplo de 3'],
+   ['sair um número maior que 4',2,'um número maior que 4'],['sair um número menor que 3',2,'um número menor que 3'],['sair o número 5',1,'o número 5']]);
+  const f=ev[1],ok=BP_F(f,6);
+  return mk({q:`Ao lançar um dado comum e justo, qual é a probabilidade de ${ev[0]}?`,ok,
+   bad:[[BP_F(6-f,6),'usou os casos que não servem','Conte os resultados que atendem ao pedido, não os que sobram.'],
+        [BP_F(f,12),'usou o total de dois dados','Com um dado só, são 6 resultados possíveis.'],
+        ['1/6','achou que todo evento tem a mesma chance de uma face só','Conte quantas faces atendem ao pedido.'],
+        [BP_F(f,5),'contou 5 resultados possíveis','O dado tem 6 faces.']],
+   fill:()=>BP_F(rnd(1,5),6),h:['Conte quantas faces atendem ao pedido.','Probabilidade = casos favoráveis ÷ casos possíveis.'],
+   e:`Há ${f} faces favoráveis entre 6 possíveis: ${f}/6${ok!==f+'/6'?' = '+ok:''}.`,s:BP_S({modo:2,soma:7,cmp:0,oc:0})})},
+ /* roleta */
+ ()=>{const r=rnd(1,5),az=rnd(1,5),vd=rnd(1,4),T=r+az+vd,i=rnd(0,2),cn=[r,az,vd],f=cn[i],ok=BP_F(f,T);
+  return mk({q:`Uma roleta tem ${T} setores iguais: ${r} ${r===1?'vermelho':'vermelhos'}, ${az} ${az===1?'azul':'azuis'} e ${vd} ${vd===1?'verde':'verdes'}. Qual é a probabilidade de parar no ${BP_NCOR[i]}?`,ok,
+   bad:[[BP_F(f,T-f),'comparou os favoráveis com os que não servem','O total de setores é '+T+', contando todas as cores.'],
+        ['1/3','achou que as três cores têm a mesma chance','Os setores de cada cor são em quantidades diferentes.'],
+        [BP_F(T-f,T),'usou os setores das outras cores','Use os setores da cor pedida.'],
+        [BP_F(f,3),'dividiu pelo número de cores','Divida pelo número total de setores.']],
+   fill:()=>BP_F(rnd(1,6),rnd(7,12)),h:['Conte os setores da cor pedida.',`O total de setores é ${T}.`],
+   e:`${f} setores favoráveis entre ${T}: ${f}/${T}${ok!==f+'/'+T?' = '+ok:''}.`,s:BP_S({modo:1,n:30,sem:rnd(1,30),r,az,vd,oc:0})})},
+ /* frequência relativa de caras */
+ ()=>{const n=pick([20,25,40,50,80,100]),sem=rnd(1,30),c=BP_CARAS(n,sem)[n-1],ok=BP_PC(c/n);
+  return mk({q:`Na simulação, uma moeda foi lançada ${n} vezes e deu cara ${c} vezes. Qual é a frequência relativa de caras?`,ok,
+   bad:[[BP_PC((n-c)/n),'calculou a frequência de coroas','A pergunta é sobre as caras.'],
+        [BP_PC(c/100),'dividiu por 100 em vez de dividir pelo total de lançamentos',`Divida ${c} por ${n}.`],
+        ['50%','achou que o resultado tem de ser igual à probabilidade teórica','No experimento a frequência pode ficar perto de 50%, mas raramente é igual.'],
+        [BP_PC(c/(n+c)),'somou caras ao total','O total de lançamentos já é '+n+'.']],
+   fill:BP_FILLP,h:['Frequência relativa = vezes que ocorreu ÷ total de tentativas.',`Calcule ${c} ÷ ${n}.`],
+   e:`${c} ÷ ${n} = ${(c/n).toFixed(3).replace('.',',')}, ou seja, ${ok}.`,s:BP_S({modo:0,n,sem,oc:0})})},
+ /* falácia do apostador */
+ ()=>{const k=pick([3,4,5]);
+  return mk({q:`Uma moeda justa foi lançada ${k} vezes e deu cara todas as vezes. No próximo lançamento, qual é a probabilidade de dar cara?`,ok:'1/2',
+   bad:[['Menor que 1/2, pois já saíram muitas caras','acreditou que a sorte se compensa','A moeda não tem memória: cada lançamento é independente.'],
+        ['Maior que 1/2, pois a sequência vai continuar','acreditou que a sequência continua','A moeda não tem memória: cada lançamento é independente.'],
+        [`1/${2**(k+1)}`,'multiplicou as chances dos lançamentos que já passaram','Os lançamentos que já passaram não mudam o próximo.']],
+   fill:()=>'1/'+rnd(3,9),h:['A moeda lembra do que aconteceu antes?','Cada lançamento é um experimento novo.'],
+   e:`Os lançamentos são independentes. A probabilidade de cara continua 1/2 em qualquer lançamento.`,s:BP_S({modo:0,n:Math.max(5,k),sem:rnd(1,30),oc:0})})}
+],
+2:[
+ /* dois dados: soma igual a / pelo menos / no máximo */
+ ()=>{const cmp=pick([0,0,1,2]),s=cmp===0?rnd(2,12):cmp===1?rnd(5,11):rnd(3,9),c=BP_SOMA(s,cmp),ok=BP_F(c,36);
+  return mk({q:`Dois dados comuns são lançados juntos. Qual é a probabilidade de a ${BP_CMPT[cmp]} ${s}?`,ok,
+   bad:[[BP_F(1,36),'contou só um dos resultados possíveis','Há várias combinações que dão essa soma. Conte todas na tabela.'],
+        [BP_F(c,12),'dividiu por 12 em vez de 36','São 6 × 6 = 36 resultados possíveis.'],
+        [BP_F(1,11),'achou que as 11 somas têm a mesma chance','As somas não são igualmente prováveis: algumas têm mais combinações.'],
+        [BP_F(36-c,36),'usou os casos que não servem','Conte as células que atendem ao pedido.']],
+   fill:()=>BP_F(rnd(1,20),36),h:['Use a tabela 6 × 6 do simulador e conte as células que atendem.','Divida pelo total de 36 resultados.'],
+   e:`Há ${c} combinações entre 36: ${c}/36${ok!==c+'/36'?' = '+ok:''}.`,s:BP_S({modo:2,soma:s,cmp,oc:0})})},
+ /* mais lançamentos: lei dos grandes números */
+ ()=>{const n1=pick([10,20,30,40]),n2=pick([500,1000,2000,5000]);
+  return mk({q:`Duas turmas lançaram uma moeda justa. A turma A lançou ${n1} vezes e a turma B lançou ${n2} vezes. Qual delas tende a ter a frequência de caras mais perto de 1/2?`,ok:`A turma B, com ${n2} lançamentos`,
+   bad:[[`A turma A, com ${n1} lançamentos`,'achou que poucos lançamentos aproximam melhor','Quanto mais lançamentos, mais a frequência se aproxima da probabilidade.'],
+        ['As duas ficam exatamente em 1/2','confundiu frequência com probabilidade','No experimento a frequência quase nunca é exatamente 1/2.'],
+        ['Não dá para comparar','achou que o acaso impede qualquer previsão','Em muitos lançamentos o acaso se comporta de forma previsível.']],
+   fill:()=>`A turma ${pick(['C','D','E'])}`,h:['Veja o gráfico: a linha oscila muito no início e depois se acalma.','Isso se chama lei dos grandes números.'],
+   e:`Com mais lançamentos, a frequência relativa se aproxima da probabilidade teórica (lei dos grandes números).`,s:BP_S({modo:0,n:Math.min(1000,n2),sem:rnd(1,30),oc:0})})},
+ /* complemento na roleta */
+ ()=>{const r=rnd(1,5),az=rnd(1,5),vd=rnd(1,4),T=r+az+vd,i=rnd(0,2),f=[r,az,vd][i],ok=BP_F(T-f,T);
+  return mk({q:`Numa roleta com ${T} setores iguais, a probabilidade de parar no ${BP_NCOR[i]} é ${BP_F(f,T)}. Qual é a probabilidade de NÃO parar no ${BP_NCOR[i]}?`,ok,
+   bad:[[BP_F(f,T),'repetiu a probabilidade do evento','A pergunta é sobre o contrário.'],
+        [BP_F(T-f,f),'inverteu numerador e denominador','O denominador é o total de setores.'],
+        [BP_F(1,T),'considerou só um setor','Conte todos os setores que não são dessa cor.']],
+   fill:()=>BP_F(rnd(1,8),rnd(9,14)),h:['A soma da probabilidade de um evento e a do contrário é 1.','Ou conte os setores das outras cores.'],
+   e:`Probabilidade do contrário: 1 − ${BP_F(f,T)} = ${ok}.`,s:BP_S({modo:1,n:40,sem:rnd(1,30),r,az,vd,oc:0})})},
+ /* experimento com a roleta */
+ ()=>{const r=rnd(1,4),az=rnd(1,4),vd=rnd(1,3),T=r+az+vd,n=pick([50,100,200]),sem=rnd(1,30),q=BP_ROL(n,sem,T,[r,az,vd]),i=rnd(0,2),ok=BP_PC(q[i]/n);
+  return mk({q:`A roleta girou ${n} vezes na simulação e parou ${q[i]} vezes no ${BP_NCOR[i]}. Qual é a frequência relativa do ${BP_NCOR[i]}?`,ok,
+   bad:[[BP_F([r,az,vd][i],T),'deu a probabilidade teórica em vez da frequência obtida','A pergunta é sobre o que aconteceu no experimento.'],
+        [BP_PC(q[i]/100),'dividiu por 100 em vez do total de giros',`Divida ${q[i]} por ${n}.`],
+        [BP_PC((n-q[i])/n),'calculou a frequência das outras cores','Use os giros que pararam no '+BP_NCOR[i]+'.']],
+   fill:BP_FILLP,h:['Frequência relativa = vezes que ocorreu ÷ total de giros.',`Calcule ${q[i]} ÷ ${n}.`],
+   e:`${q[i]} ÷ ${n} = ${(q[i]/n).toFixed(3).replace('.',',')}, ou seja, ${ok}.`,s:BP_S({modo:1,n,sem,r,az,vd,oc:0})})}
+],
+3:[
+ /* porta do prêmio */
+ ()=>{const k=pick([100,300,600]),tr=Math.random()<.5,ok=tr?'2/3':'1/3';
+  return mk({q:`No jogo das 3 portas, há um prêmio atrás de uma delas. Você escolhe uma porta e o apresentador abre outra, sem prêmio. Qual é a probabilidade de ganhar se você ${tr?'TROCAR de porta':'MANTER a porta escolhida'}?`,ok,
+   bad:[['1/2','achou que sobraram duas portas iguais','A porta que você escolheu primeiro continua com 1/3 de chance; a outra fechada fica com 2/3.'],
+        [tr?'1/3':'2/3',tr?'achou que trocar não muda a chance':'achou que manter melhora a chance','Quando o apresentador abre uma porta, toda a chance restante vai para a outra fechada.'],
+        ['1','achou que a estratégia garante o prêmio','Nenhuma estratégia garante o prêmio nesse jogo.']],
+   fill:()=>BP_F(rnd(1,5),rnd(6,9)),h:['Qual era a chance da primeira escolha estar certa?','O resto da chance (2/3) ficou com as outras duas portas.'],
+   e:tr?`A primeira escolha acerta com 1/3. Se você trocar, ganha quando a primeira estava errada: 2/3.`:`Se você mantém, ganha só quando a primeira escolha já estava certa: 1/3.`,s:BP_S({modo:3,n:k,sem:rnd(1,30),oc:1})})},
+ /* eventos independentes */
+ ()=>{const ev=pick([['cara e um 6',1,1],['cara e um número par',3,1],['coroa e um múltiplo de 3',2,1],['cara e um número maior que 4',2,1],['coroa e um número ímpar',3,1],['coroa e o número 1',1,1]]);
+  const ok=BP_F(ev[1],12);
+  return mk({q:`Uma moeda justa e um dado comum são lançados ao mesmo tempo. Qual é a probabilidade de sair ${ev[0]}?`,ok,
+   bad:[[BP_F(ev[1],6),'considerou só o dado','A moeda também precisa dar o resultado pedido: multiplique as probabilidades.'],
+        ['1/2','considerou só a moeda','O dado também precisa dar o resultado pedido: multiplique as probabilidades.'],
+        [BP_F(ev[1]+3,12),'somou as probabilidades em vez de multiplicar','Para "e", os eventos se multiplicam.'],
+        [BP_F(ev[1],8),'errou o total de resultados','São 2 × 6 = 12 resultados possíveis.']],
+   fill:()=>BP_F(rnd(1,5),rnd(7,13)),h:['Probabilidade da moeda × probabilidade do dado.','Ou conte os pares favoráveis entre os 12 possíveis.'],
+   e:`P(moeda) = 1/2 e P(dado) = ${BP_F(ev[1],6)}. Multiplicando: ${ok}.`,s:BP_S({modo:2,soma:7,cmp:0,oc:0})})},
+ /* pelo menos uma cara */
+ ()=>{const n=pick([2,3,4]),face=pick(['cara','coroa']),ok=BP_F(2**n-1,2**n);
+  return mk({q:`Uma moeda justa é lançada ${n} vezes. Qual é a probabilidade de sair pelo menos uma ${face}?`,ok,
+   bad:[['1/2','achou que a chance não depende do número de lançamentos','Com mais lançamentos, é mais fácil sair ao menos uma '+face+'.'],
+        [`1/${2**n}`,'calculou a chance de todos os lançamentos darem o mesmo resultado',`Essa é a chance de TODOS serem iguais ao pedido: (1/2)^${n}.`],
+        [`${n}/${2**n}`,'contou só os casos com uma cara','"Pelo menos uma" inclui também duas ou mais caras.']],
+   fill:()=>BP_F(rnd(1,6),8),h:[`Pense no contrário: nenhuma ${face}.`,'Probabilidade = 1 − chance do contrário.'],
+   e:`O contrário (nenhuma ${face}) tem chance 1/${2**n}. Logo: 1 − 1/${2**n} = ${ok}.`,s:BP_S({modo:0,n:Math.max(n,5),sem:rnd(1,30),oc:0})})},
+ /* experimento do jogo das portas */
+ ()=>{const n=pick([200,300,500,1000]),sem=rnd(1,30),m=BP_MONTY(n,sem),t=n-m,ok=t>m?'Trocar de porta':m>t?'Manter a porta':'Foram iguais';
+  return mk({q:`Na simulação do jogo das 3 portas com ${n} partidas, quem manteve a porta ganhou ${m} vezes e quem trocou ganhou ${t} vezes. Qual estratégia foi melhor nesse experimento?`,ok,
+   bad:[['Trocar de porta','inverteu a comparação'],['Manter a porta','inverteu a comparação'],['Foram iguais','achou que as chances são iguais'],['Não dá para concluir nada com simulações','desconfiou do experimento']].filter(x=>x[0]!==ok).map(x=>[x[0],x[1],'Compare os dois números de vitórias.']),
+   fill:()=>'Depende da cor da porta',h:['Compare as vitórias de quem manteve e de quem trocou.','Lembre da probabilidade teórica: 1/3 para manter e 2/3 para trocar.'],
+   e:`Manter: ${m} de ${n}. Trocar: ${t} de ${n}. ${ok==='Trocar de porta'?'Trocar venceu, como a teoria prevê (2/3 contra 1/3).':ok==='Manter a porta'?'Manter venceu nesta amostra.':'Empate nesta amostra.'}`,s:BP_S({modo:3,n,sem,oc:1})})}
+]};
+
+MODS.push({id:'probexp',ano:8,ic:'🎰',nome:'Probabilidade experimental',sub:'Moeda, roleta, dois dados e porta do prêmio: da teoria ao experimento',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 moeda · 1 roleta · 2 dois dados · 3 porta do prêmio)',min:0,max:3,v:0},
+      {k:'n',l:'Número de lançamentos, giros ou partidas',min:1,max:1000,v:20},
+      {k:'sem',l:'Semente (muda a sequência sorteada)',min:1,max:30,v:7},
+      {k:'r',l:'Setores vermelhos da roleta',min:1,max:8,v:3},
+      {k:'az',l:'Setores azuis da roleta',min:1,max:8,v:2},
+      {k:'vd',l:'Setores verdes da roleta',min:0,max:8,v:1},
+      {k:'soma',l:'Soma dos dois dados',min:2,max:12,v:7},
+      {k:'cmp',l:'Tipo de soma (0 igual · 1 pelo menos · 2 no máximo)',min:0,max:2,v:0}],
+ reset:{modo:0,n:20,sem:7,r:3,az:2,vd:1,soma:7,cmp:0,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));
+  v.modo=cl(v.modo,0,3);v.n=cl(v.n,1,1000);v.sem=cl(v.sem,1,30);v.r=cl(v.r,1,8);v.az=cl(v.az,1,8);v.vd=cl(v.vd,0,8);v.soma=cl(v.soma,2,12);v.cmp=cl(v.cmp,0,2);v.oc=cl(v.oc,0,1)},
+ info(v){const m=v.modo,ocu=BP_OCU(v);
+  if(m===0){const c=BP_CARAS(v.n,v.sem)[v.n-1];return `${v.n} lançamentos · caras: ${c} · frequência relativa = ${c}/${v.n} = ${BP_PC(c/v.n)} · probabilidade teórica 50%`}
+  if(m===1){const T=v.r+v.az+v.vd,q=BP_ROL(v.n,v.sem,T,[v.r,v.az,v.vd]);return `Roleta com ${T} setores · ${v.n} giros · vermelho ${q[0]}, azul ${q[1]}, verde ${q[2]}`}
+  if(m===2){if(ocu)return `Tabela 6 × 6 dos dois dados · conte os casos que atendem ao pedido`;const c=BP_SOMA(v.soma,v.cmp);return `${BP_CMPT[v.cmp]} ${v.soma} · ${c} casos entre 36 · P = ${BP_F(c,36)}`}
+  const k=BP_MONTY(v.n,v.sem);if(ocu)return `${v.n} partidas simuladas · resultado escondido até você responder`;return `${v.n} partidas · manter ganhou ${k} (${BP_PC(k/v.n)}) · trocar ganhou ${v.n-k} (${BP_PC((v.n-k)/v.n)})`},
+ desc(v){const m=v.modo,ocu=BP_OCU(v);
+  if(m===0){const c=BP_CARAS(v.n,v.sem)[v.n-1];return `Gráfico da frequência relativa de caras ao longo de ${v.n} lançamentos de uma moeda. A linha oscila no começo e se aproxima da linha tracejada de 50%. No fim, ${c} caras em ${v.n} lançamentos.`}
+  if(m===1){const T=v.r+v.az+v.vd,q=BP_ROL(v.n,v.sem,T,[v.r,v.az,v.vd]);return `Roleta com ${T} setores iguais: ${v.r} vermelhos, ${v.az} azuis e ${v.vd} verdes. Ao lado, barras com o resultado de ${v.n} giros: vermelho ${q[0]}, azul ${q[1]}, verde ${q[2]}.`}
+  if(m===2)return `Tabela com as 36 somas possíveis de dois dados.${ocu?'':` Estão destacadas as somas que atendem a: ${BP_CMPT[v.cmp]} ${v.soma}, ${BP_SOMA(v.soma,v.cmp)} casos entre 36.`}`;
+  const k=BP_MONTY(v.n,v.sem);return `Três portas, com uma escolhida, uma aberta sem prêmio e uma fechada. Abaixo, barras com a frequência de vitórias de quem manteve e de quem trocou em ${v.n} partidas.${ocu?' Os valores ficam escondidos até você responder.':` Manter ganhou ${k} e trocar ganhou ${v.n-k}.`}`},
+ draw(c,v,W,H,k){const m=v.modo,ocu=BP_OCU(v);
+  const txt=(t,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(t,x,y)};
+  if(m===0){const acc=BP_CARAS(v.n,v.sem),x0=44,x1=W-14,y0=34,y1=H-34,X=i=>x0+(x1-x0)*(v.n===1?1:(i)/(v.n-1)),Y=f=>y1-f*(y1-y0);
+   c.strokeStyle=k.m;c.lineWidth=1;c.globalAlpha=.5;[0,.25,.5,.75,1].forEach(f=>{c.beginPath();c.moveTo(x0,Y(f));c.lineTo(x1,Y(f));c.stroke()});c.globalAlpha=1;
+   [0,.5,1].forEach(f=>txt(BP_PC(f),x0-5,Y(f)+4,k.m,'11px sans-serif','right'));
+   c.strokeStyle=k.a;c.lineWidth=2;c.setLineDash([6,4]);c.beginPath();c.moveTo(x0,Y(.5));c.lineTo(x1,Y(.5));c.stroke();c.setLineDash([]);
+   c.strokeStyle=k.c1;c.lineWidth=2.2;c.beginPath();const passo=Math.max(1,Math.floor(v.n/(x1-x0)));
+   for(let i=0;i<v.n;i+=passo){const f=acc[i]/(i+1);i===0?c.moveTo(X(i),Y(f)):c.lineTo(X(i),Y(f))}c.lineTo(X(v.n-1),Y(acc[v.n-1]/v.n));c.stroke();
+   c.fillStyle=k.pk;c.beginPath();c.arc(X(v.n-1),Y(acc[v.n-1]/v.n),4.5,0,7);c.fill();
+   txt('frequência relativa de caras',W/2,16,k.t,'bold 13px sans-serif');txt('linha tracejada: probabilidade teórica (50%)',W/2,H-6,k.a,'11px sans-serif');txt('1',x0,y1+14,k.m,'11px sans-serif');txt(String(v.n),x1,y1+14,k.m,'11px sans-serif');
+   txt('lançamentos',W/2,y1+14,k.m,'11px sans-serif');c.textAlign='left';return}
+  if(m===1){const T=v.r+v.az+v.vd,cn=[v.r,v.az,v.vd],q=BP_ROL(v.n,v.sem,T,cn),cx=Math.round(W*.24),cy=Math.round(H*.5),R=Math.min(W*.2,H*.38);let ang=-Math.PI/2;
+   for(let j=0;j<3;j++)for(let s=0;s<cn[j];s++){c.fillStyle=BP_COR[j];c.beginPath();c.moveTo(cx,cy);c.arc(cx,cy,R,ang,ang+2*Math.PI/T);c.closePath();c.fill();c.strokeStyle='#fff';c.lineWidth=2;c.stroke();ang+=2*Math.PI/T}
+   c.fillStyle=k.t;c.beginPath();c.moveTo(cx,cy-R-2);c.lineTo(cx-7,cy-R-14);c.lineTo(cx+7,cy-R-14);c.closePath();c.fill();
+   txt(`${T} setores iguais`,cx,cy+R+20,k.m,'12px sans-serif');
+   const bx=Math.round(W*.46),bw=(W-bx-14)/3,base=H-44,top=34,mx=Math.max(.5,Math.max(...q)/v.n*1.15,Math.max(...cn)/T*1.15),Y=f=>base-f/mx*(base-top);
+   for(let j=0;j<3;j++){const x=bx+j*bw,f=q[j]/v.n;c.globalAlpha=.8;c.fillStyle=BP_COR[j];c.fillRect(x+8,Y(f),bw-16,base-Y(f));c.globalAlpha=1;
+    txt(String(q[j]),x+bw/2,Y(f)-5,k.t,'bold 12px sans-serif');txt(BP_NCOR[j],x+bw/2,base+16,k.m,'12px sans-serif');
+    c.strokeStyle=k.a;c.lineWidth=2;c.setLineDash([5,3]);c.beginPath();c.moveTo(x+2,Y(cn[j]/T));c.lineTo(x+bw-2,Y(cn[j]/T));c.stroke();c.setLineDash([])}
+   c.strokeStyle=k.t;c.lineWidth=1.5;c.beginPath();c.moveTo(bx,base);c.lineTo(W-10,base);c.stroke();
+   txt(`${v.n} giros · tracejado = teoria`,(bx+W)/2,16,k.m,'12px sans-serif');txt('barras = vezes por cor',(bx+W)/2,H-6,k.m,'11px sans-serif');c.textAlign='left';return}
+  if(m===2){const cs=Math.max(18,Math.min(34,W<520?(W-30)/7:(W-140)/7,(H-(W<520?100:60))/7)),gx=Math.round((W-cs*7)/2)-(W<520?0:40),gy=30;
+   txt('dado 2 →',gx+cs*4,gy-10,k.m,'11px sans-serif');txt('dado 1 ↓',gx+cs*.5,gy-10,k.m,'11px sans-serif');
+   for(let i=0;i<=6;i++){if(i>0){txt(String(i),gx+cs*(i+.5),gy+cs*.62,k.m,'bold 12px sans-serif');txt(String(i),gx+cs*.5,gy+cs*(i+.62),k.m,'bold 12px sans-serif')}}
+   for(let i=1;i<=6;i++)for(let j=1;j<=6;j++){const t=i+j,ok=v.cmp===0?t===v.soma:v.cmp===1?t>=v.soma:t<=v.soma,x=gx+cs*j,y=gy+cs*i;
+    c.fillStyle=ok&&!ocu?k.a:k.f;c.globalAlpha=ok&&!ocu?.85:.6;c.fillRect(x+1,y+1,cs-2,cs-2);c.globalAlpha=1;
+    txt(String(t),x+cs/2,y+cs*.64,ok&&!ocu?'#fff':k.t,(ok&&!ocu?'bold ':'')+'12px sans-serif')}
+   const estreito=W<520,rx=estreito?W/2-60:gx+cs*7+16,ry=estreito?gy+cs*7+8:gy,n=BP_SOMA(v.soma,v.cmp);
+   if(ocu)txt('Conte os casos que\natendem ao pedido'.split('\n')[0],rx+60,ry+(estreito?10:60),k.m,'12px sans-serif'),txt('atendem ao pedido',rx+60,ry+(estreito?26:76),k.m,'12px sans-serif');
+   else{txt(`${BP_CMPT[v.cmp]} ${v.soma}`,rx+60,ry+(estreito?10:60),k.t,'bold 12px sans-serif');txt(`${n} casos em 36`,rx+60,ry+(estreito?30:80),k.a,'bold 14px sans-serif');txt(`P = ${BP_F(n,36)}`,rx+60,ry+(estreito?50:102),k.c1,'bold 14px sans-serif')}
+   c.textAlign='left';return}
+  const kk=BP_MONTY(v.n,v.sem),dw=Math.min(70,W/6),dh=dw*1.25,dx=W/2-dw*1.8,dy=34;
+  ['escolhida','aberta','fechada'].forEach((t,i)=>{const x=dx+i*dw*1.4-dw/2+dw*.2;c.fillStyle=i===1?k.m:k.f;c.globalAlpha=i===1?.35:1;c.fillRect(x,dy,dw,dh);c.globalAlpha=1;c.strokeStyle=i===0?k.a:k.t;c.lineWidth=i===0?3:1.5;c.strokeRect(x,dy,dw,dh);
+   txt(String(i+1),x+dw/2,dy+dh*.58,k.t,'bold 20px sans-serif');txt(t,x+dw/2,dy+dh+14,k.m,'10px sans-serif')});
+  const base=H-40,top=dy+dh+34,bw=Math.min(90,W/5),bx=[W/2-bw*1.4,W/2+bw*.4],fr=[kk/v.n,(v.n-kk)/v.n],nm=['manter','trocar'],cor=[k.c1,k.pk],teo=[1/3,2/3],Y=f=>base-f*(base-top);
+  for(let i=0;i<2;i++){if(!ocu){c.globalAlpha=.8;c.fillStyle=cor[i];c.fillRect(bx[i],Y(fr[i]),bw,base-Y(fr[i]));c.globalAlpha=1;txt(BP_PC(fr[i]),bx[i]+bw/2,Y(fr[i])-5,k.t,'bold 12px sans-serif')}
+   else txt('?',bx[i]+bw/2,(top+base)/2,k.m,'bold 28px sans-serif');
+   if(!ocu){c.strokeStyle=k.a;c.lineWidth=2;c.setLineDash([5,3]);c.beginPath();c.moveTo(bx[i]-4,Y(teo[i]));c.lineTo(bx[i]+bw+4,Y(teo[i]));c.stroke();c.setLineDash([])}
+   txt(nm[i],bx[i]+bw/2,base+15,k.m,'bold 12px sans-serif')}
+  c.strokeStyle=k.t;c.lineWidth=1.5;c.beginPath();c.moveTo(bx[0]-14,base);c.lineTo(bx[1]+bw+14,base);c.stroke();
+  txt(`${v.n} partidas${ocu?'':' · tracejado = teoria'}`,W/2,H-4,k.m,'11px sans-serif');c.textAlign='left'},
+ rod:8,gens:BP_GENS});
+
 const O6=['nat','adsub','muldiv','tabmul','tabdiv','fra','solidos'],ix=MODS.map((m,i)=>m.ano===6?i:-1).filter(i=>i>=0),st=ix.map(i=>MODS[i]).sort((x,y)=>{const a=O6.indexOf(x.id),b=O6.indexOf(y.id);return (a<0?99:a)-(b<0?99:b)});ix.forEach((i,j)=>{MODS[i]=st[j]});
 })();
 
@@ -4135,6 +4533,8 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
     med:    { eixo:'Grandezas e Medidas', bncc:['EF06MA24','EF07MA29','EF08MA20','EF09MA18'], prereq:['nat','muldiv'], proximo:['prob','dec'], objetivos:['Converter unidades de medida','Operar com unidades mistas','Estimar ordem de grandeza'], tempo:'4 aulas' },
     func:   { eixo:'Álgebra', bncc:['EF09MA06'], prereq:['alg','eq','cart'], proximo:[], objetivos:['Reconhecer função como relação em que cada x tem um só y','Ler tabela, expressão e gráfico da mesma função','Identificar coeficiente angular e termo independente','Resolver problemas com função afim e quadrática'], tempo:'4 aulas' },
     pi:     { eixo:'Geometria', bncc:['EF07MA33','EF08MA19'], prereq:['dec'], proximo:['area'], objetivos:['Reconhecer raio, diâmetro e circunferência','Descobrir que a volta dividida pelo diâmetro dá cerca de 3,14','Calcular comprimento e área do círculo','Conhecer a história do número π'], tempo:'4 aulas' },
+    balanca:{ eixo:'Álgebra', bncc:['EF06MA14','EF07MA18'], prereq:['eq'], proximo:['equiv','eq2'], objetivos:['Manter a balança em equilíbrio fazendo o mesmo nos dois pratos','Resolver equações com números negativos','Resolver equações com x nos dois lados'], tempo:'3 aulas' },
+    probexp:{ eixo:'Probabilidade e Estatística', bncc:['EF07MA34','EF08MA22','EF09MA20'], prereq:['prob','fra'], proximo:[], objetivos:['Comparar frequência obtida e probabilidade teórica','Entender a lei dos grandes números','Calcular probabilidades com dois dados, eventos independentes e o complementar'], tempo:'3 aulas' },
     prob:   { eixo:'Probabilidade e Estatística', bncc:['EF06MA30','EF07MA34','EF07MA35','EF08MA22','EF08MA25'], prereq:['fra','dec'], proximo:[], objetivos:['Calcular probabilidade teórica','Comparar frequência relativa e probabilidade teórica','Calcular média, mediana e moda'], tempo:'4 aulas' }
 };
   for (const m of MODS) {
@@ -4144,7 +4544,7 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
   }
   window.__meta = META;
   /* Ordem pedagógica na home: dentro de cada eixo, do mais básico ao mais avançado */
-  const ORDEM_HOME=['nat','adsub','muldiv','tabmul','tabdiv','mmc','primos','fra','dec','pot','expr','int','sinais','alg','equiv','eq','eq2','func','solidos','ang','pi','tri','area','pit','tales','cart','med','prob'];
+  const ORDEM_HOME=['nat','adsub','muldiv','tabmul','tabdiv','mmc','primos','fra','dec','pot','expr','int','sinais','alg','equiv','eq','balanca','eq2','func','solidos','ang','pi','tri','area','pit','tales','cart','med','prob','probexp'];
   const pos=m=>{const i=ORDEM_HOME.indexOf(m.id);return i<0?999:i};
   MODS.sort((a,b)=>pos(a)-pos(b));
 })();
@@ -4322,7 +4722,7 @@ window.__desc=DESC;
 
 /* ===== BOLETIM DO ALUNO E RELATÓRIO DA TURMA (PDF por impressão) ===== */
 (()=>{
-const DICAS={pi:'Voltar ao simulador do círculo desenrolado: ver quantos diâmetros cabem na volta e refazer a conta com 3,14.',func:'Voltar ao gráfico do simulador: mexer em a e em b e observar o que muda na reta e na tabela.',prob:'Comparar no simulador a frequência observada com a probabilidade teórica e aumentar o número de lançamentos.',fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
+const DICAS={probexp:'Voltar ao simulador: aumentar o número de lançamentos e observar a frequência se aproximar da probabilidade teórica.',balanca:'Voltar à balança: mexer no passo da resolução e ver o que acontece ao tirar o mesmo dos dois pratos.',pi:'Voltar ao simulador do círculo desenrolado: ver quantos diâmetros cabem na volta e refazer a conta com 3,14.',func:'Voltar ao gráfico do simulador: mexer em a e em b e observar o que muda na reta e na tabela.',prob:'Comparar no simulador a frequência observada com a probabilidade teórica e aumentar o número de lançamentos.',fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
 const fmtData=d=>d?String(d).split('-').reverse().join('/'):'';
 const pct=(n,d)=>d?Math.round(n*100/d):null;
 const pctT=(n,d)=>d?Math.round(n*100/d)+'%':'—';
@@ -5166,7 +5566,7 @@ const EIXO_META={
  'Grandezas e Medidas':{n:4,d:'Comprimento, massa, tempo, capacidade e conversões entre unidades.',ic:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="26" height="10" rx="2"/><path d="M9 11v5M15 11v7M21 11v5"/></svg>'},
  'Probabilidade e Estatística':{n:5,d:'Chance, tabelas, médias e leitura de dados.',ic:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="24" height="24" rx="5"/><circle cx="11" cy="11" r="1.6" fill="currentColor"/><circle cx="21" cy="21" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/><circle cx="21" cy="11" r="1.6" fill="currentColor"/><circle cx="11" cy="21" r="1.6" fill="currentColor"/></svg>'}
 };
-const NOVOS=['pi'];
+const NOVOS=['pi','balanca','probexp'];
 let skEixo=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const skinAtiva=()=>S.skin!=='classico';
