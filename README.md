@@ -299,6 +299,8 @@ Na tela de configuração da Arena, o bloco "Jogar com celulares, em tempo real"
 
 **Pontuação.** A mesma do modo local (100 por acerto, sequência de 3 mais 30, sequência de 5 ou mais mais 60). No modo celulares o bônus de rapidez (até 25) vem ligado e usa o relógio do servidor, do instante em que a questão aparece até a resposta chegar. O professor pode desligar.
 
+**Acessibilidade e ritmo no celular do aluno.** Uma barra no alto da tela oferece: A− e A+ (tamanho da letra), Alto contraste, Ouvir (lê o enunciado e as alternativas em voz alta, e depois a explicação), Modo calmo (tira a contagem de segundos e o vermelho de urgência) e Confirmar antes de enviar (o primeiro toque só marca a alternativa, e o aluno pode trocar antes de confirmar). As escolhas ficam guardadas no aparelho. O professor tem o botão "Mais 15 s para a turma" durante a questão (até 120 s no total), e o bônus de rapidez passa a usar o tempo total. A posição só aparece no celular de quem está entre os três primeiros. Os demais veem pontos, acertos e melhor sequência. Nada disso exige mudar as regras do Firebase.
+
 **Segurança e privacidade.**
 - Só apelidos. O filtro barra palavras ofensivas (palavra inteira, para não barrar "Cassio"), telefone e endereço de internet.
 - A resposta certa nunca vai para o servidor antes da revelação. A pontuação é calculada no computador do professor.

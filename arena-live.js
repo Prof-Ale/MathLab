@@ -143,6 +143,7 @@ async function publicarResultado(rev,placar,estadoFinal){
   up[c+'/estado']=estadoFinal||'resultado';
   return tenta(()=>F.update(F.ref(db),up));
 }
+async function mudarTempo(seg){return tenta(()=>F.update(F.ref(db),{[SALA(H.cod)+'/rodada/tempoSeg']:seg}))}
 async function mudarEstado(e){return tenta(()=>F.set(R(SALA(H.cod)+'/estado'),e))}
 async function removerJogador(u){return tenta(()=>F.remove(R(SALA(H.cod)+'/jogadores/'+u)))}
 async function encerrarSala(){
@@ -205,7 +206,7 @@ async function sair(){
 window.ArenaLive={
   conectar,agora,apelidoValido,traduzir,soDig,
   uid:()=>uid,
-  prof:{criarSala,retomarSala,ouvirSala,ouvirConexao,mudarCfg,publicarQuestao,fecharRespostas,publicarResultado,mudarEstado,removerJogador,encerrarSala,codigo:()=>H.cod},
+  prof:{criarSala,retomarSala,ouvirSala,ouvirConexao,mudarCfg,publicarQuestao,fecharRespostas,publicarResultado,mudarTempo,mudarEstado,removerJogador,encerrarSala,codigo:()=>H.cod},
   aluno:{existeSala,entrar,ouvir,responder,sair}
 };
 })();

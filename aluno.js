@@ -9,6 +9,45 @@ const SK='mathlab-arena-aluno';
 const AL=window.ArenaLive;
 let D={},S={cod:null,apelido:null,uid:null,tela:null},Lq={qi:-1,op:null,ptsAntes:0,enviando:false,msg:''},timer=null,rt=null;
 
+const PK='mathlab-arena-aluno-pref';
+let pref={fs:1,cont:false,calmo:false,conf:false};
+try{Object.assign(pref,JSON.parse(localStorage.getItem(PK)||'{}')||{})}catch(_){}
+function salvarPref(){try{localStorage.setItem(PK,JSON.stringify(pref))}catch(_){}}
+function aplicarPref(){
+  pref.fs=Math.min(1.5,Math.max(.9,Math.round(pref.fs*10)/10));
+  document.documentElement.style.setProperty('--f',pref.fs);
+  document.body.classList.toggle('contraste',!!pref.cont);document.body.classList.toggle('calmo',!!pref.calmo);
+  const s=(id,v)=>{const b=$(id);if(b)b.setAttribute('aria-pressed',String(!!v))};
+  s('bCont',pref.cont);s('bCalmo',pref.calmo);s('bConf',pref.conf);
+  const m=document.querySelector('meta[name=theme-color]');if(m)m.content=pref.cont?'#000000':'#061a38';
+}
+function textoParaOuvir(){
+  const r=D.rodada,v=D.revelacao;if(!r)return '';
+  const o=r.o||{};
+  if(D.estado==='resultado'&&v&&v.qi===r.qi){
+    let t='Resposta certa, alternativa '+LET[v.correta]+': '+(o[v.correta]||'')+'. ';
+    if(Lq.op!==null&&Lq.op!==v.correta)t+='Você marcou a alternativa '+LET[Lq.op]+'. ';
+    if(v.explicacao)t+='Explicação: '+v.explicacao;return t;
+  }
+  let t=r.q+'. ';[0,1,2,3].forEach(i=>{t+='Alternativa '+LET[i]+': '+(o[i]||'')+'. '});
+  if(r.fig)t+='Esta questão tem figura no projetor. ';return t;
+}
+function ouvir(){
+  if(!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined'){anunciar('Seu aparelho não tem leitura em voz alta.');return}
+  const t=textoParaOuvir();if(!t){anunciar('Ainda não há nada para ouvir.');return}
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';speechSynthesis.speak(u)}catch(_){}
+}
+function ligarBarra(){
+  const on=(id,f)=>{const b=$(id);if(b)b.addEventListener('click',f)};
+  on('bMenos',()=>{pref.fs-=.1;aplicarPref();salvarPref()});
+  on('bMais',()=>{pref.fs+=.1;aplicarPref();salvarPref()});
+  on('bCont',()=>{pref.cont=!pref.cont;aplicarPref();salvarPref()});
+  on('bCalmo',()=>{pref.calmo=!pref.calmo;aplicarPref();salvarPref();if(D.estado==='questao'&&D.rodada)iniciarTempo(D.rodada)});
+  on('bConf',()=>{pref.conf=!pref.conf;aplicarPref();salvarPref();if(D.estado==='questao'&&S.cod){S.tela=null;telaQuestao()}});
+  on('bOuvir',ouvir);
+  if(!('speechSynthesis' in window)){const b=$('bOuvir');if(b){b.disabled=true;b.title='Seu aparelho não tem leitura em voz alta'}}
+  aplicarPref();
+}
 function guardar(){try{localStorage.setItem(SK,JSON.stringify({cod:S.cod,apelido:S.apelido,t:Date.now(),resp:S.resp||null}))}catch(_){}}
 function lerGuardado(){try{const g=JSON.parse(localStorage.getItem(SK)||'null');return g&&Date.now()-g.t<8*3600*1000?g:null}catch(_){return null}}
 function esquecer(){try{localStorage.removeItem(SK)}catch(_){}}
@@ -100,9 +139,9 @@ function respostaGuardada(qi){const r=S.resp;return r&&r.cod===S.cod&&r.qi===qi?
 function telaQuestao(){
   const r=D.rodada;if(!r)return;
   if(Lq.qi!==r.qi){
-    Lq={qi:r.qi,op:respostaGuardada(r.qi),ptsAntes:(D.eu&&D.eu.pts)||0,enviando:false,msg:''};
+    Lq={qi:r.qi,op:respostaGuardada(r.qi),ptsAntes:(D.eu&&D.eu.pts)||0,enviando:false,msg:'',sel:null,ts:r.tempoSeg,extra:false};
     S.tela=null;
-  }
+  }else if(Lq.ts!=null&&r.tempoSeg>Lq.ts){Lq.ts=r.tempoSeg;Lq.extra=true;anunciar('O professor deu mais tempo.')}
   const total=(D.cfg&&D.cfg.total)||'';
   const o=r.o||{},ops=[0,1,2,3].map(i=>o[i]||(Array.isArray(r.o)?r.o[i]:'')||'');
   const respondida=Lq.op!==null;
@@ -110,9 +149,12 @@ function telaQuestao(){
     <div class="tempo" id="tbar" aria-hidden="true"><i id="ti"></i></div>
     ${r.fig?`<p class="fig">Esta questão tem figura. Olhe o projetor.</p>`:''}
     <h1 class="enun" data-foco id="enun">${esc(r.q)}</h1>
-    <div class="ops" role="group" aria-label="Alternativas">${ops.map((t,i)=>`<button type="button" class="op ${Lq.op===i?'minha':''}" data-i="${i}" style="--c:${COR[i]}" ${respondida?'disabled':''} aria-label="Alternativa ${LET[i]}: ${esc(t)}"><span class="l" aria-hidden="true">${LET[i]}</span><span class="s" aria-hidden="true">${SIM[i]}</span><span class="t">${esc(t)}</span></button>`).join('')}</div>
+    <div class="ops" role="group" aria-label="Alternativas">${ops.map((t,i)=>`<button type="button" class="op ${Lq.op===i||(Lq.sel===i&&!respondida)?'minha':''}" data-i="${i}" style="--c:${COR[i]}" ${respondida?'disabled':''} ${Lq.sel===i&&!respondida?'aria-pressed="true"':''} aria-label="Alternativa ${LET[i]}: ${esc(t)}"><span class="l" aria-hidden="true">${LET[i]}</span><span class="s" aria-hidden="true">${SIM[i]}</span><span class="t">${esc(t)}</span></button>`).join('')}</div>
+    ${pref.conf&&!respondida?`<button class="go confirma" id="bConfirmar" type="button" ${Lq.sel==null?'disabled':''}>${Lq.sel==null?'Escolha uma alternativa':'Confirmar resposta '+LET[Lq.sel]}</button>`:''}
+    ${Lq.extra?`<p class="nota" role="status">O professor deu mais tempo.</p>`:''}
     <p id="msg" class="${Lq.msg?'erro':'mu'}" role="status">${respondida?(Lq.enviando?'Enviando...':'Resposta enviada. Aguarde o professor revelar.'):esc(Lq.msg)}</p>`,'q'+r.qi);
-  document.querySelectorAll('.op').forEach(b=>b.addEventListener('click',()=>responder(+b.dataset.i)));
+  document.querySelectorAll('.op').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.i;if(pref.conf)selecionar(i);else responder(i)}));
+  const bc=$('bConfirmar');if(bc)bc.addEventListener('click',()=>{if(Lq.sel!=null)responder(Lq.sel)});
   if(!document.body.dataset.qa||document.body.dataset.qa!==String(r.qi)){document.body.dataset.qa=String(r.qi);anunciar(`Questão ${r.qi+1}. ${r.q}`)}
   iniciarTempo(r);
 }
@@ -128,15 +170,24 @@ function iniciarTempo(r){
     if(rest<=0){
       clearInterval(timer);
       document.querySelectorAll('.op').forEach(b=>b.disabled=true);
-      const m=$('msg');if(m&&Lq.op===null){m.className='mu';m.textContent='Tempo esgotado. Aguarde o professor revelar.';anunciar('Tempo esgotado.')}
+      const bc=$('bConfirmar');if(bc)bc.disabled=true;
+      const m=$('msg');if(m&&Lq.op===null){m.className='mu';m.textContent=Lq.sel!=null?'Tempo esgotado. A resposta não foi enviada. Aguarde o professor revelar.':'Tempo esgotado. Aguarde o professor revelar.';anunciar('Tempo esgotado.')}
     }
   };
   tick();timer=setInterval(tick,200);
+}
+function selecionar(i){
+  const r=D.rodada;if(!r||Lq.op!==null||Lq.qi!==r.qi)return;
+  Lq.sel=i;
+  document.querySelectorAll('.op').forEach(b=>{const m=+b.dataset.i===i;b.classList.toggle('minha',m);if(m)b.setAttribute('aria-pressed','true');else b.removeAttribute('aria-pressed')});
+  const bc=$('bConfirmar');if(bc){bc.disabled=false;bc.textContent='Confirmar resposta '+LET[i]}
+  anunciar('Alternativa '+LET[i]+' escolhida. Toque em confirmar para enviar.');
 }
 async function responder(op){
   const r=D.rodada;if(!r||Lq.op!==null||Lq.qi!==r.qi)return;
   Lq.op=op;Lq.enviando=true;Lq.msg='';
   document.querySelectorAll('.op').forEach(b=>{b.disabled=true;b.classList.toggle('minha',+b.dataset.i===op)});
+  const bcf=$('bConfirmar');if(bcf)bcf.remove();
   const m=$('msg');if(m){m.className='mu';m.textContent='Enviando...'}
   const lento=setTimeout(()=>{const x=$('msg');if(x&&Lq.enviando)x.textContent='Sem conexão, tentando enviar. Se o tempo acabar, a resposta não conta.'},5000);
   try{
@@ -155,6 +206,7 @@ async function responder(op){
     telaQuestao();
   }finally{clearTimeout(lento)}
 }
+const top3=eu=>!!eu&&(eu.pts||0)>0&&eu.pos>=1&&eu.pos<=3;
 function telaResultado(){
   clearInterval(timer);
   const r=D.rodada,v=D.revelacao;
@@ -168,8 +220,9 @@ function telaResultado(){
   const titulo=acertou?'Você acertou':sem?'Sem resposta':'Não foi dessa vez';
   mostrar(`<div class="card"><h1 class="grande ${acertou?'ok':'no'}" data-foco>${titulo}</h1>
     ${acertou?`<p class="grande" style="font-size:1.6rem">+${ganho} pontos</p>`:''}
-    <div class="cx"><div><b>${eu.pts||0}</b><small>pontos</small></div><div><b>${eu.pos&&(eu.pts||0)>0?eu.pos+'º':'–'}</b><small>posição</small></div>
-    <div><b>${eu.acertos||0}</b><small>acertos</small></div><div><b>${eu.seq||0}</b><small>sequência</small></div></div></div>
+    <div class="cx"><div><b>${eu.pts||0}</b><small>pontos</small></div>
+    <div><b>${eu.acertos||0}</b><small>acertos</small></div><div><b>${eu.seq||0}</b><small>sequência</small></div>
+    ${top3(eu)?`<div><b>${eu.pos}º</b><small>posição</small></div>`:`<div><b>${eu.maxSeq||0}</b><small>melhor sequência</small></div>`}</div></div>
     <div class="card"><h2>Resposta certa: ${LET[v.correta]}</h2><p class="enun" style="font-size:1.05rem">${esc(o[v.correta]||'')}</p>
     ${Lq.op!==null&&!acertou?`<p class="mu">Você marcou ${LET[Lq.op]}: ${esc(o[Lq.op]||'')}</p>`:''}
     ${v.explicacao?`<p>${esc(v.explicacao)}</p>`:''}</div>
@@ -178,18 +231,19 @@ function telaResultado(){
 }
 function telaPodio(){
   clearInterval(timer);
-  const eu=D.eu||{},p=(eu.pts||0)>0?eu.pos:0;
+  const eu=D.eu||{},p=top3(eu)?eu.pos:0;
   const med=p===1?'🥇':p===2?'🥈':p===3?'🥉':'';
   mostrar(`<div class="card"><h1 class="grande" data-foco>${med?med+' ':''}${p?p+'º lugar':'Fim da partida'}</h1>
     <p style="text-align:center">${esc(S.apelido)}</p>
     <div class="cx"><div><b>${eu.pts||0}</b><small>pontos</small></div><div><b>${eu.acertos||0}</b><small>acertos</small></div>
     <div><b>${eu.maxSeq||0}</b><small>maior sequência</small></div><div><b>${(D.cfg&&D.cfg.total)||'–'}</b><small>questões</small></div></div></div>
     <p class="mu">Olhe o projetor para ver o pódio da turma. Obrigado por jogar.</p>`,'podio');
-  anunciar(`Fim da partida. ${p?'Você ficou em '+p+'º lugar.':''} ${eu.pts||0} pontos.`);
+  anunciar(`Fim da partida. ${p?'Você ficou em '+p+'º lugar.':''} ${eu.pts||0} pontos, ${eu.acertos||0} acertos.`);
 }
 
 /* ===== INÍCIO ===== */
 function iniciar(){
+  ligarBarra();
   if(!AL){mostrar(`<div class="card"><h1 data-foco>Não carregou</h1><p>A parte que conecta à sala não carregou. Atualize a página.</p></div>`,'x');return}
   const g=lerGuardado(),p=new URLSearchParams(location.search),c=(p.get('c')||'').replace(/\D/g,'');
   if(g&&g.cod&&g.apelido&&(!c||c===g.cod)){entrar(g.cod,g.apelido,true);return}

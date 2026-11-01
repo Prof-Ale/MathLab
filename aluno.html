@@ -11,7 +11,7 @@
 <style>
 :root{--bg:#061a38;--card:#0d2c58;--sf:#143b73;--tx:#eef3fb;--mu:#b3c3dc;--gold:#f2b01e;--gold2:#f6c453;--bd:#27497f;--ok:#22c55e;--no:#f87171;--cy:#06b6d4}
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
-html{font-size:17px;-webkit-text-size-adjust:100%}
+html{font-size:calc(17px * var(--f,1));-webkit-text-size-adjust:100%}
 body{background:var(--bg);color:var(--tx);min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;line-height:1.45;padding-bottom:env(safe-area-inset-bottom)}
 header{display:flex;align-items:center;gap:.6rem;padding:.6rem 1rem;border-bottom:2px solid var(--gold);background:#04122b}
 header img{width:30px;height:30px;border-radius:8px}
@@ -60,11 +60,34 @@ input:focus{outline:3px solid var(--cy);outline-offset:1px;border-color:var(--cy
 .pulso{width:14px;height:14px;border-radius:50%;background:var(--gold);display:inline-block;animation:pl 1.2s infinite ease-in-out}
 @keyframes pl{0%,100%{transform:scale(.7);opacity:.6}50%{transform:scale(1.1);opacity:1}}
 @media (prefers-reduced-motion:reduce){.pulso{animation:none}.tempo i{transition:none}.op:active{transform:none}}
+
+#tb{display:flex;gap:.4rem;flex-wrap:wrap;padding:.5rem 1rem;background:#04122b;border-bottom:1px solid var(--bd)}
+#tb button{background:transparent;color:var(--tx);border:1px solid var(--bd);border-radius:999px;padding:.45rem .8rem;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;min-height:40px}
+#tb button[aria-pressed=true]{background:var(--gold);color:#2a1b00;border-color:var(--gold)}
+#tb button:disabled{opacity:.4}
+.confirma{min-height:60px;width:100%}
+body.contraste{--bg:#000;--card:#111;--sf:#111;--tx:#ff0;--mu:#fff;--gold:#ff0;--gold2:#ff0;--bd:#fff;--ok:#0f0;--no:#ff9d9d;--cy:#0ff}
+body.contraste header,body.contraste #tb{background:#000}
+body.contraste .go,body.contraste #tb button[aria-pressed=true]{color:#000}
+body.contraste .op .l{color:#000}
+body.calmo .tempo.urg i{background:var(--gold)}
+body.calmo #tn{display:none}
+body.calmo .pulso{animation:none}
+body.calmo .tempo i{transition:none}
+.nota{border:1px solid var(--gold);border-radius:12px;padding:.6rem .8rem;background:rgba(242,176,30,.12);font-size:.92rem}
 footer{padding:.8rem 1rem;text-align:center;font-size:.75rem;color:var(--mu)}
 </style>
 </head>
 <body>
 <header><img src="icons/icon-192.png" alt=""><b>Arena MathLab</b><span id="hSala"></span></header>
+<nav id="tb" aria-label="Ajustes de acessibilidade">
+<button type="button" id="bMenos" aria-label="Diminuir a letra">A−</button>
+<button type="button" id="bMais" aria-label="Aumentar a letra">A+</button>
+<button type="button" id="bCont" aria-pressed="false">Alto contraste</button>
+<button type="button" id="bOuvir">Ouvir</button>
+<button type="button" id="bCalmo" aria-pressed="false">Modo calmo</button>
+<button type="button" id="bConf" aria-pressed="false">Confirmar antes de enviar</button>
+</nav>
 <div id="banner" role="status"></div>
 <main id="app"><div class="card"><h1>Carregando</h1><p class="mu">Só um instante.</p></div></main>
 <div id="anuncio" class="sr" role="status" aria-live="polite"></div>

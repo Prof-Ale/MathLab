@@ -52,7 +52,7 @@ const salvarPref=p=>{try{localStorage.setItem(PK,JSON.stringify(p))}catch(_){}};
 /* ===== SESSÃO (para voltar depois de recarregar a página) ===== */
 function salvar(){
   if(!LV||!LV.cod)return;
-  try{sessionStorage.setItem(K,JSON.stringify({cod:LV.cod,cfg:LV.cfg,fase:LV.fase,qi:LV.qi,inicioEm:LV.inicioEm,
+  try{sessionStorage.setItem(K,JSON.stringify({cod:LV.cod,cfg:LV.cfg,fase:LV.fase,qi:LV.qi,inicioEm:LV.inicioEm,tempoSeg:LV.tempoSeg,
     qs:(LV.qs||[]).map(x=>({id:x.mod.id,nivel:x.nivel,q:x.q})),placar:LV.placar,rodadas:LV.rodadas,erros:LV.erros,ultRes:LV.ultRes,dist:LV.dist,
     sel:[...I().E.sel],nivel:I().E.nivel}))}catch(_){}
 }
@@ -212,7 +212,7 @@ async function comecar(){
 async function rodada(qi){
   const II=I(),E=II.E;
   clearInterval(LV.timer);
-  LV.qi=qi;E.qi=qi;E.revelada=false;LV.fase='questao';LV.revelando=false;LV.ultRes=null;
+  LV.qi=qi;E.qi=qi;E.revelada=false;LV.fase='questao';LV.revelando=false;LV.ultRes=null;LV.tempoSeg=LV.cfg.tempo;
   const it=LV.qs[qi];
   try{
     LV.inicioEm=await live().prof.publicarQuestao({qi,mod:it.mod.nome,ic:it.mod.ic,nivel:it.nivel,eixo:it.mod.eixo,q:it.q.q,o:it.q.o,fig:II.temFigura(it),tempoSeg:LV.cfg.tempo});
@@ -223,14 +223,14 @@ async function rodada(qi){
 }
 function relogioTick(){
   if(!LV||LV.fase!=='questao')return;
-  const T=LV.cfg.tempo;if(!T)return;
+  const T=LV.tempoSeg;if(!T)return;
   const dec=Math.max(0,(live().agora()-LV.inicioEm)/1000),rest=Math.max(0,Math.ceil(T-dec));
   const n=$('arTn'),c=$('arAnel');
   if(n){n.textContent=rest;n.parentNode.classList.toggle('urg',rest<=5&&rest>0)}
   if(c)c.style.strokeDashoffset=String(170*Math.min(1,dec/T));
   if(rest<=0&&!LV.fimAvisado){LV.fimAvisado=true;clearInterval(LV.timer);I().som('fim');const s=$('arStatus');if(s)s.textContent='Tempo esgotado. Revele quando quiser.';I().anunciar('Tempo esgotado.')}
 }
-function iniciarRelogio(){LV.fimAvisado=false;clearInterval(LV.timer);if(LV.cfg.tempo>0){relogioTick();LV.timer=setInterval(relogioTick,200)}}
+function iniciarRelogio(){LV.fimAvisado=false;clearInterval(LV.timer);if(LV.tempoSeg>0){relogioTick();LV.timer=setInterval(relogioTick,200)}}
 function contarRespostas(){
   const r=(LV.sala&&LV.sala.respostas)||{},j=(LV.sala&&LV.sala.jogadores)||{};
   return {n:Object.keys(r).filter(u=>j[u]).length,total:Object.keys(j).length};
@@ -247,7 +247,7 @@ function atualizarProgresso(){
   }
 }
 function telaQuestao(){
-  const II=I(),E=II.E,L=II.L,it=LV.qs[LV.qi],q=it.q,fig=II.temFigura(it),T=LV.cfg.tempo;
+  const II=I(),E=II.E,L=II.L,it=LV.qs[LV.qi],q=it.q,fig=II.temFigura(it),T=LV.tempoSeg;
   LV.todosAvisado=false;
   $('arMain').innerHTML=`<section class="ar-rodada" style="--ax:${II.corEixo(it.mod)}" aria-labelledby="arEnun">
     <div class="ar-top"><div class="ar-info"><span class="ar-pill"><b>Questão ${LV.qi+1}</b> de ${LV.qs.length}</span><span class="ar-pill eixo"><span aria-hidden="true">${it.mod.ic}</span> ${esc(it.mod.nome)} · Nível ${it.nivel}</span><span class="ar-pill">Sala <b>${esc(LV.cod)}</b></span></div>
@@ -260,7 +260,7 @@ function telaQuestao(){
     <div class="lv-prog"><b id="lvCont">0 de ${Object.keys((LV.sala&&LV.sala.jogadores)||{}).length} responderam</b><div class="lv-barra" aria-hidden="true"><i id="lvBarra"></i></div></div>
     <p class="lv-conn" id="lvConn">${LV.conectado?'Conexão com o servidor: ativa.':'Conexão com o servidor perdida. Tentando voltar sozinha.'}</p>
     <div class="ar-acoes"><p id="arStatus" class="ar-status" aria-live="off">Os alunos estão respondendo no celular. Revele quando quiser.</p>
-      <button class="ar-go" type="button" id="arRev" onclick="ArenaHost.revelar()">Revelar resposta e pontuar</button></div>
+      <div class="ar-lin">${LV.cfg.tempo>0?`<button class="ar-btn sec" type="button" id="lvMais" onclick="ArenaHost.maisTempo()" ${LV.tempoSeg>=120?'disabled':''}>Mais 15 s para a turma</button>`:''}<button class="ar-go" type="button" id="arRev" onclick="ArenaHost.revelar()">Revelar resposta e pontuar</button></div></div>
     <div id="arResultado"></div></section>`;
   II.desenharFigura();
   const h=$('arEnun');if(h)h.focus({preventScroll:true});
@@ -268,9 +268,22 @@ function telaQuestao(){
   atualizarProgresso();
 }
 
+/* ===== MAIS TEMPO ===== */
+async function maisTempo(){
+  if(!LV||LV.fase!=='questao'||LV.revelando||!LV.cfg.tempo)return;
+  const atual=LV.tempoSeg||LV.cfg.tempo,novo=Math.min(120,atual+15);
+  if(novo<=atual){I().anunciar('O limite é de 120 segundos por questão.');return}
+  const b=$('lvMais');if(b)b.disabled=true;
+  try{await live().prof.mudarTempo(novo)}catch(e){if(b)b.disabled=false;alert(e.message);return}
+  LV.tempoSeg=novo;salvar();iniciarRelogio();
+  const s=$('arStatus');if(s)s.textContent=`Mais 15 segundos para a turma. Agora são ${novo} segundos no total.`;
+  I().anunciar(`Mais 15 segundos. Total de ${novo} segundos.`);
+  if(b)b.disabled=novo>=120;
+}
+
 /* ===== REVELAR E PONTUAR ===== */
 function calcular(it,resp,jogs){
-  const II=I(),core=window.ArenaCore,q=it.q,T=LV.cfg.tempo,bonus=LV.cfg.bonus&&T>0;
+  const II=I(),core=window.ArenaCore,q=it.q,T=LV.tempoSeg!=null?LV.tempoSeg:LV.cfg.tempo,bonus=LV.cfg.bonus&&T>0;
   const dist=[0,0,0,0];let sem=0,acertos=0;const ganhos={};
   jogs.forEach(p=>{
     const pl=LV.placar[p.uid]||(LV.placar[p.uid]={apelido:p.apelido,pts:0,acertos:0,seq:0,maxSeq:0,somaTempo:0});
@@ -403,7 +416,7 @@ async function retomar(){
   const mods=II.MODS;
   const qs=(s.qs||[]).map(x=>({mod:mods.find(m=>m.id===x.id),nivel:x.nivel,q:x.q}));
   if(qs.some(x=>!x.mod)){limparSessao();erroTela('Não consegui restaurar as questões','O MathLab foi atualizado desde que a sala abriu. Abra uma nova sala.',null);return}
-  LV={cod:s.cod,cfg:s.cfg,sala:null,fase:s.fase,qi:s.qi||0,qs,placar:s.placar||{},rodadas:s.rodadas||[],erros:s.erros||{},dist:s.dist||[],ultRes:s.ultRes||null,inicioEm:s.inicioEm,timer:null,conectado:true};
+  LV={cod:s.cod,cfg:s.cfg,sala:null,fase:s.fase,qi:s.qi||0,qs,placar:s.placar||{},rodadas:s.rodadas||[],erros:s.erros||{},dist:s.dist||[],ultRes:s.ultRes||null,inicioEm:s.inicioEm,tempoSeg:(s.tempoSeg!=null?s.tempoSeg:s.cfg.tempo),timer:null,conectado:true};
   E.qs=qs;E.qi=LV.qi;E.ativa=LV.fase!=='podio'&&LV.fase!=='lobby';E.revelada=LV.fase==='resultado';
   if(s.sel)E.sel=new Set(s.sel);
   ligar();window.onbeforeunload=e=>{e.preventDefault();e.returnValue=''};
@@ -428,6 +441,6 @@ function voltar(){
 }
 function prefChange(){const b=$('lvBonus');if(b)salvarPref({bonus:b.checked})}
 
-window.ArenaHost={abrir,comecar,revelar,proxima,expulsar,bonus:mudarBonus,cancelar,fechar,retomar,descartar,voltar,rodada,rodadaAtual,pref:prefChange};
+window.ArenaHost={abrir,comecar,revelar,proxima,expulsar,bonus:mudarBonus,cancelar,fechar,retomar,descartar,voltar,rodada,rodadaAtual,maisTempo,pref:prefChange};
 window.__arenaHostEstado=()=>LV;
 })();
