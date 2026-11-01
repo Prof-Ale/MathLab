@@ -4406,6 +4406,199 @@ MODS.push({id:'probexp',ano:8,ic:'🎰',nome:'Probabilidade experimental',sub:'M
   txt(`${v.n} partidas${ocu?'':' · tracejado = teoria'}`,W/2,H-4,k.m,'11px sans-serif');c.textAlign='left'},
  rod:8,gens:BP_GENS});
 
+/* ===== Razão, proporção e grandezas proporcionais (módulo novo, arquivo separado) ===== */
+const PP_G=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){const t=a%b;a=b;b=t}return a||1};
+const PP_F=n=>{const r=Math.round(n*10)/10;return Number.isInteger(r)?String(r):String(r).replace('.',',')};
+const PP_R=n=>`R$ ${n},00`;
+const PP_S=o=>Object.assign({modo:0,k:3,x:5,P:24,tp:0,a:4,bv:12,xr:10,b:3,tot:48,oc:0},o);
+const PP_Y=v=>v.tp===1?v.a*v.bv/v.xr:v.bv*v.xr/v.a;           // regra de três: valor procurado
+const PP_OCU=v=>v.oc===1&&!locked;
+const PP_FILL=()=>String(rnd(2,60));
+
+const PP_PAR=[
+ ['a quantidade de arroz comprada e o preço pago','d'],['o número de pacotes de bala e o total de balas','d'],['os litros de gasolina e o preço pago no posto','d'],
+ ['o número de pedreiros e os dias para terminar a mesma obra','i'],['a velocidade de um carro e o tempo para percorrer o mesmo trajeto','i'],['o número de torneiras iguais e o tempo para encher o mesmo tanque','i'],
+ ['a idade de uma pessoa e a sua altura','n'],['o número de irmãos de um aluno e a nota dele em Matemática','n'],['o número do sapato e o dia do mês do aniversário','n']];
+const PP_TXT={d:'Diretamente proporcionais',i:'Inversamente proporcionais',n:'Não são proporcionais'};
+
+const PP_GENS={
+1:[
+ /* valor unitário */
+ ()=>{const u=rnd(2,9),n=rnd(2,9),T=u*n,it=pick(['cadernos','lápis','pães','canetas']);
+  return mk({q:`${n} ${it} iguais custam ${PP_R(T)}. Quanto custa 1 deles?`,ok:PP_R(u),
+   bad:[[PP_R(T*n),'multiplicou em vez de dividir','Para achar o preço de 1, divida o total pelo número de itens.'],
+        [PP_R(T-n),'subtraiu em vez de dividir','Preço de 1 = total ÷ quantidade.'],
+        [PP_R(u+1),'errou a conta da divisão',`Confira: ${T} ÷ ${n}.`],
+        [PP_R(n),'repetiu a quantidade',`A quantidade é ${n}; o preço de 1 é outra coisa.`]],
+   fill:()=>PP_R(rnd(1,60)),h:['Preço de 1 = total ÷ quantidade.',`Calcule ${T} ÷ ${n}.`],
+   e:`${T} ÷ ${n} = ${u}. Cada um custa ${PP_R(u)}.`,s:PP_S({modo:0,k:u,x:n,oc:0})})},
+ /* y = k x */
+ ()=>{const k=rnd(2,9),x=rnd(3,12),it=pick(['balas','figurinhas','bolinhas','adesivos']);
+  return mk({q:`Cada pacote traz ${k} ${it}. Quantas ${it} há em ${x} pacotes?`,ok:String(k*x),
+   bad:[[String(k+x),'somou em vez de multiplicar','Cada pacote traz a mesma quantidade: multiplique.'],
+        [String(k),'repetiu o valor de 1 pacote',`Há ${x} pacotes, não 1.`],
+        [String(x),'repetiu o número de pacotes',`Multiplique o número de pacotes por ${k}.`],
+        [String(k*(x-1)),'contou um pacote a menos','Conte todos os pacotes.']],
+   fill:PP_FILL,h:['Dobrando os pacotes, dobra a quantidade.',`Calcule ${k} × ${x}.`],
+   e:`${k} × ${x} = ${k*x}.`,s:PP_S({modo:0,k,x,oc:1})})},
+ /* o gráfico da proporção direta */
+ ()=>{const k=rnd(2,9);
+  return mk({q:`No gráfico de duas grandezas diretamente proporcionais, y = ${k}x, por qual ponto a reta sempre passa?`,ok:'pela origem, o ponto (0, 0)',
+   bad:[['pelo ponto (1, 1)','achou que x e y sempre são iguais',`Com y = ${k}x, quando x = 1, y = ${k}.`],
+        [`pelo ponto (0, ${k})`,'confundiu a razão com o ponto de partida','Se x = 0, então y = k · 0 = 0.'],
+        ['por nenhum ponto fixo','achou que a reta pode ficar em qualquer lugar','A reta da proporção direta nasce sempre em (0, 0).']],
+   fill:()=>`pelo ponto (${rnd(1,5)}, ${rnd(1,5)})`,h:['O que acontece com y quando x vale 0?','Multiplique k por 0.'],
+   e:`Em y = ${k}x, se x = 0 então y = 0. A reta passa pela origem.`,s:PP_S({modo:0,k,x:rnd(2,8),oc:0})})},
+ /* razão */
+ ()=>{const k=rnd(2,9),n=rnd(2,6),xs=[1,2,3,4].map(i=>i*n);
+  return mk({q:`Numa tabela, quando x vale ${xs.join(', ')}, y vale ${xs.map(x=>x*k).join(', ')}. Qual é a razão y ÷ x, igual em toda a tabela?`,ok:String(k),
+   bad:[[String(n),'pegou o passo de x em vez da razão',`Divida y por x em qualquer linha: ${xs[1]*k} ÷ ${xs[1]}.`],
+        [String(k+n),'somou os dois números','A razão é uma divisão, não uma soma.'],
+        [String(k*n),'multiplicou y por x','A razão é y dividido por x.'],
+        [String(Math.round(k/2)||k+1),'dividiu errado','Confira a divisão.']],
+   fill:()=>String(rnd(1,20)),h:['Divida y por x em uma linha da tabela.','Em toda a tabela o resultado é o mesmo.'],
+   e:`${xs[0]*k} ÷ ${xs[0]} = ${k}. A razão y ÷ x é ${k} em todas as linhas.`,s:PP_S({modo:0,k,x:rnd(2,8),oc:0})})}
+],
+2:[
+ /* regra de três direta */
+ ()=>{const r=rnd(8,15),b=rnd(2,6),c=pick([8,10,12,15,20].filter(z=>z!==b)),
+   it=pick([['Um carro percorre','km','litros','de gasolina'],['Uma máquina produz','peças','horas','de trabalho']]);
+  const D=r*b,ok=r*c;
+  return mk({q:`${it[0]} ${D} ${it[1]} com ${b} ${it[2]} ${it[3]}. No mesmo ritmo, quantos ${it[1]} em ${c} ${it[2]}?`,ok:String(ok),
+   bad:[[String(D+(c-b)),'somou a diferença em vez de usar a proporção','Dobrando o tempo ou o combustível, dobra o resultado: a relação é de multiplicar, não de somar.'],
+        [String(Math.round(D*b/c)),'usou a regra inversa','Aqui as duas grandezas crescem juntas: é proporção direta.'],
+        [String(D),'repetiu o valor dado',`Agora são ${c} ${it[2]}, não ${b}.`],
+        [String(ok+r),'errou a conta','Confira a multiplicação.']],
+   fill:PP_FILL,h:[`Quanto vale 1 ${it[2].slice(0,-1)}? Divida ${D} por ${b}.`,'Depois multiplique pelo novo valor.'],
+   e:`${D} ÷ ${b} = ${r} por unidade. ${r} × ${c} = ${ok}.`,s:PP_S({modo:2,tp:0,a:b,bv:D,xr:c,oc:1})})},
+ /* regra de três inversa */
+ ()=>{const n=rnd(2,6),d=rnd(6,12),P=n*d,m=pick([2,3,4,6,8,9,12].filter(z=>P%z===0&&z!==n));
+  if(!m)return PP_GENS[2][1]();
+  const ok=P/m;
+  return mk({q:`${n} operários, trabalhando no mesmo ritmo, terminam uma obra em ${d} dias. Em quantos dias ${m} operários terminam a mesma obra?`,ok:String(ok),
+   bad:[[String(Math.round(d*m/n)),'usou a regra direta','Mais operários terminam mais depressa: a relação é inversa.'],
+        [String(d+(m-n)),'somou a diferença','Em proporção inversa o produto fica constante: operários × dias.'],
+        [String(d),'repetiu o valor dado',`Com ${m} operários o prazo muda.`],
+        [String(ok+1),'errou a conta de divisão','Confira: total de "operário-dias" ÷ novos operários.']],
+   fill:()=>String(rnd(1,24)),h:[`Total de trabalho: ${n} × ${d}.`,`Divida esse total por ${m}.`],
+   e:`${n} × ${d} = ${P} operário-dias. ${P} ÷ ${m} = ${ok} dias.`,s:PP_S({modo:2,tp:1,a:n,bv:d,xr:m,oc:1})})},
+ /* tipo de grandeza */
+ ()=>{const p=pick(PP_PAR);
+  return mk({q:`Em cada caso, as grandezas são diretamente proporcionais, inversamente proporcionais ou nenhuma das duas. Para ${p[0]}, qual alternativa está certa?`,ok:PP_TXT[p[1]],
+   bad:Object.keys(PP_TXT).filter(c=>c!==p[1]).map(c=>[PP_TXT[c],c==='n'?'achou que não há relação de proporção':c==='i'?'confundiu direta com inversa':'confundiu inversa com direta','Teste: se uma dobra, o que acontece com a outra?']),
+   fill:()=>'Só são proporcionais para números inteiros',h:['Se uma grandeza dobra, a outra dobra, cai pela metade ou nada se sabe?','Dobra com dobra: direta. Dobra com metade: inversa.'],
+   e:`${p[1]==='d'?'Quando uma dobra, a outra dobra: diretamente proporcionais.':p[1]==='i'?'Quando uma dobra, a outra cai pela metade: inversamente proporcionais.':'Não existe uma regra fixa de multiplicação ou divisão: não são proporcionais.'}`,s:PP_S({modo:p[1]==='i'?1:0,P:24,k:3,x:4,oc:0})})},
+ /* escala */
+ ()=>{const e=rnd(2,9),c=rnd(3,12);
+  return mk({q:`Num mapa, 1 cm representa ${e} km no terreno. Duas cidades estão a ${c} cm no mapa. Qual é a distância real entre elas?`,ok:`${e*c} km`,
+   bad:[[`${e+c} km`,'somou em vez de multiplicar','Cada centímetro vale a mesma distância: multiplique.'],
+        [`${c} km`,'ignorou a escala',`Cada cm vale ${e} km, não 1 km.`],
+        [`${e*c*10} km`,'errou a unidade','Mantenha km para km: não precisa converter.'],
+        [`${e*(c-1)} km`,'contou um centímetro a menos','Conte todos os centímetros.']],
+   fill:()=>`${rnd(5,100)} km`,h:['Cada cm vale a mesma distância real.',`Multiplique ${c} por ${e}.`],
+   e:`${c} × ${e} = ${e*c} km.`,s:PP_S({modo:0,k:e,x:c,oc:1})})}
+],
+3:[
+ /* partes proporcionais */
+ ()=>{const a=rnd(1,5),b=rnd(2,6),m=rnd(2,10),T=m*(a+b),ok=m*a;
+  if(a===b)return PP_GENS[3][0]();
+  return mk({q:`${PP_R(T)} serão divididos entre Ana e Beto em partes proporcionais a ${a} e ${b}. Quanto Ana recebe?`,ok:PP_R(ok),
+   bad:[[PP_R(m*b),'trocou as partes de Ana e Beto',`A parte da Ana corresponde a ${a} partes de ${a+b}.`],
+        [PP_R(T/2),'dividiu igualmente','A divisão proporcional não é igual: Ana e Beto têm partes diferentes.'],
+        [PP_R(T-ok-m),'errou a conta da parte',`Cada parte vale ${T} ÷ ${a+b}.`],
+        [PP_R(Math.round(T/a)),'dividiu o total pela parte da Ana',`Primeiro ache o valor de 1 parte: ${T} ÷ ${a+b}.`]],
+   fill:()=>PP_R(rnd(10,120)),h:[`O total tem ${a} + ${b} = ${a+b} partes.`,'Ache o valor de 1 parte e multiplique pela parte da Ana.'],
+   e:`${a} + ${b} = ${a+b} partes. 1 parte = ${T} ÷ ${a+b} = ${m}. Ana: ${a} × ${m} = ${PP_R(ok)}.`,s:PP_S({modo:3,a,b,tot:Math.min(120,T),oc:1})})},
+ /* velocidade e tempo */
+ ()=>{const par=pick([[40,60],[60,90],[30,45],[50,75],[80,120],[40,80]]),[v1,v2]=par,mult=v2/PP_G(v1,v2),t=mult*rnd(1,2),D=v1*t,ok=D/v2;
+  return mk({q:`A ${v1} km/h, um ônibus faz um trajeto em ${t} horas. Se andar a ${v2} km/h, em quantas horas faz o mesmo trajeto?`,ok:`${ok} h`,
+   bad:[[`${Math.round(t*v2/v1)} h`,'usou a regra direta','Mais velocidade gasta menos tempo: a relação é inversa.'],
+        [`${t+(v2-v1)} h`,'somou a diferença de velocidade','Em proporção inversa o produto velocidade × tempo é constante.'],
+        [`${t} h`,'repetiu o valor dado','Com outra velocidade, o tempo muda.'],
+        [`${ok+1} h`,'errou a divisão','Confira: distância ÷ nova velocidade.']],
+   fill:()=>`${rnd(1,12)} h`,h:[`Distância = ${v1} × ${t}.`,`Divida a distância por ${v2}.`],
+   e:`Distância: ${v1} × ${t} = ${D} km. Tempo: ${D} ÷ ${v2} = ${ok} h.`,s:PP_S({modo:2,tp:1,a:v1,bv:t,xr:v2,oc:1})})},
+ /* ler a tabela */
+ ()=>{const t=pick(['d','i','n']),P=12,k=pick([2,3,5]),xs=[1,2,3,4],ys=t==='d'?xs.map(x=>k*x):t==='i'?xs.map(x=>P/x):xs.map(x=>x+k+3);
+  return mk({q:`Numa tabela, x vale ${xs.join(', ')} e y vale ${ys.join(', ')}. Que relação existe entre x e y?`,ok:PP_TXT[t],
+   bad:Object.keys(PP_TXT).filter(c=>c!==t).map(c=>[PP_TXT[c],c==='n'?'achou que não há padrão':c==='i'?'confundiu direta com inversa':'confundiu inversa com direta','Teste y ÷ x e também y × x: qual deles fica igual em toda a tabela?']),
+   fill:()=>'Só são proporcionais para números inteiros',h:['Calcule y ÷ x e y × x em duas linhas.','Se y ÷ x é fixo: direta. Se y × x é fixo: inversa.'],
+   e:t==='d'?`y ÷ x vale ${k} em todas as linhas: diretamente proporcionais.`:t==='i'?`y × x vale ${P} em todas as linhas: inversamente proporcionais.`:`Nem y ÷ x nem y × x são constantes: não são proporcionais.`,s:PP_S({modo:t==='i'?1:0,k,P,x:3,oc:0})})},
+ /* receita */
+ ()=>{const u=pick([.5,1,1.5,2]),p1=pick([4,6,8]),p2=pick([2,10,12,14,16].filter(z=>z!==p1)),e1=u*p1,ok=u*p2,it=pick(['ovos','colheres de açúcar','xícaras de farinha']);
+  return mk({q:`Uma receita para ${p1} porções usa ${e1} ${it}. Mantendo a mesma proporção, quanto é necessário para ${p2} porções?`,ok:PP_F(ok),
+   bad:[[PP_F(e1+(p2-p1)),'somou a diferença de porções','Para manter o sabor, a quantidade cresce junto com as porções, na mesma razão.'],
+        [PP_F(e1*p2/p1+u),'errou a conta',`Cada porção usa ${PP_F(u)} ${it}.`],
+        [PP_F(e1),'repetiu o valor da receita',`Agora são ${p2} porções.`],
+        [PP_F(p2),'usou o número de porções','Use a quantidade de ingredientes por porção.']],
+   fill:()=>PP_F(rnd(1,40)),h:[`Quanto vai em 1 porção? Divida ${e1} por ${p1}.`,'Depois multiplique pelo novo número de porções.'],
+   e:`${PP_F(e1)} ÷ ${p1} = ${PP_F(u)} por porção. ${PP_F(u)} × ${p2} = ${PP_F(ok)}.`,s:PP_S({modo:2,tp:0,a:p1,bv:Math.max(1,Math.round(e1)),xr:p2,oc:0})})}
+]};
+
+MODS.push({id:'prop',ano:7,ic:'⚖️',nome:'Razão, proporção e grandezas',sub:'Proporção direta, inversa, regra de três e partes proporcionais',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 direta · 1 inversa · 2 regra de três · 3 partes proporcionais)',min:0,max:3,v:0},
+      {k:'k',l:'Razão da proporção direta (y ÷ x)',min:1,max:9,v:3},
+      {k:'P',l:'Produto constante da proporção inversa (x · y)',min:6,max:72,v:24},
+      {k:'x',l:'Valor de x',min:1,max:12,v:5},
+      {k:'tp',l:'Regra de três (0 direta · 1 inversa)',min:0,max:1,v:0},
+      {k:'a',l:'Regra de três: valor de A (ou parte A)',min:1,max:90,v:4},
+      {k:'bv',l:'Regra de três: valor de B correspondente',min:1,max:120,v:12},
+      {k:'xr',l:'Regra de três: novo valor de A',min:1,max:120,v:10},
+      {k:'b',l:'Partes proporcionais: parte B',min:1,max:9,v:3},
+      {k:'tot',l:'Partes proporcionais: total a repartir',min:6,max:120,v:48}],
+ reset:{modo:0,k:3,P:24,x:5,tp:0,a:4,bv:12,xr:10,b:3,tot:48,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));
+  v.modo=cl(v.modo,0,3);v.k=cl(v.k,1,9);v.P=cl(v.P,6,72);v.x=cl(v.x,1,12);v.tp=cl(v.tp,0,1);v.a=cl(v.a,1,90);v.bv=cl(v.bv,1,120);v.xr=cl(v.xr,1,120);v.b=cl(v.b,1,9);v.tot=cl(v.tot,6,120);v.oc=cl(v.oc,0,1)},
+ info(v){const m=v.modo,ocu=PP_OCU(v);
+  if(m===0)return ocu?`Proporção direta · y = ${v.k}x · descubra y para x = ${v.x}`:`Direta · y = ${v.k}x · x = ${v.x}, y = ${v.k*v.x} · y ÷ x = ${v.k} em todos os pontos · a reta passa pela origem`;
+  if(m===1)return `Inversa · x · y = ${v.P} · x = ${v.x}, y = ${PP_F(v.P/v.x)} · o produto não muda, a curva nunca toca os eixos`;
+  if(m===2)return ocu?`Regra de três ${v.tp?'inversa':'direta'} · A: ${v.a} → ${v.xr} · B: ${v.bv} → ?`:`Regra de três ${v.tp?'inversa':'direta'} · A: ${v.a} → ${v.xr} · B: ${v.bv} → ${PP_F(PP_Y(v))}`;
+  const s=v.a+v.b;return ocu?`Partes proporcionais ${v.a} : ${v.b} · total ${v.tot} · descubra cada parte`:`Partes ${v.a} : ${v.b} · 1 parte = ${v.tot} ÷ ${s} = ${PP_F(v.tot/s)} · A recebe ${PP_F(v.tot*v.a/s)} e B recebe ${PP_F(v.tot*v.b/s)}`},
+ desc(v){const m=v.modo,ocu=PP_OCU(v);
+  if(m===0)return `Gráfico de uma proporção direta, y igual a ${v.k} vezes x: uma reta que sai da origem. Ponto marcado em x igual a ${v.x}${ocu?'.':`, y igual a ${v.k*v.x}.`}`;
+  if(m===1)return `Gráfico de uma proporção inversa, x vezes y igual a ${v.P}: uma curva que desce, sem tocar os eixos. Ponto marcado em x igual a ${v.x}, y igual a ${PP_F(v.P/v.x)}, e um retângulo de área ${v.P}.`;
+  if(m===2)return `Esquema de regra de três ${v.tp?'inversa':'direta'}. Grandeza A vai de ${v.a} para ${v.xr}. Grandeza B vai de ${v.bv} para ${ocu?'um valor escondido até você responder':PP_F(PP_Y(v))}.`;
+  return `Barra dividida em ${v.a+v.b} partes iguais, ${v.a} para A e ${v.b} para B, representando um total de ${v.tot}.${ocu?' Os valores de cada parte ficam escondidos até você responder.':` A recebe ${PP_F(v.tot*v.a/(v.a+v.b))} e B recebe ${PP_F(v.tot*v.b/(v.a+v.b))}.`}`},
+ draw(c,v,W,H,k){const m=v.modo,ocu=PP_OCU(v);
+  const txt=(t,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(t,x,y)};
+  if(m<=1){const x0=46,x1=W-16,y0=30,y1=H-36,Xm=12,Ym=m===0?v.k*Xm:v.P,X=x=>x0+(x1-x0)*x/Xm,Y=y=>y1-(y1-y0)*Math.min(y,Ym)/Ym;
+   c.strokeStyle=k.m;c.lineWidth=1;c.globalAlpha=.4;for(let i=0;i<=4;i++){const y=y1-(y1-y0)*i/4;c.beginPath();c.moveTo(x0,y);c.lineTo(x1,y);c.stroke()}c.globalAlpha=1;
+   c.strokeStyle=k.t;c.lineWidth=1.8;c.beginPath();c.moveTo(x0,y0-4);c.lineTo(x0,y1);c.lineTo(x1,y1);c.stroke();
+   txt('0',x0-8,y1+4,k.m,'11px sans-serif','right');txt(String(Xm),x1,y1+14,k.m,'11px sans-serif');txt(String(Ym),x0-6,y0+4,k.m,'11px sans-serif','right');txt('x',(x0+x1)/2,y1+16,k.m,'11px sans-serif');
+   c.strokeStyle=k.c1;c.lineWidth=2.6;c.beginPath();
+   if(m===0){c.moveTo(X(0),Y(0));c.lineTo(X(Xm),Y(Ym))}
+   else{for(let i=0;i<=120;i++){const x=.5+(Xm-.5)*i/120,y=v.P/x;if(i===0)c.moveTo(X(x),Y(y));else c.lineTo(X(x),Y(y))}}
+   c.stroke();
+   for(let xi=1;xi<=Xm;xi++){const yy=m===0?v.k*xi:v.P/xi;c.fillStyle=k.m;c.beginPath();c.arc(X(xi),Y(yy),2.6,0,7);c.fill()}
+   const yy=m===0?v.k*v.x:v.P/v.x;
+   if(m===1){c.fillStyle=k.a;c.globalAlpha=.25;c.fillRect(X(0),Y(yy),X(v.x)-X(0),y1-Y(yy));c.globalAlpha=1;c.strokeStyle=k.a;c.lineWidth=1.5;c.strokeRect(X(0),Y(yy),X(v.x)-X(0),y1-Y(yy))}
+   else{c.strokeStyle=k.a;c.lineWidth=1.5;c.setLineDash([5,3]);c.beginPath();c.moveTo(X(v.x),y1);c.lineTo(X(v.x),Y(yy));c.lineTo(x0,Y(yy));c.stroke();c.setLineDash([])}
+   c.fillStyle=k.pk;c.beginPath();c.arc(X(v.x),Y(yy),6,0,7);c.fill();
+   txt(ocu?`(${v.x}, ?)`:`(${v.x}, ${PP_F(yy)})`,Math.min(X(v.x)+8,W-70),Math.max(Y(yy)-10,y0+8),k.t,'bold 13px sans-serif','left');
+   txt(m===0?`y = ${v.k}x · a razão y ÷ x é sempre ${v.k}`:`x · y = ${v.P} · a área do retângulo não muda`,W/2,18,k.t,'bold 13px sans-serif');
+   c.textAlign='left';return}
+  if(m===2){const dir=v.tp===0,y=PP_Y(v),cw=Math.min(110,(W-150)/3),cx=[W/2-cw*1.6,W/2+cw*.4],ry=[78,160];
+   txt(dir?'Grandezas diretamente proporcionais':'Grandezas inversamente proporcionais',W/2,20,k.t,'bold 14px sans-serif');
+   txt('A',cx[0]-cw*.9,ry[0]+6,k.c1,'bold 18px sans-serif');txt('B',cx[0]-cw*.9,ry[1]+6,k.c2,'bold 18px sans-serif');
+   const caixa=(x,yy,t,col,dest)=>{c.fillStyle=k.f;c.fillRect(x-cw/2+cw*.5,yy-24,cw,46);c.strokeStyle=col;c.lineWidth=dest?3:1.5;c.strokeRect(x-cw/2+cw*.5,yy-24,cw,46);txt(t,x+cw*.5,yy+7,dest?k.pk:k.t,'bold 20px sans-serif')};
+   caixa(cx[0],ry[0],String(v.a),k.c1);caixa(cx[1],ry[0],String(v.xr),k.c1);caixa(cx[0],ry[1],String(v.bv),k.c2);caixa(cx[1],ry[1],ocu?'?':PP_F(y),k.pk,true);
+   const xa=cx[0]+cw*.5+cw/2,xb=cx[1]+cw*.5-cw/2;
+   [[ry[0],k.c1],[ry[1],k.c2]].forEach(([yy,col])=>{c.strokeStyle=col;c.lineWidth=2;c.beginPath();c.moveTo(xa+4,yy-1);c.lineTo(xb-8,yy-1);c.stroke();c.fillStyle=col;c.beginPath();c.moveTo(xb-2,yy-1);c.lineTo(xb-10,yy-6);c.lineTo(xb-10,yy+4);c.fill()});
+   const f=v.xr/v.a;txt(`× ${PP_F(f)}`,(xa+xb)/2,ry[0]-12,k.c1,'bold 13px sans-serif');
+   txt(ocu?'?':(dir?`× ${PP_F(f)}`:`÷ ${PP_F(f)}`),(xa+xb)/2,ry[1]-12,k.c2,'bold 13px sans-serif');
+   txt(dir?'B muda pelo mesmo fator que A':'B muda pelo fator contrário de A',W/2,H-34,k.m,'12px sans-serif');
+   txt(dir?`A ÷ x = B ÷ y  ·  ${v.a} ÷ ${v.xr} = ${v.bv} ÷ ?`:`A · B = novo A · novo B  ·  ${v.a} · ${v.bv} = ${v.xr} · ?`,W/2,H-12,k.a,'bold 13px sans-serif');
+   c.textAlign='left';return}
+  const s=v.a+v.b,bw=W-60,bx=30,by=70,bh=44,pw=bw/s;
+  txt(`Dividir ${v.tot} na razão ${v.a} : ${v.b}`,W/2,22,k.t,'bold 14px sans-serif');
+  for(let i=0;i<s;i++){c.fillStyle=i<v.a?k.c1:k.c2;c.globalAlpha=.8;c.fillRect(bx+i*pw+1,by,pw-2,bh);c.globalAlpha=1;txt(i<v.a?'A':'B',bx+i*pw+pw/2,by+bh/2+5,'#fff','bold 14px sans-serif')}
+  c.strokeStyle=k.t;c.lineWidth=1.5;c.strokeRect(bx,by,bw,bh);
+  txt(ocu?`1 parte = ?`:`1 parte = ${v.tot} ÷ ${s} = ${PP_F(v.tot/s)}`,W/2,by+bh+28,k.a,'bold 14px sans-serif');
+  txt(`A: ${v.a} partes`+(ocu?'':` = ${PP_F(v.tot*v.a/s)}`),bx+pw*v.a/2,by-12,k.c1,'bold 13px sans-serif');
+  txt(`B: ${v.b} partes`+(ocu?'':` = ${PP_F(v.tot*v.b/s)}`),bx+pw*v.a+pw*v.b/2,by-12,k.c2,'bold 13px sans-serif');
+  txt(`${s} partes iguais no total`,W/2,H-12,k.m,'12px sans-serif');c.textAlign='left'},
+ rod:8,gens:PP_GENS});
+
 const O6=['nat','adsub','muldiv','tabmul','tabdiv','fra','solidos'],ix=MODS.map((m,i)=>m.ano===6?i:-1).filter(i=>i>=0),st=ix.map(i=>MODS[i]).sort((x,y)=>{const a=O6.indexOf(x.id),b=O6.indexOf(y.id);return (a<0?99:a)-(b<0?99:b)});ix.forEach((i,j)=>{MODS[i]=st[j]});
 })();
 
@@ -4535,6 +4728,7 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
     pi:     { eixo:'Geometria', bncc:['EF07MA33','EF08MA19'], prereq:['dec'], proximo:['area'], objetivos:['Reconhecer raio, diâmetro e circunferência','Descobrir que a volta dividida pelo diâmetro dá cerca de 3,14','Calcular comprimento e área do círculo','Conhecer a história do número π'], tempo:'4 aulas' },
     balanca:{ eixo:'Álgebra', bncc:['EF06MA14','EF07MA18'], prereq:['eq'], proximo:['equiv','eq2'], objetivos:['Manter a balança em equilíbrio fazendo o mesmo nos dois pratos','Resolver equações com números negativos','Resolver equações com x nos dois lados'], tempo:'3 aulas' },
     probexp:{ eixo:'Probabilidade e Estatística', bncc:['EF07MA34','EF08MA22','EF09MA20'], prereq:['prob','fra'], proximo:[], objetivos:['Comparar frequência obtida e probabilidade teórica','Entender a lei dos grandes números','Calcular probabilidades com dois dados, eventos independentes e o complementar'], tempo:'3 aulas' },
+    prop:   { eixo:'Álgebra', bncc:['EF07MA17','EF08MA12','EF08MA13','EF09MA08'], prereq:['fra','alg'], proximo:['func'], objetivos:['Reconhecer grandezas diretamente e inversamente proporcionais','Resolver problemas com regra de três','Dividir um total em partes proporcionais'], tempo:'4 aulas' },
     prob:   { eixo:'Probabilidade e Estatística', bncc:['EF06MA30','EF07MA34','EF07MA35','EF08MA22','EF08MA25'], prereq:['fra','dec'], proximo:[], objetivos:['Calcular probabilidade teórica','Comparar frequência relativa e probabilidade teórica','Calcular média, mediana e moda'], tempo:'4 aulas' }
 };
   for (const m of MODS) {
@@ -4544,7 +4738,7 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
   }
   window.__meta = META;
   /* Ordem pedagógica na home: dentro de cada eixo, do mais básico ao mais avançado */
-  const ORDEM_HOME=['nat','adsub','muldiv','tabmul','tabdiv','mmc','primos','fra','dec','pot','expr','int','sinais','alg','equiv','eq','balanca','eq2','func','solidos','ang','pi','tri','area','pit','tales','cart','med','prob','probexp'];
+  const ORDEM_HOME=['nat','adsub','muldiv','tabmul','tabdiv','mmc','primos','fra','dec','pot','expr','int','sinais','alg','prop','equiv','eq','balanca','eq2','func','solidos','ang','pi','tri','area','pit','tales','cart','med','prob','probexp'];
   const pos=m=>{const i=ORDEM_HOME.indexOf(m.id);return i<0?999:i};
   MODS.sort((a,b)=>pos(a)-pos(b));
 })();
@@ -4722,7 +4916,7 @@ window.__desc=DESC;
 
 /* ===== BOLETIM DO ALUNO E RELATÓRIO DA TURMA (PDF por impressão) ===== */
 (()=>{
-const DICAS={probexp:'Voltar ao simulador: aumentar o número de lançamentos e observar a frequência se aproximar da probabilidade teórica.',balanca:'Voltar à balança: mexer no passo da resolução e ver o que acontece ao tirar o mesmo dos dois pratos.',pi:'Voltar ao simulador do círculo desenrolado: ver quantos diâmetros cabem na volta e refazer a conta com 3,14.',func:'Voltar ao gráfico do simulador: mexer em a e em b e observar o que muda na reta e na tabela.',prob:'Comparar no simulador a frequência observada com a probabilidade teórica e aumentar o número de lançamentos.',fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
+const DICAS={prop:'Voltar ao simulador: mudar o modo e comparar a reta da proporção direta com a curva da inversa.',probexp:'Voltar ao simulador: aumentar o número de lançamentos e observar a frequência se aproximar da probabilidade teórica.',balanca:'Voltar à balança: mexer no passo da resolução e ver o que acontece ao tirar o mesmo dos dois pratos.',pi:'Voltar ao simulador do círculo desenrolado: ver quantos diâmetros cabem na volta e refazer a conta com 3,14.',func:'Voltar ao gráfico do simulador: mexer em a e em b e observar o que muda na reta e na tabela.',prob:'Comparar no simulador a frequência observada com a probabilidade teórica e aumentar o número de lançamentos.',fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
 const fmtData=d=>d?String(d).split('-').reverse().join('/'):'';
 const pct=(n,d)=>d?Math.round(n*100/d):null;
 const pctT=(n,d)=>d?Math.round(n*100/d)+'%':'—';
@@ -5566,7 +5760,7 @@ const EIXO_META={
  'Grandezas e Medidas':{n:4,d:'Comprimento, massa, tempo, capacidade e conversões entre unidades.',ic:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="26" height="10" rx="2"/><path d="M9 11v5M15 11v7M21 11v5"/></svg>'},
  'Probabilidade e Estatística':{n:5,d:'Chance, tabelas, médias e leitura de dados.',ic:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="24" height="24" rx="5"/><circle cx="11" cy="11" r="1.6" fill="currentColor"/><circle cx="21" cy="21" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/><circle cx="21" cy="11" r="1.6" fill="currentColor"/><circle cx="11" cy="21" r="1.6" fill="currentColor"/></svg>'}
 };
-const NOVOS=['pi','balanca','probexp'];
+const NOVOS=['pi','balanca','probexp','prop'];
 let skEixo=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const skinAtiva=()=>S.skin!=='classico';

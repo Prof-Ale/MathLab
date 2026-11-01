@@ -335,3 +335,10 @@ Opção desligada por padrão, na seção "Jogar com celulares, em tempo real". 
 e vira no projetor. Cartas: pontos em dobro, escudo da sequência (errar não zera a sequência), mais dez segundos, desafio da
 turma (70% de acertos dá 50 pontos para todos) e dica do professor. Só efeitos positivos. O efeito é aplicado pelo painel do
 professor, então os celulares e as regras do Firebase não mudam.
+
+## Razão, proporção e grandezas (módulo novo)
+
+Módulo `prop`, 7º ano, eixo Álgebra (BNCC EF07MA17, EF08MA12, EF08MA13 e EF09MA08). Quatro modos: proporção direta (reta pela origem),
+proporção inversa (curva e retângulo de área constante), regra de três (direta e inversa, com os fatores nas setas) e partes proporcionais
+(barra dividida). São 12 geradores em 3 níveis, elegíveis para a Arena. A trigonometria (seno, cosseno e tangente) fica reservada
+para a etapa do Ensino Médio.
