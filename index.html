@@ -4599,6 +4599,1346 @@ MODS.push({id:'prop',ano:7,ic:'⚖️',nome:'Razão, proporção e grandezas',su
   txt(`${s} partes iguais no total`,W/2,H-12,k.m,'12px sans-serif');c.textAlign='left'},
  rod:8,gens:PP_GENS});
 
+/* ===== Sistemas de equações do 1º grau (módulo novo, arquivo separado) ===== */
+const SS_F=n=>{const r=Math.round(n*100)/100;return Number.isInteger(r)?String(r):String(r).replace('.',',')};
+const SS_R=n=>Number.isInteger(n)?`R$ ${n},00`:`R$ ${SS_F(n).replace(/,(\d)$/,',$10')}`;
+const SS_T=(a,b,c)=>`${a===1?'':a}x + ${b===1?'':b}y = ${c}`;
+const SS_S=o=>Object.assign({modo:0,a1:1,b1:1,c1:10,a2:2,b2:1,c2:16,p:0,oc:0},o);
+const SS_SOL=v=>{const D=v.a1*v.b2-v.a2*v.b1;if(D===0)return{tipo:(v.c1*v.a2===v.c2*v.a1)?'inf':'par'};
+ const x=(v.c1*v.b2-v.c2*v.b1)/D,y=(v.a1*v.c2-v.a2*v.c1)/D;return{tipo:'um',x,y,D}};
+const SS_OCU=v=>v.oc===1&&!locked;
+const SS_FILL=()=>String(rnd(1,30));
+
+const SS_GENS={
+1:[
+ /* subtração direta: preço do caderno */
+ ()=>{const x=rnd(2,9),y=rnd(1,8),s=x+y,t=2*x+y;
+  return mk({q:`Um caderno e uma caneta custam ${SS_R(s)}. Dois cadernos e uma caneta custam ${SS_R(t)}. Quanto custa um caderno?`,ok:SS_R(x),
+   bad:[[SS_R(y),'achou o preço da caneta em vez do caderno','Veja o que a pergunta pede: o caderno.'],
+        [SS_R(t-s+y),'errou ao subtrair as compras','A diferença entre as duas compras é um caderno a mais.'],
+        [SS_R(s),'repetiu o valor da primeira compra','Ela inclui o caderno e a caneta.'],
+        [SS_R(x+1),'errou uma conta','Confira a subtração das duas compras.']],
+   fill:()=>SS_R(rnd(1,30)),h:['Compare as duas compras: o que muda de uma para a outra?','A diferença de preço é o preço do que foi acrescentado.'],
+   e:`A segunda compra tem um caderno a mais. ${t} − ${s} = ${x}. O caderno custa ${SS_R(x)}.`,s:SS_S({modo:1,a1:1,b1:1,c1:s,a2:2,b2:1,c2:t,oc:1})})},
+ /* subtração direta: preço da caneta */
+ ()=>{const x=rnd(2,9),y=rnd(2,8),s=x+y,t=x+2*y;
+  return mk({q:`Um lápis e uma borracha custam ${SS_R(s)}. Um lápis e duas borrachas custam ${SS_R(t)}. Quanto custa uma borracha?`,ok:SS_R(y),
+   bad:[[SS_R(x),'achou o preço do lápis em vez da borracha','Veja o que a pergunta pede: a borracha.'],
+        [SS_R(t),'repetiu o valor da segunda compra','Ela inclui o lápis e duas borrachas.'],
+        [SS_R(t+s),'somou as compras em vez de comparar','A diferença entre as compras é que mostra a borracha.'],
+        [SS_R(y+1),'errou uma conta','Confira a subtração.']],
+   fill:()=>SS_R(rnd(1,30)),h:['A segunda compra tem uma borracha a mais.','Subtraia as duas compras.'],
+   e:`A diferença entre as compras é uma borracha: ${t} − ${s} = ${y}.`,s:SS_S({modo:1,a1:1,b1:1,c1:s,a2:1,b2:2,c2:t,oc:1})})},
+ /* verificar um par */
+ ()=>{const x=rnd(1,8),y=rnd(1,8),a1=rnd(1,3),b1=rnd(1,3),a2=rnd(1,3),b2=rnd(1,3);
+  if(a1*b2===a2*b1)return SS_GENS[1][2]();
+  const c1=a1*x+b1*y,c2=a2*x+b2*y,t=pick([0,1,2,3]);
+  let p=x,q=y;if(t===1)p=x+1;else if(t===2)q=y+pick([-1,1]);else if(t===3){p=x+1;q=y+1}
+  if(p<1||q<1)return SS_GENS[1][2]();
+  const f1=a1*p+b1*q===c1,f2=a2*p+b2*q===c2,ok=f1&&f2?'Sim, satisfaz as duas equações':!f1&&!f2?'Não, não satisfaz nenhuma das duas':!f1?'Não, falha na primeira equação':'Não, falha na segunda equação';
+  const todas=['Sim, satisfaz as duas equações','Não, falha na primeira equação','Não, falha na segunda equação','Não, não satisfaz nenhuma das duas'];
+  return mk({q:`O par (x, y) = (${p}, ${q}) é solução do sistema ${SS_T(a1,b1,c1)} e ${SS_T(a2,b2,c2)}?`,ok,
+   bad:todas.filter(z=>z!==ok).map(z=>[z,z.startsWith('Sim')?'conferiu só uma das equações':'errou a conta ao substituir','Substitua x e y nas duas equações e compare com o lado direito.']),
+   fill:()=>'Não dá para saber',h:['Troque x e y pelos valores dados na primeira equação.','Depois faça o mesmo na segunda.'],
+   e:`1ª: ${a1}·${p} + ${b1}·${q} = ${a1*p+b1*q} (${f1?'confere':'não confere, era '+c1}). 2ª: ${a2}·${p} + ${b2}·${q} = ${a2*p+b2*q} (${f2?'confere':'não confere, era '+c2}).`,s:SS_S({modo:0,a1,b1,c1,a2,b2,c2,oc:0})})},
+ /* o que é a solução no gráfico */
+ ()=>{const x=rnd(1,6),y=rnd(1,6),a2=pick([2,3]),v=pick([
+   ['No gráfico de um sistema de duas equações, desenhamos as duas retas. O que representa a solução do sistema?','o ponto onde as duas retas se cruzam'],
+   ['As retas de um sistema se cruzam no ponto (%x, %y). Qual é a solução do sistema?','x = %x e y = %y'],
+   ['Em um sistema, cada reta mostra os pares (x, y) que servem a uma equação. Que pares servem às duas equações ao mesmo tempo?','só o par do ponto onde as retas se cruzam']]);
+  const q=v[0].replace(/%x/g,x).replace(/%y/g,y),ok=v[1].replace(/%x/g,x).replace(/%y/g,y);
+  const pool=[['o ponto onde cada reta toca o eixo x','confundiu a solução com o ponto de encontro com o eixo'],['qualquer ponto de uma das retas','achou que uma equação basta'],['o ponto (0, 0)','achou que a solução é sempre a origem'],[`x = ${y} e y = ${x}`,'trocou os valores de x e y'],['todos os pontos de uma das retas','achou que uma equação basta'],['os pontos do eixo y','confundiu a solução com o eixo']];
+  return mk({q,ok,bad:pool.filter(z=>z[0]!==ok&&(z[0].startsWith('x =')?v[1].startsWith('x ='):!v[1].startsWith('x ='))).slice(0,6).map(z=>[z[0],z[1],'A solução precisa servir nas duas equações ao mesmo tempo, e isso só acontece no ponto de cruzamento.']),
+   fill:()=>v[1].startsWith('x =')?`x = ${rnd(1,9)} e y = ${rnd(1,9)}`:'o ponto mais alto do gráfico',h:['A solução precisa servir nas duas equações ao mesmo tempo.','Qual ponto pertence às duas retas?'],
+   e:'O ponto de cruzamento pertence às duas retas, então serve nas duas equações. Ele é a solução do sistema.',s:SS_S({modo:0,a1:1,b1:1,c1:x+y,a2,b2:1,c2:a2*x+y,oc:0})})}
+],
+2:[
+ /* compras com coeficientes */
+ ()=>{let a1,b1,a2,b2;do{a1=rnd(1,4);b1=rnd(1,4);a2=rnd(1,4);b2=rnd(1,4)}while(a1*b2===a2*b1);
+  const x=rnd(2,9),y=rnd(2,9),c1=a1*x+b1*y,c2=a2*x+b2*y,pedeY=Math.random()<.5,ok=pedeY?y:x,out=pedeY?x:y,nome=pedeY?'uma caneta':'um caderno';
+  return mk({q:`${a1} cadernos e ${b1} canetas custam ${SS_R(c1)}. ${a2} cadernos e ${b2} canetas custam ${SS_R(c2)}. Quanto custa ${nome}?`.replace(/\b1 cadernos\b/g,'1 caderno').replace(/\b1 canetas\b/g,'1 caneta'),ok:SS_R(ok),
+   bad:[[SS_R(out),'achou o preço do outro item','Releia a pergunta e confirme qual item ela pede.'],
+        [SS_R(Math.abs(c1-c2)),'só subtraiu os totais','Os totais mudam por causa de itens diferentes; é preciso igualar as quantidades.'],
+        [SS_R(Math.round(c1/(a1+b1))),'dividiu o total pela quantidade de itens','Cadernos e canetas têm preços diferentes.'],
+        [SS_R(ok+1),'errou uma conta','Confira os cálculos depois de eliminar um item.']],
+   fill:()=>SS_R(rnd(1,30)),h:['Multiplique as equações para igualar a quantidade de um dos itens.','Depois subtraia as duas compras.'],
+   e:`O preço do caderno é R$ ${x},00 e o da caneta é R$ ${y},00. A resposta é ${SS_R(ok)}.`,s:SS_S({modo:1,a1,b1,c1,a2,b2,c2,oc:1})})},
+ /* motos e carros */
+ ()=>{const m=rnd(3,12),c=rnd(3,12),V=m+c,R=2*m+4*c;
+  return mk({q:`Num estacionamento há motos (2 rodas) e carros (4 rodas), ao todo ${V} veículos e ${R} rodas. Quantos são os carros?`,ok:String(c),
+   bad:[[String(m),'achou o número de motos','Releia a pergunta: quantos carros?'],
+        [String(Math.round(R/4)),'dividiu as rodas só por 4','Há motos também, com 2 rodas.'],
+        [String(V-c+1),'errou ao conferir o total','Confira se motos + carros dá o total de veículos.'],
+        [String(Math.round(R/V)),'usou a média de rodas por veículo','A média não separa motos e carros.']],
+   fill:SS_FILL,h:['Chame de x as motos e de y os carros: x + y = total.','Rodas: 2x + 4y = total de rodas.'],
+   e:`x + y = ${V} e 2x + 4y = ${R}. Multiplicando a 1ª por 2: 2x + 2y = ${2*V}. Subtraindo: 2y = ${R-2*V}, y = ${c}.`,s:SS_S({modo:2,a1:1,b1:1,c1:V,a2:2,b2:4,c2:R,p:0,oc:1})})},
+ /* ingressos */
+ ()=>{const pi=pick([8,10,12]),n=rnd(6,14),me=rnd(2,n-2),inte=n-me,tot=pi*inte+(pi/2)*me;
+  return mk({q:`Num cinema, o ingresso inteiro custa ${SS_R(pi)} e a meia-entrada custa ${SS_R(pi/2)}. ${n} pessoas pagaram ao todo ${SS_R(tot)}. Quantas pagaram meia-entrada?`,ok:String(me),
+   bad:[[String(inte),'achou o número de inteiras','Releia a pergunta: meia-entrada.'],
+        [String(Math.round(tot/pi)),'dividiu o total pelo preço inteiro','Há dois preços diferentes.'],
+        [String(Math.round(n/2)),'dividiu as pessoas ao meio','Nem sempre metade paga meia.'],
+        [String(me+1),'errou uma conta','Confira a eliminação.']],
+   fill:SS_FILL,h:['x inteiras e y meias: x + y = pessoas.',`${pi}x + ${pi/2}y = total.`],
+   e:`x + y = ${n} e ${pi}x + ${pi/2}y = ${tot}. Multiplicando a 1ª por ${pi}: ${pi}x + ${pi}y = ${pi*n}. Subtraindo: ${pi/2}y = ${pi*n-tot}, y = ${me}.`,s:SS_S({modo:2,a1:1,b1:1,c1:n,a2:pi,b2:pi/2,c2:tot,oc:1})})},
+ /* qual passo */
+ ()=>{const b=rnd(2,5),a1=rnd(1,3),a2=a1+rnd(1,3),x=rnd(1,6),y=rnd(1,6),c1=a1*x+b*y,c2=a2*x+b*y;
+  return mk({q:`No sistema ${SS_T(a1,b,c1)} e ${SS_T(a2,b,c2)}, qual passo elimina o y?`,ok:'Subtrair uma equação da outra',
+   bad:[['Somar as duas equações','somou em vez de subtrair','Somando, o y fica com o dobro. Para ele sumir, os termos precisam se cancelar.'],
+        [`Dividir as duas equações por ${b}`,'dividiu sem eliminar','Dividir não faz o y desaparecer.'],
+        ['Multiplicar só a primeira equação por 2','mexeu em uma equação só','Multiplicar uma só desiguala os coeficientes do y.']],
+   fill:()=>'Trocar x por y',h:['Os coeficientes de y são iguais nas duas equações.','Qual operação cancela termos iguais?'],
+   e:`O y tem o mesmo coeficiente (${b}) nas duas. Subtraindo as equações, o y some e sobra ${a2-a1===1?'':a2-a1}x = ${c2-c1}.`,s:SS_S({modo:2,a1,b1:b,c1,a2,b2:b,c2,p:1,oc:0})})}
+],
+3:[
+ /* multiplicar para igualar */
+ ()=>{let a1,b1,a2,b2;do{a1=rnd(2,5);b1=rnd(2,5);a2=rnd(2,5);b2=rnd(2,5)}while(a1*b2===a2*b1||a1===a2||b1===b2);
+  const x=rnd(1,8),y=rnd(1,8),c1=a1*x+b1*y,c2=a2*x+b2*y,pedeY=Math.random()<.5,ok=pedeY?y:x,out=pedeY?x:y;
+  return mk({q:`Resolva o sistema ${SS_T(a1,b1,c1)} e ${SS_T(a2,b2,c2)}. Quanto vale ${pedeY?'y':'x'}?`,ok:String(ok),
+   bad:[[String(out),'trocou x por y','Confira qual incógnita a pergunta pede.'],
+        [String(Math.abs(c1-c2)),'só subtraiu as equações sem igualar os coeficientes','Os coeficientes são diferentes: é preciso multiplicar antes de subtrair.'],
+        [String(Math.round((c1+c2)/(a1+b1+a2+b2))),'somou tudo e dividiu','Somar tudo não separa as incógnitas.'],
+        [String(ok+1),'errou uma conta','Confira a multiplicação e a subtração.']],
+   fill:SS_FILL,h:['Multiplique cada equação para igualar os coeficientes de uma incógnita.','Subtraia e depois substitua.'],
+   e:`Solução: x = ${x} e y = ${y}. Confira: ${a1}·${x} + ${b1}·${y} = ${c1} e ${a2}·${x} + ${b2}·${y} = ${c2}.`,s:SS_S({modo:2,a1,b1,c1,a2,b2,c2,p:0,oc:1})})},
+ /* tipos de sistema */
+ ()=>{const k=rnd(2,4),a=rnd(1,3),b=rnd(1,3),x=rnd(1,5),y=rnd(1,5),c=a*x+b*y,t=pick(['um','par','inf']),
+   c2=t==='um'?null:t==='par'?k*c+rnd(1,5):k*c;
+  let a2=a*k,b2=b*k,cc=c2;if(t==='um'){a2=a+1;b2=b;cc=a2*x+b2*y}
+  const U='uma única solução',P='nenhuma solução, pois as retas são paralelas',I='infinitas soluções, pois as retas são a mesma',D='exatamente duas soluções',ok=t==='um'?U:t==='par'?P:I;
+  return mk({q:`O sistema ${SS_T(a,b,c)} e ${SS_T(a2,b2,cc)} tem quantas soluções?`,ok,
+   bad:[U,P,I,D].filter(z=>z!==ok).map(z=>[z,z===D?'achou que duas retas podem ter dois cruzamentos':'confundiu o tipo do sistema','Compare as razões dos coeficientes e dos termos independentes.']),
+   fill:()=>'depende do valor de x',h:['Compare os coeficientes: um é múltiplo do outro?','Se for, compare também o termo do lado direito.'],
+   e:t==='um'?'Os coeficientes não são proporcionais: as retas se cruzam num ponto só.':t==='par'?`Os coeficientes são proporcionais (fator ${k}), mas o lado direito não: retas paralelas, sem solução.`:`Todos os números da 2ª equação são ${k} vezes os da 1ª: as retas coincidem, e há infinitas soluções.`,s:SS_S({modo:0,a1:a,b1:b,c1:c,a2,b2,c2:cc,oc:0})})},
+ /* soma de preços */
+ ()=>{let a1,b1,a2,b2;do{a1=rnd(1,4);b1=rnd(2,4);a2=rnd(2,4);b2=rnd(1,4)}while(a1*b2===a2*b1);
+  const x=rnd(2,9),y=rnd(2,9),c1=a1*x+b1*y,c2=a2*x+b2*y;
+  return mk({q:`Ana pagou ${SS_R(c1)} por ${a1} ${a1===1?'pão':'pães'} e ${b1} sucos. Beto pagou ${SS_R(c2)} por ${a2} pães e ${b2} ${b2===1?'suco':'sucos'}. Quanto custa um pão mais um suco?`,ok:SS_R(x+y),
+   bad:[[SS_R(x),'achou só o preço do pão','A pergunta pede o pão mais o suco.'],
+        [SS_R(y),'achou só o preço do suco','A pergunta pede o pão mais o suco.'],
+        [SS_R(x*y),'multiplicou os preços','Para "mais", some os preços.'],
+        [SS_R(Math.round((c1+c2)/2)),'tirou a média das compras','Cada compra tem quantidades diferentes.']],
+   fill:()=>SS_R(rnd(2,30)),h:['Ache primeiro o preço do pão e o do suco.','Depois some os dois.'],
+   e:`Pão: ${SS_R(x)}. Suco: ${SS_R(y)}. Juntos: ${SS_R(x+y)}.`,s:SS_S({modo:1,a1,b1,c1,a2,b2,c2,oc:1})})},
+ /* substituição */
+ ()=>{const s=rnd(8,20),a2=rnd(2,5),b2=rnd(1,4),x=rnd(2,6),y=s-x,c2=a2*x+b2*y;
+  if(y<1||a2===b2)return SS_GENS[3][3]();
+  return mk({q:`No sistema x + y = ${s} e ${a2}x + ${b2===1?'':b2}y = ${c2}, isola-se x na 1ª equação (x = ${s} − y) e substitui-se na 2ª. Como fica a 2ª equação?`,ok:`${a2}(${s} − y) + ${b2===1?'':b2}y = ${c2}`,
+   bad:[[`${a2}(${s} + y) + ${b2===1?'':b2}y = ${c2}`,'errou o sinal ao isolar x','Se x = s − y, entra s − y entre parênteses.'],
+        [`${a2}·${s} − y + ${b2===1?'':b2}y = ${c2}`,'esqueceu os parênteses',`O ${a2} multiplica a expressão toda, não só o primeiro termo.`],
+        [`${a2}x + ${b2===1?'':b2}(${s} − x) = ${c2}`,'substituiu a incógnita errada','Aqui a substituição é de x, não de y.']],
+   fill:()=>`${rnd(2,6)}(${rnd(5,20)} − y) + y = ${rnd(10,60)}`,h:['Troque x por (s − y) na 2ª equação.','Use parênteses.'],
+   e:`Trocando x por (${s} − y): ${a2}(${s} − y) + ${b2===1?'':b2}y = ${c2}. Depois é só resolver: y = ${y} e x = ${x}.`,s:SS_S({modo:2,a1:1,b1:1,c1:s,a2,b2,c2,p:0,oc:0})})}
+]};
+
+MODS.push({id:'sist',ano:8,ic:'🧮',nome:'Sistemas de equações',sub:'Duas equações, duas incógnitas: gráfico, compras e eliminação',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 gráfico · 1 compras · 2 passo a passo)',min:0,max:2,v:0},
+      {k:'a1',l:'1ª equação: coeficiente de x',min:1,max:9,v:1},{k:'b1',l:'1ª equação: coeficiente de y',min:1,max:9,v:1},{k:'c1',l:'1ª equação: resultado',min:1,max:200,v:10},
+      {k:'a2',l:'2ª equação: coeficiente de x',min:1,max:16,v:2},{k:'b2',l:'2ª equação: coeficiente de y',min:1,max:16,v:1},{k:'c2',l:'2ª equação: resultado',min:1,max:200,v:16},
+      {k:'p',l:'Passo da eliminação (0 a 3)',min:0,max:3,v:0}],
+ reset:{modo:0,a1:1,b1:1,c1:10,a2:2,b2:1,c2:16,p:0,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));
+  v.modo=cl(v.modo,0,2);v.a1=cl(v.a1,1,9);v.b1=cl(v.b1,1,9);v.c1=cl(v.c1,1,200);v.a2=cl(v.a2,1,16);v.b2=cl(v.b2,1,16);v.c2=cl(v.c2,1,200);v.p=cl(v.p,0,3);v.oc=cl(v.oc,0,1)},
+ info(v){const so=SS_SOL(v),ocu=SS_OCU(v),eq=`${SS_T(v.a1,v.b1,v.c1)} e ${SS_T(v.a2,v.b2,v.c2)}`;
+  if(ocu)return `${eq} · descubra a solução`;
+  if(so.tipo==='par')return `${eq} · retas paralelas: nenhuma solução`;
+  if(so.tipo==='inf')return `${eq} · retas coincidentes: infinitas soluções`;
+  return `${eq} · solução: x = ${SS_F(so.x)} e y = ${SS_F(so.y)}${so.x<0||so.y<0?' · cruzam fora da região mostrada':''}`},
+ desc(v){const so=SS_SOL(v),ocu=SS_OCU(v),m=v.modo;
+  const res=ocu?'A solução fica escondida até você responder.':so.tipo==='par'?'As retas são paralelas, não há solução.':so.tipo==='inf'?'As retas coincidem, há infinitas soluções.':`A solução é x igual a ${SS_F(so.x)} e y igual a ${SS_F(so.y)}.`;
+  if(m===0)return `Gráfico com duas retas: ${SS_T(v.a1,v.b1,v.c1)} e ${SS_T(v.a2,v.b2,v.c2)}. ${res}`;
+  if(m===1)return `Duas compras: ${v.a1} cadernos e ${v.b1} canetas por ${v.c1} reais, e ${v.a2} cadernos e ${v.b2} canetas por ${v.c2} reais. ${res}`;
+  return `Passo ${v.p+1} de 4 da resolução por eliminação do sistema ${SS_T(v.a1,v.b1,v.c1)} e ${SS_T(v.a2,v.b2,v.c2)}. ${res}`},
+ draw(c,v,W,H,k){const m=v.modo,so=SS_SOL(v),ocu=SS_OCU(v);
+  const txt=(t,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(t,x,y)};
+  if(m===0){const x0=44,x1=W-18,y0=40,y1=H-30;
+   let Xm=Math.max(v.c1/v.a1,v.c2/v.a2)*1.1,Ym=Math.max(v.c1/v.b1,v.c2/v.b2)*1.1;
+   if(so.tipo==='um'&&so.x>0&&so.y>0){Xm=Math.max(Xm,so.x*1.3);Ym=Math.max(Ym,so.y*1.3)}
+   const X=x=>x0+(x1-x0)*x/Xm,Y=y=>y1-(y1-y0)*y/Ym;
+   c.strokeStyle=k.m;c.lineWidth=1;c.globalAlpha=.35;for(let i=1;i<=4;i++){c.beginPath();c.moveTo(x0,y1-(y1-y0)*i/4);c.lineTo(x1,y1-(y1-y0)*i/4);c.stroke()}c.globalAlpha=1;
+   c.strokeStyle=k.t;c.lineWidth=1.8;c.beginPath();c.moveTo(x0,y0-6);c.lineTo(x0,y1);c.lineTo(x1,y1);c.stroke();
+   txt('x',x1-4,y1+16,k.m,'12px sans-serif');txt('y',x0-12,y0,k.m,'12px sans-serif');txt('0',x0-8,y1+4,k.m,'11px sans-serif','right');
+   [[v.a1,v.b1,v.c1,k.c1],[v.a2,v.b2,v.c2,k.c2]].forEach(([a,b,cc,col],i)=>{c.strokeStyle=col;c.lineWidth=3;c.beginPath();c.moveTo(X(cc/a),Y(0));c.lineTo(X(0),Y(cc/b));c.stroke();
+    txt(SS_T(a,b,cc),W/2+(i?1:-1)*Math.min(110,W*.22),20,col,'bold 13px sans-serif')});
+   if(so.tipo==='um'&&so.x>=0&&so.y>=0){c.fillStyle=k.pk;c.beginPath();c.arc(X(so.x),Y(so.y),7,0,7);c.fill();
+    if(!ocu){c.strokeStyle=k.a;c.lineWidth=1.5;c.setLineDash([5,3]);c.beginPath();c.moveTo(X(so.x),y1);c.lineTo(X(so.x),Y(so.y));c.lineTo(x0,Y(so.y));c.stroke();c.setLineDash([]);
+     txt(`(${SS_F(so.x)}, ${SS_F(so.y)})`,Math.min(X(so.x)+10,W-70),Math.max(Y(so.y)-12,y0+8),k.t,'bold 13px sans-serif','left')}
+    else txt('(?, ?)',Math.min(X(so.x)+10,W-50),Math.max(Y(so.y)-12,y0+8),k.t,'bold 13px sans-serif','left')}
+   else if(so.tipo==='par')txt('retas paralelas: nunca se cruzam',W/2,H-8,k.pk,'bold 13px sans-serif');
+   else if(so.tipo==='inf')txt('as duas retas coincidem',W/2,H-8,k.pk,'bold 13px sans-serif');
+   else txt('as retas se cruzam fora desta região',W/2,H-8,k.pk,'bold 12px sans-serif');
+   c.textAlign='left';return}
+  if(m===1){const linha=(a,b,cc,y)=>{let x=24;const it=(n,cor,rot)=>{for(let i=0;i<Math.min(n,9);i++){c.fillStyle=cor;if(rot==='c'){c.fillRect(x,y-18,18,24);c.fillStyle='#fff';c.fillRect(x+3,y-14,12,3)}else{c.fillRect(x+6,y-18,6,26)}x+=rot==='c'?24:16}
+     };
+    it(a,k.c1,'c');txt('cad.',x+4,y+22,k.c1,'10px sans-serif','left');x+=34;txt('+',x,y+2,k.t,'bold 18px sans-serif','left');x+=22;it(b,k.a,'p');txt('can.',x+2,y+22,k.a,'10px sans-serif','left');x+=34;
+    txt(`= R$ ${cc}`,x+6,y+2,k.t,'bold 16px sans-serif','left')};
+   txt('Duas compras na papelaria',W/2,20,k.t,'bold 14px sans-serif');linha(v.a1,v.b1,v.c1,70);linha(v.a2,v.b2,v.c2,130);
+   txt(`${SS_T(v.a1,v.b1,v.c1)}  ·  ${SS_T(v.a2,v.b2,v.c2)}`,W/2,178,k.m,'12px sans-serif');
+   const t=ocu?'1 caderno = ?   1 caneta = ?':so.tipo==='um'?`1 caderno = R$ ${SS_F(so.x)}   ·   1 caneta = R$ ${SS_F(so.y)}`:so.tipo==='par'?'Compras impossíveis: nenhum preço serve nas duas':'As duas compras dizem a mesma coisa';
+   txt(t,W/2,H-22,k.a,'bold 14px sans-serif');c.textAlign='left';return}
+  /* modo 2: eliminação */
+  const p=v.p,m1=v.b2,m2=v.b1,A1=v.a1*m1,C1=v.c1*m1,A2=v.a2*m2,C2=v.c2*m2,Y=v.b1*v.b2,lin=[];
+  const E=(a,b,cc)=>SS_T(a,b,cc);
+  lin.push(['1ª equação:',E(v.a1,v.b1,v.c1),k.c1],['2ª equação:',E(v.a2,v.b2,v.c2),k.c2]);
+  if(p>=1){lin.push([`1ª × ${m1}:`,E(A1,Y,C1),k.c1],[`2ª × ${m2}:`,E(A2,Y,C2),k.c2])}
+  if(p>=2){const sg=A1>=A2?1:-1,D=sg*(A1-A2),N=sg*(C1-C2);lin.push(['Subtrair:',D===0?'0x = '+N:(D===1?'':D)+'x = '+N,k.pk])}
+  if(p>=3){const o=!ocu&&so.tipo==='um';lin.push(['Resultado:',ocu?'x = ?  e  y = ?':so.tipo==='um'?`x = ${SS_F(so.x)}  e  y = ${SS_F(so.y)}`:so.tipo==='par'?'sem solução':'infinitas soluções',k.a])}
+  txt('Eliminar o y por subtração',W/2,20,k.t,'bold 14px sans-serif');
+  lin.forEach(([r,e,col],i)=>{const y=52+i*34;txt(r,Math.max(16,W/2-150),y,k.m,'12px sans-serif','left');txt(e,Math.max(150,W/2-30),y,col,'bold 16px sans-serif','left')});
+  txt(['Comece pelas duas equações.','Multiplique para o y ficar igual nas duas.','Subtraia: o y desaparece.','Descubra x e substitua para achar y.'][p],W/2,H-10,k.m,'12px sans-serif');
+  c.textAlign='left'},
+ rod:8,gens:SS_GENS});
+
+/* ===== Porcentagem, juros e educação financeira (módulo novo, arquivo separado) ===== */
+const JU_R=n=>'R$ '+(Math.round(n*100)/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const JU_P=n=>(Math.round(n*100)/100).toString().replace('.',',')+'%';
+const JU_N=n=>(Math.round(n*10000)/10000).toString().replace('.',',');
+const JU_S=o=>Object.assign({modo:0,V:200,p:10,q:10,C:1000,i:10,t:6,P:500,n:5,r:120,oc:0},o);
+const JU_OCU=v=>v.oc===1&&!locked;
+const JU_FILL=()=>JU_R(rnd(20,900));
+
+const JU_GENS={
+1:[
+ /* desconto */
+ ()=>{const p=pick([10,20,25,30,40,50]),V=20*rnd(3,50),d=V*p/100,f=V-d;
+  return mk({q:`Um produto custa ${JU_R(V)} e está com ${p}% de desconto. Qual é o preço final?`,ok:JU_R(f),
+   bad:[[JU_R(V-p),'subtraiu a porcentagem como se fosse em reais',`${p}% de ${V} é ${d}, e não ${p}.`],
+        [JU_R(d),'deu só o valor do desconto','O desconto é o que sai do preço. O preço final é o que sobra.'],
+        [JU_R(V+d),'somou o desconto em vez de tirar','Desconto diminui o preço.'],
+        [JU_R(f+10),'errou uma conta',`Confira ${p}% de ${V}.`]],
+   fill:JU_FILL,h:[`Calcule ${p}% de ${V}.`,'Tire esse valor do preço.'],
+   e:`${p}% de ${V} = ${d}. ${V} − ${d} = ${f}.`,s:JU_S({modo:0,V,p:0,q:p,oc:1})})},
+ /* acréscimo */
+ ()=>{const p=pick([10,20,25,30,40,50]),V=20*rnd(3,50),a=V*p/100,f=V+a;
+  return mk({q:`Um produto de ${JU_R(V)} sofreu aumento de ${p}%. Qual é o novo preço?`,ok:JU_R(f),
+   bad:[[JU_R(V+p),'somou a porcentagem como se fosse em reais',`${p}% de ${V} é ${a}, e não ${p}.`],
+        [JU_R(a),'deu só o valor do aumento','O novo preço é o preço antigo mais o aumento.'],
+        [JU_R(V-a),'tirou em vez de somar','Aumento soma ao preço.'],
+        [JU_R(f+10),'errou uma conta',`Confira ${p}% de ${V}.`]],
+   fill:JU_FILL,h:[`Calcule ${p}% de ${V}.`,'Some esse valor ao preço.'],
+   e:`${p}% de ${V} = ${a}. ${V} + ${a} = ${f}.`,s:JU_S({modo:0,V,p,q:0,oc:1})})},
+ /* porcentagem de um grupo */
+ ()=>{const N=20*rnd(1,6),p=pick([10,20,25,40,50,60,75]),ok=N*p/100;
+  return mk({q:`Numa turma de ${N} alunos, ${p}% vão de ônibus para a escola. Quantos alunos vão de ônibus?`,ok:String(ok),
+   bad:[[String(N-p),'subtraiu a porcentagem do total','Porcentagem é uma parte de cada 100, não um número a subtrair.'],
+        [String(p),'repetiu a porcentagem','A porcentagem é uma parte do total de alunos.'],
+        [String(N-ok),'contou os alunos que não vão de ônibus','Veja o que a pergunta pede.'],
+        [String(ok+5),'errou uma conta',`Confira ${p}% de ${N}.`]],
+   fill:()=>String(rnd(1,100)),h:[`${p}% é ${p} partes de cada 100.`,`Calcule ${p}/100 de ${N}.`],
+   e:`${p}% de ${N} = ${p}/100 × ${N} = ${ok}.`,s:JU_S({modo:0,V:N*10,p:0,q:0,oc:0})})},
+ /* fator multiplicador */
+ ()=>{const aum=Math.random()<.5,p=pick([5,10,20,25,50]),ok=JU_N(aum?1+p/100:1-p/100);
+  return mk({q:`${aum?`Um aumento de ${p}%`:`Um desconto de ${p}%`} equivale a multiplicar o preço por qual número?`,ok,
+   bad:[[JU_N(p/100),'usou só a taxa','O preço inteiro conta: 100% mais ou menos a taxa.'],
+        [JU_N(aum?1-p/100:1+p/100),aum?'confundiu aumento com desconto':'confundiu desconto com aumento','Aumento soma à parte inteira (1); desconto subtrai.'],
+        [String(aum?100+p:100-p),'tratou a porcentagem como número inteiro','Porcentagem é dividida por 100.'],
+        [JU_N(p),'usou a taxa sem dividir por 100','Divida a porcentagem por 100.']],
+   fill:()=>JU_N(rnd(2,200)/100),h:['O preço inteiro é 100%, ou seja, 1.',`${p}% é ${p}/100.`],
+   e:aum?`1 + ${p}/100 = ${ok}.`:`1 − ${p}/100 = ${ok}.`,s:JU_S({modo:0,V:100,p:aum?p:0,q:aum?0:p,oc:0})})}
+],
+2:[
+ /* sucessivos: aumento e depois desconto */
+ ()=>{const p=pick([10,20,30,40,50]),q=pick([10,20,30,40,50]),k=rnd(1,9),V=100*k,f=V*(100+p)*(100-q)/10000;
+  return mk({q:`Um produto de ${JU_R(V)} teve aumento de ${p}% e, depois, desconto de ${q}% sobre o novo preço. Qual é o preço final?`,ok:JU_R(f),
+   bad:[[JU_R(V),'achou que o aumento e o desconto se anulam',`Os percentuais incidem sobre bases diferentes: ${p}% de ${V} não é ${q}% do novo preço.`],
+        [JU_R(V*(100+p-q)/100),'somou e subtraiu as taxas','O desconto incide sobre o preço já aumentado, e não sobre o preço antigo.'],
+        [JU_R(V*(100+p)/100),'esqueceu de aplicar o desconto',`Depois do aumento ainda há ${q}% de desconto.`],
+        [JU_R(V*(100-q)/100),'esqueceu de aplicar o aumento',`Antes do desconto há ${p}% de aumento.`]],
+   fill:JU_FILL,h:[`Primeiro calcule o preço depois do aumento de ${p}%.`,`Depois tire ${q}% desse novo preço.`],
+   e:`${V} × ${JU_N(1+p/100)} = ${V*(100+p)/100}. Depois, × ${JU_N(1-q/100)} = ${JU_R(f)}.`,s:JU_S({modo:0,V,p,q,oc:1})})},
+ /* mais e menos a mesma taxa */
+ ()=>{const p=pick([10,20,30,40,50]),perda=p*p/100,ok=`${JU_P(perda)} menor que o preço inicial`;
+  return mk({q:`Um preço sobe ${p}% e, em seguida, cai ${p}%. Como fica o preço final em relação ao inicial?`,ok,
+   bad:[['igual ao preço inicial','achou que +x% e −x% se anulam','As duas taxas incidem sobre valores diferentes.'],
+        [`${JU_P(p)} menor que o preço inicial`,'achou que a perda é igual à taxa',`O fator é ${JU_N(1+p/100)} × ${JU_N(1-p/100)}, e não ${JU_N(1-p/100)}.`],
+        [`${JU_P(perda)} maior que o preço inicial`,'trocou menor por maior',`O fator ${JU_N((100+p)*(100-p)/10000)} é menor que 1.`]],
+   fill:()=>`${JU_P(rnd(1,60))} maior que o preço inicial`,h:[`Multiplique ${JU_N(1+p/100)} por ${JU_N(1-p/100)}.`,'Compare o resultado com 1.'],
+   e:`${JU_N(1+p/100)} × ${JU_N(1-p/100)} = ${JU_N((100+p)*(100-p)/10000)}. O preço fica ${JU_P(perda)} menor.`,s:JU_S({modo:0,V:100,p,q:p,oc:0})})},
+ /* juros simples */
+ ()=>{const C=100*rnd(2,20),i=rnd(1,10),t=rnd(2,12),J=C*i*t/100,M=C+J;
+  return mk({q:`Um capital de ${JU_R(C)} é aplicado a juros simples de ${i}% ao mês durante ${t} meses. Qual é o montante no fim?`,ok:JU_R(M),
+   bad:[[JU_R(J),'deu só os juros','O montante é o capital mais os juros.'],
+        [JU_R(C*(1+i/100)**t),'usou juros compostos','Em juros simples, os juros de cada mês incidem sempre sobre o capital inicial.'],
+        [JU_R(C+C*i/100),'contou só um mês de juros',`São ${t} meses.`],
+        [JU_R(M+C/10),'errou uma conta',`Confira ${i}% de ${C} vezes ${t}.`]],
+   fill:JU_FILL,h:[`Os juros de um mês são ${i}% de ${C}.`,`Multiplique por ${t} e some ao capital.`],
+   e:`Juros por mês: ${JU_R(C*i/100)}. Em ${t} meses: ${JU_R(J)}. Montante: ${JU_R(C)} + ${JU_R(J)} = ${JU_R(M)}.`,s:JU_S({modo:1,C,i,t,oc:1})})},
+ /* qual foi o desconto em % */
+ ()=>{const p=pick([5,10,15,20,25,30,40]),V=20*rnd(5,40),d=V*p/100;
+  return mk({q:`Uma camiseta de ${JU_R(V)} foi vendida com abatimento de ${JU_R(d)}. Qual foi o percentual de desconto?`,ok:JU_P(p),
+   bad:[[JU_P(d),'usou o valor em reais como se fosse porcentagem','Divida o desconto pelo preço original e multiplique por 100.'],
+        [JU_P(100-p),'deu a porcentagem que sobrou','O desconto é o que saiu do preço.'],
+        [JU_P(p*2),'dobrou a porcentagem','Confira a divisão.'],
+        [JU_P(Math.round(V/d)),'dividiu ao contrário','Divida o desconto pelo preço, e não o preço pelo desconto.']],
+   fill:()=>JU_P(rnd(2,90)),h:['Desconto ÷ preço original.','Multiplique o resultado por 100.'],
+   e:`${d} ÷ ${V} = ${JU_N(d/V)}, ou seja, ${JU_P(p)}.`,s:JU_S({modo:0,V,p:0,q:p,oc:1})})}
+],
+3:[
+ /* juros compostos */
+ ()=>{const [i,t,b]=pick([[10,2,100],[10,3,1000],[20,2,100],[5,2,400],[30,2,100],[10,2,200]]),C=b*rnd(1,5),M=Math.round(C*(1+i/100)**t*100)/100;
+  return mk({q:`Um capital de ${JU_R(C)} rende ${i}% ao mês a juros compostos. Qual é o montante após ${t} meses?`,ok:JU_R(M),
+   bad:[[JU_R(C*(1+i*t/100)),'usou juros simples','Em juros compostos, os juros de cada mês incidem sobre o montante do mês anterior.'],
+        [JU_R(C*(1+i/100)),'contou só um mês','São '+t+' meses de juros.'],
+        [JU_R(C*(1+i/100)*t),'multiplicou o montante de um mês pelo número de meses','Cada mês, a base de cálculo muda.'],
+        [JU_R(M+C/20),'errou uma conta','Confira cada mês: multiplique por '+JU_N(1+i/100)+'.']],
+   fill:JU_FILL,h:[`Cada mês, multiplique por ${JU_N(1+i/100)}.`,`Faça isso ${t} vezes.`],
+   e:`${JU_R(C)} × ${JU_N(1+i/100)}${t===2?'²':'³'} = ${JU_R(M)}.`,s:JU_S({modo:1,C,i,t,oc:1})})},
+ /* diferença entre simples e composto */
+ ()=>{const i=pick([10,20]),k=rnd(1,9),C=100*k,dif=C*i*i/10000;
+  return mk({q:`Um capital de ${JU_R(C)} é aplicado por 2 meses a ${i}% ao mês. Quanto o montante a juros compostos supera o montante a juros simples?`,ok:JU_R(dif),
+   bad:[[JU_R(C*i/100),'deu os juros de um mês','A diferença vem só dos juros sobre juros.'],
+        [JU_R(0),'achou que os dois sistemas rendem igual','No segundo mês, os juros compostos incidem também sobre os juros do primeiro.'],
+        [JU_R(dif*2),'dobrou a diferença','Confira: juros sobre juros acontece uma vez em 2 meses.'],
+        [JU_R(C*i*i/1000),'errou a casa decimal','Divida por 10 000.']],
+   fill:()=>JU_R(rnd(1,60)),h:[`Simples: ${C} × (1 + 2 × ${i/100}).`,`Compostos: ${C} × (1 + ${i/100})².`],
+   e:`Simples: ${JU_R(C*(1+2*i/100))}. Compostos: ${JU_R(C*(1+i/100)**2)}. Diferença: ${JU_R(dif)}.`,s:JU_S({modo:1,C,i,t:2,oc:1})})},
+ /* parcelado: quantos por cento a mais */
+ ()=>{const [p,ns]=pick([[10,[2,5,10]],[20,[2,3,4,5,6]],[25,[5]],[50,[2,3,5,6]]]),n=pick(ns),k=rnd(1,9),P=100*k,tot=k*(100+p),r=tot/n;
+  return mk({q:`Uma TV custa ${JU_R(P)} à vista, ou ${n} parcelas de ${JU_R(r)}. Quantos por cento a mais se paga no parcelado?`,ok:JU_P(p),
+   bad:[[JU_P(r),'usou a parcela como se fosse porcentagem','Compare o total parcelado com o preço à vista.'],
+        [JU_P(Math.round(tot-P)),'deu o acréscimo em reais, sem converter em porcentagem','Divida o acréscimo pelo preço à vista.'],
+        [JU_P(100+p),'deu o total em relação ao preço, e não o acréscimo','O acréscimo é o que passa de 100%.'],
+        [JU_P(p/2),'dividiu a porcentagem pela metade','Confira a divisão do acréscimo pelo preço à vista.']],
+   fill:()=>JU_P(rnd(2,90)),h:[`Total parcelado: ${n} × ${JU_R(r)}.`,'Acréscimo ÷ preço à vista.'],
+   e:`Total: ${n} × ${JU_R(r)} = ${JU_R(tot)}. Acréscimo: ${JU_R(tot-P)}. ${tot-P} ÷ ${P} = ${JU_N((tot-P)/P)}, ou seja, ${JU_P(p)}.`,s:JU_S({modo:2,P,n,r:Math.min(1000,r),oc:1})})},
+ /* aumentos sucessivos: total */
+ ()=>{const [p,q]=pick([[10,10],[20,10],[20,20],[50,10],[10,30],[30,30],[20,50],[50,50]]),tot=(100+p)*(100+q)/100-100;
+  return mk({q:`Um preço subiu ${p}% em janeiro e mais ${q}% em fevereiro. Qual foi o aumento total nos dois meses?`,ok:JU_P(tot),
+   bad:[[JU_P(p+q),'somou as taxas','O segundo aumento incide sobre o preço já aumentado, por isso o total passa de '+(p+q)+'%.'],
+        [JU_P(p*q/100),'calculou só o efeito de uma taxa sobre a outra','Falta somar os dois aumentos.'],
+        [JU_P(tot+10),'errou uma conta','Confira: multiplique os fatores.'],
+        [JU_P(Math.round((p+q)/2)),'tirou a média das taxas','Aumentos sucessivos se multiplicam.']],
+   fill:()=>JU_P(rnd(5,150)),h:[`Multiplique ${JU_N(1+p/100)} por ${JU_N(1+q/100)}.`,'Subtraia 1 e converta em porcentagem.'],
+   e:`${JU_N(1+p/100)} × ${JU_N(1+q/100)} = ${JU_N((100+p)*(100+q)/10000)}. Aumento total: ${JU_P(tot)}.`,s:JU_S({modo:0,V:100,p,q:0,oc:0})})}
+]};
+
+MODS.push({id:'juros',ano:8,ic:'💰',nome:'Porcentagem, juros e dinheiro',sub:'Aumentos e descontos sucessivos, juros simples e compostos, à vista ou parcelado',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 sucessivos · 1 juros · 2 à vista ou parcelado)',min:0,max:2,v:0},
+      {k:'V',l:'Preço ou valor inicial (R$)',min:20,max:1000,v:200},
+      {k:'p',l:'Aumento (%)',min:0,max:100,v:10},{k:'q',l:'Desconto (%)',min:0,max:90,v:10},
+      {k:'C',l:'Capital aplicado (R$)',min:100,max:5000,v:1000},{k:'i',l:'Taxa de juros ao mês (%)',min:1,max:30,v:10},{k:'t',l:'Tempo (meses)',min:1,max:24,v:6},
+      {k:'P',l:'Preço à vista (R$)',min:100,max:2000,v:500},{k:'n',l:'Número de parcelas',min:2,max:12,v:5},{k:'r',l:'Valor de cada parcela (R$)',min:10,max:1000,v:120}],
+ reset:{modo:0,V:200,p:10,q:10,C:1000,i:10,t:6,P:500,n:5,r:120,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));
+  v.modo=cl(v.modo,0,2);v.V=cl(v.V,20,1000);v.p=cl(v.p,0,100);v.q=cl(v.q,0,90);v.C=cl(v.C,100,5000);v.i=cl(v.i,1,30);v.t=cl(v.t,1,24);v.P=cl(v.P,100,2000);v.n=cl(v.n,2,12);v.r=cl(v.r,10,1000);v.oc=cl(v.oc,0,1)},
+ info(v){const m=v.modo,ocu=JU_OCU(v);
+  if(m===0){const a=v.V*(1+v.p/100),f=a*(1-v.q/100);return ocu?`${JU_R(v.V)} · aumento de ${v.p}% · desconto de ${v.q}% · descubra o resultado`:`${JU_R(v.V)} → ${JU_R(a)} → ${JU_R(f)} · fator ${JU_N(1+v.p/100)} × ${JU_N(1-v.q/100)} = ${JU_N((1+v.p/100)*(1-v.q/100))} · variação total ${JU_P(((1+v.p/100)*(1-v.q/100)-1)*100)}`}
+  if(m===1){const S=v.C*(1+v.i*v.t/100),Co=v.C*(1+v.i/100)**v.t;return ocu?`Capital ${JU_R(v.C)} · ${v.i}% ao mês · ${v.t} meses · descubra o montante`:`Simples: ${JU_R(S)} · compostos: ${JU_R(Co)} · diferença ${JU_R(Co-S)}`}
+  const tot=v.n*v.r,ac=(tot-v.P)/v.P*100;return ocu?`À vista ${JU_R(v.P)} · ${v.n} parcelas de ${JU_R(v.r)} · descubra o acréscimo`:`À vista ${JU_R(v.P)} · parcelado ${JU_R(tot)} · ${ac>=0?`acréscimo de ${JU_R(tot-v.P)} (${JU_P(ac)})`:`desconto de ${JU_R(v.P-tot)} (${JU_P(-ac)})`}`},
+ desc(v){const m=v.modo,ocu=JU_OCU(v);
+  if(m===0){const a=v.V*(1+v.p/100),f=a*(1-v.q/100);return `Três barras: valor inicial de ${JU_R(v.V)}, valor depois do aumento de ${v.p} por cento${ocu?'':` (${JU_R(a)})`} e valor depois do desconto de ${v.q} por cento${ocu?', escondido até você responder':` (${JU_R(f)})`}.`}
+  if(m===1){const S=v.C*(1+v.i*v.t/100),Co=v.C*(1+v.i/100)**v.t;return `Gráfico de ${v.t} meses com duas linhas partindo de ${JU_R(v.C)}: juros simples, que sobe em linha reta, e juros compostos, que sobe em curva cada vez mais inclinada.${ocu?' Os valores finais ficam escondidos.':` No fim, simples ${JU_R(S)} e compostos ${JU_R(Co)}.`}`}
+  const tot=v.n*v.r;return `Duas barras: preço à vista de ${JU_R(v.P)} e total parcelado de ${ocu?'valor escondido':JU_R(tot)}, em ${v.n} parcelas de ${JU_R(v.r)}.`},
+ draw(c,v,W,H,k){const m=v.modo,ocu=JU_OCU(v);
+  const txt=(t,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(t,x,y)};
+  if(m===0){const a=v.V*(1+v.p/100),f=a*(1-v.q/100),vals=[v.V,a,f],cols=[k.m,k.c1,k.pk],nom=['inicial',`+${v.p}%`,`−${v.q}%`],mx=Math.max(...vals)*1.15,base=H-44,top=40,bw=Math.min(100,(W-80)/4),gap=(W-bw*3)/4;
+   txt('Aumento e depois desconto',W/2,20,k.t,'bold 14px sans-serif');
+   vals.forEach((x,i)=>{const hh=(base-top)*x/mx,xx=gap+i*(bw+gap),oc=ocu&&i===2;c.globalAlpha=.85;c.fillStyle=cols[i];c.fillRect(xx,base-hh,bw,hh);c.globalAlpha=1;
+    txt(oc?'?':JU_R(x),xx+bw/2,base-hh-6,k.t,'bold 13px sans-serif');txt(nom[i],xx+bw/2,base+16,k.m,'12px sans-serif')});
+   c.strokeStyle=k.a;c.lineWidth=2;c.setLineDash([6,4]);const yv=base-(base-top)*v.V/mx;c.beginPath();c.moveTo(gap/2,yv);c.lineTo(W-gap/2,yv);c.stroke();c.setLineDash([]);
+   txt(ocu?'fator: ?':`fator ${JU_N(1+v.p/100)} × ${JU_N(1-v.q/100)} = ${JU_N((1+v.p/100)*(1-v.q/100))}`,W/2,H-8,k.a,'bold 13px sans-serif');c.textAlign='left';return}
+  if(m===1){const x0=64,x1=W-18,y0=36,y1=H-34,T=v.t,S=t=>v.C*(1+v.i*t/100),Co=t=>v.C*(1+v.i/100)**t,mx=Math.max(S(T),Co(T))*1.08,mn=v.C*.95,X=t=>x0+(x1-x0)*t/T,Y=y=>y1-(y1-y0)*(y-mn)/(mx-mn);
+   txt('Juros simples e juros compostos',W/2,18,k.t,'bold 14px sans-serif');
+   c.strokeStyle=k.t;c.lineWidth=1.8;c.beginPath();c.moveTo(x0,y0-6);c.lineTo(x0,y1);c.lineTo(x1,y1);c.stroke();
+   txt(JU_R(v.C).replace(',00',''),x0-4,Y(v.C)+4,k.m,'10px sans-serif','right');txt('0',x0,y1+14,k.m,'11px sans-serif');txt(`${T} meses`,x1,y1+14,k.m,'11px sans-serif','right');
+   [[S,k.c1,'simples'],[Co,k.pk,'compostos']].forEach(([f,col,nome])=>{c.strokeStyle=col;c.lineWidth=3;c.beginPath();for(let j=0;j<=60;j++){const t=T*j/60;j===0?c.moveTo(X(t),Y(f(t))):c.lineTo(X(t),Y(f(t)))}c.stroke();
+    c.fillStyle=col;c.beginPath();c.arc(X(T),Y(f(T)),5,0,7);c.fill();txt(ocu?nome:`${nome}: ${JU_R(f(T))}`,X(T)-6,Y(f(T))+(nome==='simples'?22:-12),col,'bold 12px sans-serif','right')});
+   txt(ocu?'qual dos dois cresce mais?':`diferença no fim: ${JU_R(Co(T)-S(T))}`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left';return}
+  const tot=v.n*v.r,mx=Math.max(tot,v.P)*1.15,base=H-48,top=44,bw=Math.min(110,(W-80)/3),gap=(W-bw*2)/3,ac=(tot-v.P)/v.P*100;
+  txt('À vista ou parcelado?',W/2,20,k.t,'bold 14px sans-serif');
+  [[v.P,k.c1,'à vista',false],[tot,k.pk,`${v.n} × ${JU_R(v.r)}`,ocu]].forEach(([x,col,nome,hide],i)=>{const hh=(base-top)*x/mx,xx=gap+i*(bw+gap);c.globalAlpha=.85;c.fillStyle=col;c.fillRect(xx,base-hh,bw,hh);c.globalAlpha=1;
+   txt(hide?'?':JU_R(x),xx+bw/2,base-hh-6,k.t,'bold 13px sans-serif');txt(nome,xx+bw/2,base+16,k.m,'12px sans-serif')});
+  txt(ocu?'acréscimo: ?':(ac>=0?`acréscimo de ${JU_P(ac)} sobre o preço à vista`:`desconto de ${JU_P(-ac)} sobre o preço à vista`),W/2,H-8,k.a,'bold 13px sans-serif');c.textAlign='left'},
+ rod:8,gens:JU_GENS});
+
+/* ===== Volume, capacidade e litro (módulo novo, arquivo separado) ===== */
+const VO_N=n=>(Math.round(n*1000)/1000).toLocaleString('pt-BR');
+const VO_S=o=>Object.assign({modo:0,a:4,b:3,c:2,h:1,u:1,val:5,oc:0},o);
+const VO_OCU=v=>v.oc===1&&!locked;
+const VO_UN=['cm³','dm³','m³','litros','mL'];
+/* quanto cada unidade vale em cm³ */
+const VO_CM3=[1,1000,1000000,1000,1];
+const VO_FILL=()=>String(rnd(2,120));
+
+const VO_GENS={
+1:[
+ /* contar cubinhos */
+ ()=>{const a=rnd(2,6),b=rnd(2,5),c=rnd(2,5),V=a*b*c;
+  return mk({q:`Um bloco é feito de cubinhos iguais: ${a} no comprimento, ${b} na largura e ${c} na altura. Quantos cubinhos há no bloco?`,ok:String(V),
+   bad:[[String(a+b+c),'somou as dimensões','Volume conta cubinhos de camada em camada: multiplique.'],
+        [String(a*b),'contou só uma camada',`Há ${c} camadas iguais.`],
+        [String(2*(a*b+b*c+a*c)),'calculou a área da superfície','Volume é o espaço de dentro, e não a superfície.'],
+        [String(V+a),'errou uma conta','Confira a multiplicação.']],
+   fill:VO_FILL,h:[`Uma camada tem ${a} × ${b} cubinhos.`,`Multiplique pelo número de camadas, ${c}.`],
+   e:`${a} × ${b} × ${c} = ${V} cubinhos.`,s:VO_S({modo:0,a,b,c,oc:1})})},
+ /* volume de caixa em cm³ */
+ ()=>{const a=rnd(2,9),b=rnd(2,9),c=rnd(2,9),V=a*b*c;
+  return mk({q:`Uma caixa mede ${a} cm de comprimento, ${b} cm de largura e ${c} cm de altura. Qual é o volume dela?`,ok:`${V} cm³`,
+   bad:[[`${a+b+c} cm³`,'somou as medidas','O volume é produto das três medidas.'],
+        [`${2*(a*b+b*c+a*c)} cm³`,'calculou a área da superfície','Volume mede o espaço de dentro.'],
+        [`${V} cm²`,'usou a unidade de área','Volume usa unidade cúbica: cm³.'],
+        [`${a*b} cm³`,'multiplicou só duas medidas','Falta a altura.']],
+   fill:()=>`${rnd(10,700)} cm³`,h:['Volume = comprimento × largura × altura.','O resultado fica em cm³.'],
+   e:`${a} × ${b} × ${c} = ${V} cm³.`,s:VO_S({modo:0,a:Math.min(a,8),b:Math.min(b,8),c:Math.min(c,8),oc:0})})},
+ /* 1 dm³ = 1 L */
+ ()=>{const n=rnd(2,40);
+  return mk({q:`Um recipiente tem volume de ${n} dm³. Quantos litros de água cabem nele?`,ok:`${n} litros`,
+   bad:[[`${n*10} litros`,'multiplicou por 10','1 dm³ é exatamente 1 litro.'],
+        [`${n*100} litros`,'multiplicou por 100','1 dm³ é exatamente 1 litro.'],
+        [`${n*1000} litros`,'confundiu dm³ com cm³ ou mL','Esse fator vale para dm³ em cm³, e não em litros.'],
+        [`${Math.max(1,Math.round(n/10))} litros`,'dividiu por 10','1 dm³ é exatamente 1 litro.']],
+   fill:()=>`${rnd(1,2000)} litros`,h:['Um cubo de 1 dm de aresta tem 1 dm³ de volume.','Esse cubo comporta exatamente 1 litro.'],
+   e:`1 dm³ = 1 litro. Então ${n} dm³ = ${n} litros.`,s:VO_S({modo:2,u:1,val:n,oc:0})})},
+ /* quantos cm³ em 1 dm³ ou mL em 1 L */
+ ()=>{const t=pick([['Quantos cm³ cabem em 1 dm³?','1 000'],['Quantos mililitros há em 1 litro?','1 000'],['Quantos cm³ há em 1 litro?','1 000']]);
+  return mk({q:t[0],ok:t[1],
+   bad:[['10','achou que o fator é o da linha (10)','Em volume, o fator é 10 × 10 × 10.'],['100','achou que o fator é o da área (10 × 10)','Em volume, o fator é 10 × 10 × 10.'],['10 000','errou o número de zeros','São três dezenas multiplicadas: 10 × 10 × 10.']],
+   fill:()=>VO_N(rnd(2,99)*10),h:['Um cubo de 1 dm tem 10 cm de aresta.','Calcule 10 × 10 × 10.'],
+   e:'Um cubo de 1 dm de aresta tem 10 cm de aresta: 10 × 10 × 10 = 1 000 cm³. E 1 dm³ = 1 litro = 1 000 mL.',s:VO_S({modo:2,u:1,val:1,oc:0})})}
+],
+2:[
+ /* capacidade de aquário */
+ ()=>{const a=rnd(2,10),b=rnd(2,6),c=rnd(2,6),V=a*b*c;
+  return mk({q:`Um aquário em forma de bloco retangular mede ${a} dm de comprimento, ${b} dm de largura e ${c} dm de altura. Qual é a capacidade dele, em litros?`,ok:`${V} litros`,
+   bad:[[`${a+b+c} litros`,'somou as medidas','A capacidade vem do volume: multiplique as três medidas.'],
+        [`${V*10} litros`,'multiplicou o resultado por 10','Em dm³ o valor já é igual ao de litros.'],
+        [`${V*1000} litros`,'converteu dm³ para cm³ e chamou de litros','Em dm³ o valor já é igual ao de litros.'],
+        [`${a*b} litros`,'usou só a área do fundo','Falta multiplicar pela altura.']],
+   fill:()=>`${rnd(10,400)} litros`,h:['Volume = comprimento × largura × altura, em dm³.','1 dm³ = 1 litro.'],
+   e:`${a} × ${b} × ${c} = ${V} dm³ = ${V} litros.`,s:VO_S({modo:1,a,b,c,h:c,oc:1})})},
+ /* nível da água */
+ ()=>{const a=rnd(3,10),b=rnd(2,6),c=rnd(3,8),h=rnd(1,c-1),V=a*b*h;
+  return mk({q:`Um aquário tem fundo de ${a} dm por ${b} dm e ${c} dm de altura. A água chega a ${h} dm de altura. Quantos litros de água há no aquário?`,ok:`${V} litros`,
+   bad:[[`${a*b*c} litros`,'usou a altura do aquário em vez da altura da água','A água só enche até '+h+' dm.'],
+        [`${a*b} litros`,'usou só a área do fundo','Falta multiplicar pela altura da água.'],
+        [`${a*b*(c-h)} litros`,'calculou o espaço vazio','A pergunta é sobre a água que já está lá.'],
+        [`${V+a} litros`,'errou uma conta','Confira a multiplicação.']],
+   fill:()=>`${rnd(5,300)} litros`,h:['A água forma um bloco com a base do aquário e a altura da água.',`Calcule ${a} × ${b} × ${h}.`],
+   e:`${a} × ${b} × ${h} = ${V} dm³ = ${V} litros.`,s:VO_S({modo:1,a,b,c,h,oc:1})})},
+ /* caixa em cm → litros */
+ ()=>{const d=pick([[10,10,10],[20,10,10],[20,20,10],[20,20,20],[25,20,20],[50,20,10],[30,20,10],[40,25,10]]),V=d[0]*d[1]*d[2],L=V/1000;
+  return mk({q:`Uma caixa tem ${d[0]} cm de comprimento, ${d[1]} cm de largura e ${d[2]} cm de altura. Quantos litros ela comporta?`,ok:`${VO_N(L)} ${L===1?'litro':'litros'}`,
+   bad:[[`${VO_N(V)} litros`,'esqueceu de converter cm³ em litros','1 litro = 1 000 cm³. Divida o volume por 1 000.'],
+        [`${VO_N(V/100)} litros`,'dividiu por 100','1 litro = 1 000 cm³, e não 100.'],
+        [`${VO_N(V/10)} litros`,'dividiu por 10','1 litro = 1 000 cm³, e não 10.'],
+        [`${VO_N(L*10)} litros`,'multiplicou em vez de dividir','Litro é uma unidade maior que cm³.']],
+   fill:()=>`${rnd(2,200)} litros`,h:[`Volume em cm³: ${d[0]} × ${d[1]} × ${d[2]}.`,'Divida por 1 000 para obter litros.'],
+   e:`${d[0]} × ${d[1]} × ${d[2]} = ${VO_N(V)} cm³. ${VO_N(V)} ÷ 1 000 = ${VO_N(L)} L.`,s:VO_S({modo:2,u:0,val:Math.min(200,Math.round(V/1000)||1),oc:0})})},
+ /* m³ → litros */
+ ()=>{const n=rnd(2,40);
+  return mk({q:`Uma caixa-d'água tem volume de ${n} m³. Quantos litros ela comporta?`,ok:`${VO_N(n*1000)} litros`,
+   bad:[[`${VO_N(n*100)} litros`,'usou 100 em vez de 1 000','1 m³ = 1 000 dm³ = 1 000 litros.'],
+        [`${VO_N(n*10)} litros`,'usou 10 em vez de 1 000','1 m³ = 1 000 dm³ = 1 000 litros.'],
+        [`${n} litros`,'achou que m³ e litros são iguais','1 dm³ é que vale 1 litro, e não 1 m³.'],
+        [`${VO_N(n*1000000)} litros`,'confundiu com cm³','1 m³ = 1 000 000 cm³, mas 1 litro = 1 000 cm³.']],
+   fill:()=>`${VO_N(rnd(2,99)*100)} litros`,h:['1 m³ = 1 000 dm³.','1 dm³ = 1 litro.'],
+   e:`1 m³ = 1 000 dm³ = 1 000 litros. ${n} × 1 000 = ${VO_N(n*1000)} litros.`,s:VO_S({modo:2,u:2,val:n,oc:0})})}
+],
+3:[
+ /* quantos litros faltam */
+ ()=>{const a=rnd(3,10),b=rnd(2,6),c=rnd(4,8),h=rnd(1,c-2),V=a*b*(c-h);
+  return mk({q:`Um aquário tem fundo de ${a} dm por ${b} dm e ${c} dm de altura. Há água até ${h} dm. Quantos litros faltam para encher o aquário?`,ok:`${V} litros`,
+   bad:[[`${a*b*h} litros`,'deu a água que já existe','A pergunta é sobre o que falta.'],
+        [`${a*b*c} litros`,'deu a capacidade total','Desconte a água que já está lá.'],
+        [`${a*b*(c-h)+a*b} litros`,'contou uma camada a mais','Confira a diferença de alturas.'],
+        [`${(c-h)} litros`,'usou só a diferença de alturas','Falta multiplicar pela área do fundo.']],
+   fill:()=>`${rnd(5,300)} litros`,h:['Altura que falta = altura total − altura da água.','Multiplique pela área do fundo.'],
+   e:`Falta ${c} − ${h} = ${c-h} dm de altura. ${a} × ${b} × ${c-h} = ${V} dm³ = ${V} litros.`,s:VO_S({modo:1,a,b,c,h,oc:1})})},
+ /* tempo para encher */
+ ()=>{const r=pick([2,3,4,5,6,8,10]),m=rnd(2,12),V=r*m,a=pick([2,3,4,5,6]);
+  if(V%a)return VO_GENS[3][1]();
+  const bc=V/a,b=pick([1,2,3,4,5,6,8,9,10].filter(z=>bc%z===0&&bc/z<=10)),c=b?bc/b:0;
+  if(!b||b>10||c>10)return VO_GENS[3][1]();
+  return mk({q:`Uma torneira despeja ${r} litros de água por minuto num tanque vazio de ${a} dm por ${b} dm por ${c} dm. Em quantos minutos o tanque fica cheio?`,ok:`${m} minutos`,
+   bad:[[`${V} minutos`,'deu a capacidade em litros como se fossem minutos','Divida a capacidade pela vazão.'],
+        [`${m+r} minutos`,'somou a vazão ao tempo','Tempo = capacidade ÷ vazão.'],
+        [`${m*r} minutos`,'multiplicou em vez de dividir','Quanto maior a vazão, menos tempo leva.'],
+        [`${Math.max(1,m-1)} minutos`,'errou uma conta','Confira a divisão.']],
+   fill:()=>`${rnd(1,60)} minutos`,h:[`Capacidade em litros: ${a} × ${b} × ${c}.`,`Divida por ${r} litros por minuto.`],
+   e:`${a} × ${b} × ${c} = ${V} dm³ = ${V} litros. ${V} ÷ ${r} = ${m} minutos.`,s:VO_S({modo:1,a,b,c,h:c,oc:1})})},
+ /* cubos maiores dentro da caixa */
+ ()=>{const e=pick([2,3]),x=rnd(1,4),y=rnd(1,3),z=rnd(1,4),A=e*x,B=e*y,C=e*z,N=x*y*z;
+  if(A>10||B>10||C>10)return VO_GENS[3][2]();
+  return mk({q:`Uma caixa tem ${A} dm de comprimento, ${B} dm de largura e ${C} dm de altura. Quantos cubos de ${e} dm de aresta cabem nela, sem sobrar espaço?`,ok:String(N),
+   bad:[[String(A*B*C),'contou cubos de 1 dm de aresta',`Os cubos têm ${e} dm de aresta, e não 1 dm.`],
+        [String(A*B*C/e),'dividiu o volume só pela aresta','Cada cubo ocupa e × e × e de volume.'],
+        [String(N+x),'errou uma conta','Confira quantos cubos cabem em cada direção.'],
+        [String(x+y+z),'somou as quantidades por direção','Multiplique as quantidades em cada direção.']],
+   fill:VO_FILL,h:[`Em cada direção, divida a medida da caixa por ${e}.`,'Multiplique os três resultados.'],
+   e:`Cabem ${A/e} × ${B/e} × ${C/e} = ${N} cubos. Também: ${A*B*C} ÷ ${e**3} = ${N}.`,s:VO_S({modo:0,a:Math.min(8,A),b:Math.min(8,B),c:Math.min(8,C),oc:0})})},
+ /* piscina */
+ ()=>{const a=rnd(3,8),b=rnd(2,5),c=pick([1,2]),V=a*b*c*1000;
+  return mk({q:`Uma piscina tem ${a} m de comprimento, ${b} m de largura e ${c} m de profundidade. Quantos litros de água cabem nela, se estiver cheia?`,ok:`${VO_N(V)} litros`,
+   bad:[[`${VO_N(a*b*c)} litros`,'deu o volume em m³ como se fosse em litros','1 m³ = 1 000 litros.'],
+        [`${VO_N(a*b*c*100)} litros`,'usou 100 em vez de 1 000','1 m³ = 1 000 dm³ = 1 000 litros.'],
+        [`${VO_N(a*b*c*10000)} litros`,'usou 10 000 em vez de 1 000','1 m³ = 1 000 litros.'],
+        [`${VO_N((a+b+c)*1000)} litros`,'somou as medidas','O volume é o produto das três medidas.']],
+   fill:()=>`${VO_N(rnd(2,200)*100)} litros`,h:['Primeiro calcule o volume em m³.','Depois converta: 1 m³ = 1 000 litros.'],
+   e:`${a} × ${b} × ${c} = ${a*b*c} m³ = ${VO_N(V)} litros.`,s:VO_S({modo:2,u:2,val:a*b*c,oc:0})})}
+]};
+
+MODS.push({id:'volume',ano:7,ic:'🧊',nome:'Volume, capacidade e litro',sub:'Cubinhos, aquário, dm³, litro, mL e m³',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 cubinhos · 1 aquário · 2 unidades)',min:0,max:2,v:0},
+      {k:'a',l:'Comprimento (cubinhos ou dm)',min:1,max:10,v:4},{k:'b',l:'Largura (cubinhos ou dm)',min:1,max:10,v:3},{k:'c',l:'Altura (cubinhos ou dm)',min:1,max:10,v:2},
+      {k:'h',l:'Altura da água no aquário (dm)',min:0,max:10,v:1},
+      {k:'u',l:'Unidade (0 cm³ · 1 dm³ · 2 m³ · 3 litros · 4 mL)',min:0,max:4,v:1},{k:'val',l:'Quantidade na unidade escolhida',min:1,max:200,v:5}],
+ reset:{modo:0,a:4,b:3,c:2,h:1,u:1,val:5,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));
+  v.modo=cl(v.modo,0,2);v.a=cl(v.a,1,10);v.b=cl(v.b,1,10);v.c=cl(v.c,1,10);v.h=cl(v.h,0,10);v.h=Math.min(v.h,v.c);v.u=cl(v.u,0,4);v.val=cl(v.val,1,200);v.oc=cl(v.oc,0,1)},
+ info(v){const m=v.modo,ocu=VO_OCU(v);
+  if(m===0)return ocu?`${v.a} × ${v.b} × ${v.c} cubinhos · descubra quantos cubinhos há no bloco`:`${v.a} × ${v.b} × ${v.c} = ${v.a*v.b*v.c} cubinhos · cada camada tem ${v.a*v.b} · ${v.c} ${v.c===1?'camada':'camadas'}`;
+  if(m===1)return ocu?`Aquário ${v.a} dm × ${v.b} dm × ${v.c} dm · água até ${v.h} dm · descubra os litros`:`Capacidade ${v.a*v.b*v.c} dm³ = ${v.a*v.b*v.c} litros · água: ${v.a*v.b*v.h} litros · falta: ${v.a*v.b*(v.c-v.h)} litros`;
+  const cm=v.val*VO_CM3[v.u];return ocu?`${v.val} ${VO_UN[v.u]} · converta para outras unidades`:`${v.val} ${VO_UN[v.u]} = ${VO_N(cm)} cm³ = ${VO_N(cm/1000)} dm³ = ${VO_N(cm/1000)} litros = ${VO_N(cm)} mL`},
+ desc(v){const m=v.modo,ocu=VO_OCU(v);
+  if(m===0)return `Bloco de cubinhos em perspectiva: ${v.a} cubinhos de comprimento, ${v.b} de largura e ${v.c} de altura.${ocu?'':` Ao todo, ${v.a*v.b*v.c} cubinhos.`}`;
+  if(m===1)return `Aquário visto de frente com ${v.a} decímetros de comprimento, ${v.b} de largura e ${v.c} de altura, com água até ${v.h} decímetros.${ocu?'':` Capacidade de ${v.a*v.b*v.c} litros e ${v.a*v.b*v.h} litros de água.`}`;
+  return `Tabela de conversão do valor ${v.val} ${VO_UN[v.u]} para cm³, dm³, litros e mililitros, ao lado de um cubo de 1 decímetro de aresta dividido em 1 000 cubinhos de 1 centímetro.`},
+ draw(c,v,W,H,k){const m=v.modo,ocu=VO_OCU(v);
+  const txt=(t,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(t,x,y)};
+  if(m===0){const a=v.a,b=v.b,cc=v.c,s=Math.max(10,Math.min(34,(W*.6)/((a+b)*.87+1),(H-70)/((a+b)*.5+cc+1))),dx=s*.866,dy=s*.5,ox=W/2+(b-a)*dx/2-(b-a)*0,oy=H-30-((a+b)*dy)/1;
+   const cor=(sh)=>({t:k.c1,l:k.m,r:k.a}[sh]);
+   const cubo=(i,j,kk)=>{const x=W/2+(i-j)*dx,y=H-46-(i+j)*dy-kk*s;
+    c.lineWidth=1;c.strokeStyle=k.t;
+    c.fillStyle=k.c1;c.globalAlpha=.95;c.beginPath();c.moveTo(x,y-s);c.lineTo(x+dx,y-s+dy);c.lineTo(x,y-s+2*dy);c.lineTo(x-dx,y-s+dy);c.closePath();c.fill();c.stroke();
+    c.fillStyle=k.m;c.beginPath();c.moveTo(x-dx,y-s+dy);c.lineTo(x,y-s+2*dy);c.lineTo(x,y+2*dy);c.lineTo(x-dx,y+dy);c.closePath();c.fill();c.stroke();
+    c.fillStyle=k.a;c.beginPath();c.moveTo(x+dx,y-s+dy);c.lineTo(x,y-s+2*dy);c.lineTo(x,y+2*dy);c.lineTo(x+dx,y+dy);c.closePath();c.fill();c.stroke();c.globalAlpha=1};
+   for(let d=a+b-2;d>=0;d--)for(let i=0;i<a;i++){const j=d-i;if(j<0||j>=b)continue;for(let kk=0;kk<cc;kk++)cubo(i,j,kk)}
+   txt(ocu?`${a} × ${b} × ${cc} cubinhos`:`${a} × ${b} × ${cc} = ${a*b*cc} cubinhos`,W/2,18,k.t,'bold 14px sans-serif');
+   txt(ocu?'cada camada tem a × b cubinhos':`cada camada: ${a*b} cubinhos · ${cc} ${cc===1?'camada':'camadas'}`,W/2,H-6,k.m,'12px sans-serif');c.textAlign='left';return}
+  if(m===1){const a=v.a,b=v.b,cc=v.c,h=v.h,u=Math.min((W-110)/a,(H-90)/cc,34),w=a*u,hh=cc*u,x0=(W-w)/2-8,y1=H-38,y0=y1-hh,off=Math.min(18,b*3);
+   c.fillStyle=k.c1;c.globalAlpha=.45;c.fillRect(x0,y1-h*u,w,h*u);c.globalAlpha=1;
+   c.strokeStyle=k.m;c.lineWidth=1;c.globalAlpha=.6;for(let i=1;i<a;i++){c.beginPath();c.moveTo(x0+i*u,y0);c.lineTo(x0+i*u,y1);c.stroke()}for(let j=1;j<cc;j++){c.beginPath();c.moveTo(x0,y1-j*u);c.lineTo(x0+w,y1-j*u);c.stroke()}c.globalAlpha=1;
+   c.strokeStyle=k.t;c.lineWidth=2.5;c.strokeRect(x0,y0,w,hh);c.beginPath();c.moveTo(x0,y0);c.lineTo(x0+off,y0-off*.6);c.lineTo(x0+w+off,y0-off*.6);c.lineTo(x0+w,y0);c.moveTo(x0+w+off,y0-off*.6);c.lineTo(x0+w+off,y1-off*.6);c.lineTo(x0+w,y1);c.stroke();
+   txt(`${a} dm`,x0+w/2,y1+16,k.m,'12px sans-serif');txt(`${cc} dm`,x0-18,y0+hh/2,k.m,'12px sans-serif');txt(`${b} dm`,x0+w+off+22,y0-off*.6+hh/2-10,k.m,'12px sans-serif');
+   if(h>0)txt(ocu?'?':`${v.a*v.b*h} L`,x0+w/2,y1-h*u/2+5,k.t,'bold 14px sans-serif');
+   txt(ocu?'Capacidade do aquário: ?':`Capacidade: ${a*b*cc} dm³ = ${a*b*cc} litros`,W/2,18,k.t,'bold 14px sans-serif');
+   txt(ocu?'cada dm³ de água é 1 litro':`água até ${h} dm · faltam ${a*b*(cc-h)} litros`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left';return}
+  const cm=v.val*VO_CM3[v.u],cs=Math.min(80,H*.5,W*.26),cx0=Math.max(12,W*.04),cy0=44,n=10;
+  txt('Cubo de 1 dm',cx0,22,k.t,'bold 13px sans-serif','left');
+  c.fillStyle=k.f;c.fillRect(cx0,cy0,cs,cs);c.strokeStyle=k.m;c.lineWidth=.8;for(let i=1;i<n;i++){c.beginPath();c.moveTo(cx0+cs*i/n,cy0);c.lineTo(cx0+cs*i/n,cy0+cs);c.moveTo(cx0,cy0+cs*i/n);c.lineTo(cx0+cs,cy0+cs*i/n);c.stroke()}
+  c.strokeStyle=k.a;c.lineWidth=2;c.strokeRect(cx0,cy0,cs,cs);
+  txt('10 × 10 × 10',cx0,cy0+cs+18,k.a,'bold 12px sans-serif','left');txt('1 000 cm³',cx0,cy0+cs+34,k.a,'bold 12px sans-serif','left');txt('= 1 litro',cx0,cy0+cs+50,k.a,'bold 12px sans-serif','left');
+  const tx=cx0+cs+22,rows=[['cm³',cm],['dm³',cm/1000],['m³',cm/1e6],['litros',cm/1000],['mL',cm]];
+  txt(`${v.val} ${VO_UN[v.u]} equivalem a:`,tx,cy0-14,k.t,'bold 13px sans-serif','left');
+  rows.forEach(([nm,val],i)=>{const y=cy0+8+i*24,ativo=nm===VO_UN[v.u];c.fillStyle=ativo?k.f:'transparent';if(ativo)c.fillRect(tx-6,y-15,W-tx-6,22);
+   txt(nm,tx,y,ativo?k.a:k.m,'bold 13px sans-serif','left');txt(ocu&&!ativo?'?':VO_N(val),W-14,y,ativo?k.a:k.t,'bold 14px sans-serif','right')});
+  c.textAlign='left'},
+ rod:8,gens:VO_GENS});
+
+/* ===== Produtos notáveis como quebra-cabeça de áreas (módulo novo, arquivo separado) ===== */
+const NT_S=o=>Object.assign({modo:0,a:5,b:3,oc:0},o);
+const NT_OCU=v=>v.oc===1&&!locked;
+/* monta "4x² + 12x + 9" a partir dos coeficientes */
+const NT_P=(p,q,r)=>{const t=[];
+ const ter=(c,suf)=>{if(!c)return;const ab=Math.abs(c),n=(ab===1&&suf)?'':String(ab);t.push([c<0?-1:1,n+suf])};
+ ter(p,'x²');ter(q,'x');ter(r,'');
+ if(!t.length)return '0';
+ return t.map((z,i)=>i===0?(z[0]<0?'−':'')+z[1]:(z[0]<0?' − ':' + ')+z[1]).join('')};
+const NT_FILL=()=>NT_P(rnd(1,9),rnd(-18,18)||5,rnd(-20,20)||4);
+const NT_FILLN=()=>String(rnd(10,9999));
+const NT_BIN=(c,d,s)=>`(${c===1?'':c}x ${s} ${d})`;
+
+const NT_GENS={
+1:[
+ /* área do quadrado de lado a+b */
+ ()=>{const a=rnd(2,9),b=rnd(1,9),L=a+b;
+  return mk({q:`Um quadrado tem lado dividido em duas partes, ${a} cm e ${b} cm. Qual é a área do quadrado inteiro?`,ok:`${L*L} cm²`,
+   bad:[[`${a*a+b*b} cm²`,'somou só os dois quadrados','Faltam os dois retângulos de lados a e b.'],
+        [`${2*L} cm²`,'dobrou o lado','Área do quadrado é lado × lado.'],
+        [`${a*a+b*b+a*b} cm²`,'contou só um retângulo','O quadrado tem dois retângulos a × b.'],
+        [`${4*L} cm²`,'calculou o perímetro','Perímetro é a soma dos lados, e não a área.']],
+   fill:()=>`${rnd(10,200)} cm²`,h:['O lado do quadrado inteiro mede a + b.',`Calcule ${L} × ${L}.`],
+   e:`Lado = ${a} + ${b} = ${L}. Área = ${L} × ${L} = ${L*L} cm².`,s:NT_S({modo:0,a:Math.min(9,a),b:Math.min(9,b),oc:1})})},
+ /* termo do meio */
+ ()=>{const b=rnd(2,9);
+  return mk({q:`Complete: (x + ${b})² = x² + ___ x + ${b*b}. Qual número vai no espaço?`,ok:String(2*b),
+   bad:[[String(b),'esqueceu de dobrar','Há dois retângulos de área b·x, e não um.'],
+        [String(b*b),'repetiu o último termo','O coeficiente de x é 2 vezes b.'],
+        [String(b+2),'somou 2 ao b','O coeficiente é 2 · b (multiplicado).']],
+   fill:()=>String(rnd(2,40)),h:['Dois retângulos de lados x e '+b+' aparecem no quadrado.','Some as áreas: 2 · x · '+b+'.'],
+   e:`(x + ${b})² = x² + 2·${b}·x + ${b*b}, então o espaço é ${2*b}.`,s:NT_S({modo:0,a:6,b:Math.min(9,b),oc:0})})},
+ /* retângulos */
+ ()=>{const a=rnd(2,9),b=rnd(2,9);
+  return mk({q:`No quadrado de lado ${a} + ${b}, os dois retângulos de lados ${a} e ${b} têm área total de quanto?`,ok:String(2*a*b),
+   bad:[[String(a*b),'contou só um retângulo','Há dois retângulos iguais.'],
+        [String(a+b),'somou os lados','Área de retângulo é base × altura.'],
+        [String(a*a+b*b),'deu a área dos quadrados','Os retângulos têm lados a e b.'],
+        [String(2*(a+b)),'calculou perímetro','Multiplique a × b e dobre.']],
+   fill:NT_FILLN,h:[`Cada retângulo tem área ${a} × ${b}.`,'Há dois deles.'],
+   e:`2 · ${a} · ${b} = ${2*a*b}.`,s:NT_S({modo:0,a,b,oc:1})})},
+ /* cálculo mental 31² etc */
+ ()=>{const d=rnd(2,9)*10,u=rnd(1,3),n=d+u;
+  return mk({q:`Use (${d} + ${u})² para calcular ${n}².`,ok:String(n*n),
+   bad:[[String(d*d+u*u),'esqueceu os retângulos',`Falta o termo do meio: 2 · ${d} · ${u}.`],
+        [String(n*2),'dobrou o número','Quadrado é n × n.'],
+        [String(d*d+u*u+d*u),'contou um retângulo só','O termo do meio vale 2 · '+d+' · '+u+'.'],
+        [String(n*n+10),'errou uma conta','Confira as três parcelas.']],
+   fill:NT_FILLN,h:[`${d}² + 2·${d}·${u} + ${u}²`,'Some as três parcelas.'],
+   e:`${d*d} + ${2*d*u} + ${u*u} = ${n*n}.`,s:NT_S({modo:0,a:Math.min(9,Math.round(d/10)+2),b:Math.min(9,u),oc:0})})}
+],
+2:[
+ /* expandir (x+b)² */
+ ()=>{const b=rnd(1,9);
+  return mk({q:`Qual é o desenvolvimento de (x + ${b})²?`,ok:NT_P(1,2*b,b*b),
+   bad:[[NT_P(1,0,b*b),'esqueceu o termo do meio','(x + b)² não é x² + b².'],
+        [NT_P(1,b,b*b),'não dobrou o termo do meio','O termo do meio é 2 · b · x.'],
+        [NT_P(1,2*b,b),'não elevou o b ao quadrado','O último termo é b².'],
+        [NT_P(1,2*b,-b*b),'trocou o sinal do último termo','Em (x + b)² tudo é positivo.']],
+   fill:NT_FILL,h:['Quadrado da soma: x² + 2·x·b + b².',`Aqui b = ${b}.`],
+   e:`(x + ${b})² = x² + 2·${b}·x + ${b*b} = ${NT_P(1,2*b,b*b)}.`,s:NT_S({modo:0,a:6,b:Math.min(9,b),oc:0})})},
+ /* expandir (x−b)² */
+ ()=>{const b=rnd(1,9);
+  return mk({q:`Qual é o desenvolvimento de (x − ${b})²?`,ok:NT_P(1,-2*b,b*b),
+   bad:[[NT_P(1,0,b*b),'esqueceu o termo do meio','(x − b)² não é x² + b².'],
+        [NT_P(1,0,-b*b),'confundiu com (x + b)(x − b)','Aqui é o mesmo fator duas vezes.'],
+        [NT_P(1,-2*b,-b*b),'deixou o último termo negativo','b² é sempre positivo.'],
+        [NT_P(1,2*b,b*b),'trocou o sinal do termo do meio','O termo do meio fica negativo.']],
+   fill:NT_FILL,h:['Quadrado da diferença: x² − 2·x·b + b².',`Aqui b = ${b}.`],
+   e:`(x − ${b})² = x² − 2·${b}·x + ${b*b} = ${NT_P(1,-2*b,b*b)}.`,s:NT_S({modo:1,a:Math.max(6,b+1),b:Math.min(9,b),oc:0})})},
+ /* soma pela diferença numérica */
+ ()=>{const m=rnd(2,9)*10,d=rnd(1,4);
+  return mk({q:`Use (${m} + ${d})(${m} − ${d}) para calcular ${m+d} × ${m-d}.`,ok:String(m*m-d*d),
+   bad:[[String(m*m+d*d),'somou o quadrado menor','O resultado é a diferença dos quadrados.'],
+        [String(m*m),'esqueceu de descontar','Falta subtrair '+d+'².'],
+        [String(m*m-2*d*m),'usou termo do meio','Na soma pela diferença os termos do meio se cancelam.'],
+        [String((m-d)*(m-d)),'elevou só um fator','Use a fórmula a² − b².']],
+   fill:NT_FILLN,h:[`${m}² − ${d}²`,'Soma pela diferença é diferença de quadrados.'],
+   e:`${m}² − ${d}² = ${m*m} − ${d*d} = ${m*m-d*d}.`,s:NT_S({modo:2,a:Math.min(9,Math.round(m/10)+1),b:Math.min(8,d),oc:0})})},
+ /* quadrado de número perto de 10x */
+ ()=>{const d=rnd(2,9)*10,u=rnd(1,3),n=d-u;
+  return mk({q:`Use (${d} − ${u})² para calcular ${n}².`,ok:String(n*n),
+   bad:[[String(d*d-u*u),'esqueceu o termo do meio','Falta − 2 · '+d+' · '+u+'.'],
+        [String(d*d+u*u),'somou o quadrado de '+u,'Há o termo do meio negativo.'],
+        [String(d*d-2*d*u-u*u),'deixou o último termo negativo','b² é positivo.'],
+        [String(n*2),'dobrou o número','Quadrado é n × n.']],
+   fill:NT_FILLN,h:[`${d}² − 2·${d}·${u} + ${u}²`,'Faça as três contas.'],
+   e:`${d*d} − ${2*d*u} + ${u*u} = ${n*n}.`,s:NT_S({modo:1,a:Math.min(9,Math.round(d/10)+1),b:Math.min(8,u),oc:0})})}
+],
+3:[
+ /* (cx+d)² */
+ ()=>{const c=rnd(2,4),d=rnd(1,6);
+  return mk({q:`Qual é o desenvolvimento de (${c}x + ${d})²?`,ok:NT_P(c*c,2*c*d,d*d),
+   bad:[[NT_P(c,2*c*d,d*d),'não elevou o '+c+' ao quadrado',`(${c}x)² = ${c*c}x².`],
+        [NT_P(c*c,c*d,d*d),'não dobrou o termo do meio','O termo do meio é 2 · '+c+'x · '+d+'.'],
+        [NT_P(c*c,0,d*d),'esqueceu o termo do meio','O termo do meio nunca some no quadrado da soma.'],
+        [NT_P(c*c,2*c*d,d),'não elevou o '+d+' ao quadrado','O último termo é '+d+'².']],
+   fill:NT_FILL,h:[`Primeiro termo ao quadrado: (${c}x)².`,`Termo do meio: 2 · ${c}x · ${d}.`],
+   e:`(${c}x)² + 2·${c}x·${d} + ${d}² = ${NT_P(c*c,2*c*d,d*d)}.`,s:NT_S({modo:0,a:Math.min(9,c+2),b:Math.min(9,d),oc:0})})},
+ /* (cx−d)(cx+d) */
+ ()=>{const c=rnd(2,5),d=rnd(1,7);
+  return mk({q:`Qual é o resultado de (${c}x − ${d})(${c}x + ${d})?`,ok:NT_P(c*c,0,-d*d),
+   bad:[[NT_P(c*c,0,d*d),'trocou o sinal do último termo','É diferença de quadrados.'],
+        [NT_P(c*c,-2*c*d,d*d),'tratou como quadrado da diferença','Os fatores são diferentes: um com − e outro com +.'],
+        [NT_P(c,0,-d*d),'não elevou o '+c+' ao quadrado',`(${c}x)² = ${c*c}x².`],
+        [NT_P(c*c,2*c*d,-d*d),'manteve um termo do meio','Os termos do meio se cancelam.']],
+   fill:NT_FILL,h:['Soma pela diferença: primeiro² − segundo².',`Aqui o primeiro é ${c}x e o segundo é ${d}.`],
+   e:`(${c}x)² − ${d}² = ${NT_P(c*c,0,-d*d)}.`,s:NT_S({modo:2,a:Math.min(9,c+2),b:Math.min(8,d),oc:0})})},
+ /* fatorar x²+2bx+b² */
+ ()=>{const b=rnd(1,9);
+  return mk({q:`Fatore ${NT_P(1,2*b,b*b)}.`,ok:`(x + ${b})²`,
+   bad:[[`(x + ${2*b})²`,'usou o termo do meio como b',`O termo do meio é 2b, então b = ${b}.`],
+        [`(x − ${b})²`,'trocou o sinal','O termo do meio é positivo.'],
+        [`(x + ${b})(x − ${b})`,'confundiu com diferença de quadrados','Aqui há termo do meio.'],
+        [`(x + ${b*b})²`,'usou o termo constante como b',`O b é a raiz de ${b*b}.`]],
+   fill:()=>`(x + ${rnd(2,40)})²`,h:[`A raiz quadrada de ${b*b} é ${b}.`,`Confira: 2 · ${b} é o termo do meio?`],
+   e:`x² + 2·${b}·x + ${b}² = (x + ${b})².`,s:NT_S({modo:0,a:6,b:Math.min(9,b),oc:0})})},
+ /* x²+y² dado soma e produto */
+ ()=>{const S=rnd(4,12),P=rnd(1,Math.floor(S*S/4));
+  return mk({q:`Se x + y = ${S} e x · y = ${P}, quanto vale x² + y²?`,ok:String(S*S-2*P),
+   bad:[[String(S*S),'esqueceu de descontar 2xy','(x + y)² = x² + 2xy + y².'],
+        [String(S*S-P),'descontou só uma vez o produto','O termo do meio é 2xy.'],
+        [String(S*S+2*P),'somou em vez de subtrair','x² + y² = (x + y)² − 2xy.'],
+        [String(2*S-P),'misturou as informações','Eleve a soma ao quadrado primeiro.']],
+   fill:NT_FILLN,h:[`(x + y)² = ${S}² = ${S*S}.`,'Subtraia 2xy desse valor.'],
+   e:`${S}² = x² + 2·${P} + y², então x² + y² = ${S*S} − ${2*P} = ${S*S-2*P}.`,s:NT_S({modo:0,a:6,b:3,oc:0})})}
+]};
+
+MODS.push({id:'notaveis',ano:8,ic:'🧩',nome:'Produtos notáveis',sub:'Quebra-cabeça de áreas: quadrado da soma, da diferença e soma pela diferença',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 quadrado da soma · 1 da diferença · 2 soma pela diferença)',min:0,max:2,v:0},
+      {k:'a',l:'Medida a',min:2,max:9,v:5},{k:'b',l:'Medida b',min:1,max:9,v:3}],
+ reset:{modo:0,a:5,b:3,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));
+  v.modo=cl(v.modo,0,2);v.a=cl(v.a,2,9);v.b=cl(v.b,1,9);if(v.modo>0)v.b=Math.min(v.b,v.a-1);v.oc=cl(v.oc,0,1)},
+ info(v){const a=v.a,b=v.b,ocu=NT_OCU(v);
+  if(v.modo===0)return ocu?`Quadrado de lado ${a} + ${b} · descubra a área`:`(${a} + ${b})² = ${a*a} + ${2*a*b} + ${b*b} = ${(a+b)**2} · a² + 2ab + b²`;
+  if(v.modo===1)return ocu?`Quadrado de lado ${a} − ${b} · descubra a área`:`(${a} − ${b})² = ${a*a} − ${2*a*b} + ${b*b} = ${(a-b)**2} · a² − 2ab + b²`;
+  return ocu?`Retângulo ${a} + ${b} por ${a} − ${b} · descubra a área`:`(${a} + ${b})(${a} − ${b}) = ${a*a} − ${b*b} = ${a*a-b*b} · a² − b²`},
+ desc(v){const a=v.a,b=v.b,ocu=NT_OCU(v);
+  if(v.modo===0)return `Quadrado de lado a mais b dividido em quatro partes: um quadrado de lado a, um quadrado de lado b e dois retângulos a por b.${ocu?'':` Com a igual a ${a} e b igual a ${b}, a área total é ${(a+b)**2}.`}`;
+  if(v.modo===1)return `Quadrado de lado a com duas faixas de largura b retiradas, restando um quadrado de lado a menos b.${ocu?'':` Com a igual a ${a} e b igual a ${b}, a área restante é ${(a-b)**2}.`}`;
+  return `Figura em L, formada por um quadrado de lado a sem um canto quadrado de lado b, e um retângulo de lados a mais b e a menos b com a mesma área.${ocu?'':` Com a igual a ${a} e b igual a ${b}, a área é ${a*a-b*b}.`}`},
+ draw(c,v,W,H,k){const a=v.a,b=v.b,ocu=NT_OCU(v);
+  const txt=(t,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(t,x,y)};
+  const R=(x,y,w,h,col,lab,lc)=>{c.globalAlpha=.9;c.fillStyle=col;c.fillRect(x,y,w,h);c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=2;c.strokeRect(x,y,w,h);
+   if(lab&&w>26&&h>16)txt(lab,x+w/2,y+h/2+4,lc||k.t,'bold 12px sans-serif')};
+  const val=(s,n)=>ocu?s:`${s}=${n}`;
+  if(v.modo===0){const L=a+b,u=Math.min((W-90)/L,(H-70)/L,32),S=L*u,x0=(W-S)/2,y0=34;
+   R(x0,y0,a*u,a*u,k.c1,val('a²',a*a));R(x0+a*u,y0,b*u,a*u,k.m,val('ab',a*b));R(x0,y0+a*u,a*u,b*u,k.m,val('ab',a*b));R(x0+a*u,y0+a*u,b*u,b*u,k.a,val('b²',b*b));
+   txt(`(a + b)² = a² + 2ab + b²`,W/2,18,k.t,'bold 14px sans-serif');
+   txt(`a = ${a}`,x0+a*u/2,y0+S+16,k.c1,'12px sans-serif');txt(`b = ${b}`,x0+a*u+b*u/2,y0+S+16,k.a,'12px sans-serif');
+   txt(ocu?'qual é a área do quadrado inteiro?':`área total = ${L*L}`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left';return}
+  if(v.modo===1){const u=Math.min((W-90)/a,(H-70)/a,32),S=a*u,x0=(W-S)/2,y0=34,d=a-b;
+   R(x0,y0,d*u,d*u,k.c1,val('(a−b)²',d*d));R(x0+d*u,y0,b*u,d*u,k.m,val('b(a−b)',b*d));R(x0,y0+d*u,d*u,b*u,k.m,val('b(a−b)',b*d));R(x0+d*u,y0+d*u,b*u,b*u,k.a,val('b²',b*b));
+   txt(`(a − b)² = a² − 2ab + b²`,W/2,18,k.t,'bold 14px sans-serif');
+   txt(`lado a = ${a}`,x0+S/2,y0+S+16,k.t,'12px sans-serif');
+   txt(ocu?'qual é a área do quadrado menor?':`quadrado menor = ${d*d} · a² − 2ab + b² = ${a*a-2*a*b+b*b}`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left';return}
+  const d=a-b,u=Math.min((W-40)/(2*a+b+1.2),(H-80)/a,30),x0=14,y0=40,xr=x0+a*u+1.2*u;
+  /* figura em L */
+  R(x0,y0,d*u,b*u,k.m,'');R(x0,y0+b*u,a*u,d*u,k.c1,'');
+  txt(ocu?'L':`L = ${a*a-b*b}`,x0+a*u/2,y0+a*u+16,k.t,'12px sans-serif');
+  /* retângulo */
+  R(xr,y0+b*u,a*u,d*u,k.c1,'');R(xr+a*u,y0+b*u,b*u,d*u,k.m,'');
+  c.strokeStyle=k.a;c.setLineDash([4,3]);c.strokeRect(x0+d*u,y0,b*u,b*u);c.setLineDash([]);
+  txt(`(a + b) × (a − b)`,xr+(a+b)*u/2,y0+b*u+d*u+16,k.a,'bold 12px sans-serif');
+  txt(`(a + b)(a − b) = a² − b²`,W/2,18,k.t,'bold 14px sans-serif');
+  txt(ocu?'a figura em L e o retângulo têm a mesma área':`a² − b² = ${a*a} − ${b*b} = ${a*a-b*b}`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left'},
+ rod:8,gens:NT_GENS});
+
+/* ===== Polígonos regulares e mosaicos (módulo novo, arquivo separado) ===== */
+const PG_S=o=>Object.assign({modo:0,n:6,k:3,oc:0},o);
+const PG_OCU=v=>v.oc===1&&!locked;
+const PG_NOME={3:'triângulo',4:'quadrado',5:'pentágono',6:'hexágono',7:'heptágono',8:'octógono',9:'eneágono',10:'decágono',12:'dodecágono'};
+const PG_FILL=()=>`${rnd(20,170)}°`;
+const PG_FILLN=()=>String(rnd(3,30));
+const PG_INT=n=>(n-2)*180/n;
+
+const PG_GENS={
+1:[
+ /* triângulos a partir de um vértice */
+ ()=>{const n=rnd(4,12);
+  return mk({q:`Traçando todas as diagonais que saem de um mesmo vértice, um polígono de ${n} lados fica dividido em quantos triângulos?`,ok:String(n-2),
+   bad:[[String(n),'achou que há um triângulo por lado','Os dois lados vizinhos ao vértice não geram triângulo.'],
+        [String(n-1),'tirou só um','Os dois lados que tocam o vértice ficam de fora.'],
+        [String(n-3),'contou só as diagonais','São n − 3 diagonais, mas n − 2 triângulos.'],
+        [String(n+1),'somou em vez de subtrair','Há menos triângulos que lados.']],
+   fill:PG_FILLN,h:['Teste com o quadrado: uma diagonal faz 2 triângulos.','Cada triângulo apoia em um lado que não toca o vértice.'],
+   e:`${n} − 2 = ${n-2} triângulos.`,s:PG_S({modo:0,n:Math.min(12,n),oc:1})})},
+ /* soma dos ângulos internos */
+ ()=>{const n=rnd(4,10),S=(n-2)*180;
+  return mk({q:`Cada triângulo tem ângulos somando 180°. Quanto somam os ângulos internos de um polígono de ${n} lados?`,ok:`${S}°`,
+   bad:[[`${n*180}°`,'multiplicou 180° pelo número de lados','Há n − 2 triângulos, e não n.'],
+        [`${(n-1)*180}°`,'tirou só um triângulo','Há n − 2 triângulos.'],
+        [`${360}°`,'usou a soma dos ângulos externos','Aqui a pergunta é sobre os ângulos internos.'],
+        [`${S+180}°`,'contou um triângulo a mais','Há n − 2 triângulos.']],
+   fill:()=>`${rnd(2,15)*180}°`,h:[`Há ${n-2} triângulos dentro do polígono.`,'Multiplique por 180°.'],
+   e:`(${n} − 2) × 180° = ${n-2} × 180° = ${S}°.`,s:PG_S({modo:0,n,oc:1})})},
+ /* ângulo interno regular */
+ ()=>{const n=pick([3,4,5,6,8,10,12]),i=PG_INT(n),nm=PG_NOME[n];
+  return mk({q:`Quanto mede cada ângulo interno de um ${nm} regular?`,ok:`${i}°`,
+   bad:[[`${(n-2)*180}°`,'deu a soma e não cada ângulo','Divida a soma pelo número de ângulos iguais.'],
+        [`${360/n}°`,'deu o ângulo externo','O interno é 180° menos o externo.'],
+        [`${i+10}°`,'errou uma conta','Confira a divisão.'],
+        [`${180-i+i/2}°`,'misturou interno e externo','Calcule (n − 2) × 180° ÷ n.']],
+   fill:PG_FILL,h:['Some os ângulos internos: (n − 2) × 180°.','Divida por n, porque todos são iguais.'],
+   e:`(${n} − 2) × 180° ÷ ${n} = ${i}°.`,s:PG_S({modo:1,n,oc:1})})},
+ /* ângulo externo regular */
+ ()=>{const n=pick([3,4,5,6,8,9,10,12]),e=360/n,nm=PG_NOME[n];
+  return mk({q:`Quanto mede cada ângulo externo de um ${nm} regular?`,ok:`${e}°`,
+   bad:[[`${180-e}°`,'deu o ângulo interno','O externo é o que falta para 180°.'],
+        [`${360}°`,'deu a soma dos externos','Divida 360° por n.'],
+        [`${e*2}°`,'multiplicou por 2','Os n ângulos externos somam 360°.'],
+        [`${180/n}°`,'dividiu 180° e não 360°','Os ângulos externos somam 360°.']],
+   fill:PG_FILL,h:['Os ângulos externos de qualquer polígono convexo somam 360°.','Divida 360° por n.'],
+   e:`360° ÷ ${n} = ${e}°.`,s:PG_S({modo:1,n,oc:1})})}
+],
+2:[
+ /* interno de regular com mais lados */
+ ()=>{const n=pick([9,15,18,20,24,30]),i=PG_INT(n);
+  return mk({q:`Quanto mede cada ângulo interno de um polígono regular de ${n} lados?`,ok:`${i}°`,
+   bad:[[`${360/n}°`,'deu o ângulo externo','O interno é 180° menos o externo.'],
+        [`${(n-2)*180}°`,'deu a soma','Divida por n.'],
+        [`${i+4}°`,'errou uma conta','Confira a divisão.'],
+        [`${i-4}°`,'errou uma conta','Confira a divisão.']],
+   fill:PG_FILL,h:[`Soma: (${n} − 2) × 180°.`,`Divida por ${n}.`],
+   e:`(${n} − 2) × 180° ÷ ${n} = ${(n-2)*180}° ÷ ${n} = ${i}°.`,s:PG_S({modo:1,n:Math.min(12,n),oc:1})})},
+ /* interno + externo = 180 */
+ ()=>{const e=pick([20,24,30,36,40,45,60,72,90]),i=180-e;
+  return mk({q:`Em um polígono regular, cada ângulo externo mede ${e}°. Quanto mede cada ângulo interno?`,ok:`${i}°`,
+   bad:[[`${e}°`,'repetiu o dado','Interno e externo são suplementares.'],
+        [`${360-e}°`,'subtraiu de 360°','O par interno e externo soma 180°.'],
+        [`${90-e}°`,'subtraiu de 90°','O par interno e externo soma 180°.'],
+        [`${i+e/2}°`,'misturou as medidas','Interno + externo = 180°.']],
+   fill:PG_FILL,h:['Interno e externo formam um ângulo raso.','Faça 180° menos o externo.'],
+   e:`180° − ${e}° = ${i}°.`,s:PG_S({modo:1,n:Math.min(12,360/e),oc:1})})},
+ /* número de lados pelo externo */
+ ()=>{const e=pick([20,24,30,36,40,45,60,72,90]),n=360/e;
+  return mk({q:`Cada ângulo externo de um polígono regular mede ${e}°. Quantos lados ele tem?`,ok:String(n),
+   bad:[[String(180-e),'usou o ângulo interno','O externo vale 360° ÷ n.'],
+        [String(n+2),'somou 2','Divida 360° pelo externo, só isso.'],
+        [String(n-2),'subtraiu 2','Divida 360° pelo externo, só isso.'],
+        [String(e/2),'dividiu o externo por 2','Divida 360° pelo externo.']],
+   fill:PG_FILLN,h:['Os ângulos externos somam 360°.',`360° ÷ ${e}°.`],
+   e:`360° ÷ ${e}° = ${n} lados.`,s:PG_S({modo:1,n:Math.min(12,n),oc:1})})},
+ /* soma de polígono qualquer */
+ ()=>{const n=rnd(5,12),S=(n-2)*180;
+  return mk({q:`Um polígono não regular tem ${n} lados. Quanto somam os ângulos internos dele?`,ok:`${S}°`,
+   bad:[[`${n*180}°`,'usou n em vez de n − 2','Há n − 2 triângulos.'],
+        [`${S+360}°`,'somou 360°','Não precisa de 360° aqui.'],
+        [`${S-180}°`,'tirou um triângulo a mais','Há n − 2 triângulos.'],
+        [`${360}°`,'usou a soma dos externos','A pergunta é sobre os internos.']],
+   fill:()=>`${rnd(2,15)*180}°`,h:['A soma não depende de o polígono ser regular.',`(${n} − 2) × 180°.`],
+   e:`(${n} − 2) × 180° = ${S}°.`,s:PG_S({modo:0,n,oc:1})})}
+],
+3:[
+ /* nº de lados a partir do interno */
+ ()=>{const n=pick([5,6,8,9,10,12,15,18]),i=PG_INT(n);
+  return mk({q:`Cada ângulo interno de um polígono regular mede ${i}°. Quantos lados ele tem?`,ok:String(n),
+   bad:[[String(360/(180-i)+2),'somou 2 depois de achar n','360° ÷ (180° − interno) já dá n.'],
+        [String(Math.round(i/10)),'dividiu o ângulo por 10','Primeiro ache o ângulo externo: 180° − interno.'],
+        [String(360/(180-i)-2),'subtraiu 2','360° ÷ externo já dá n.'],
+        [String(Math.round(360/i)),'dividiu 360° pelo interno','Divida 360° pelo ângulo externo.']],
+   fill:PG_FILLN,h:[`Ângulo externo: 180° − ${i}°.`,'Divida 360° pelo externo.'],
+   e:`Externo = ${180-i}°. 360° ÷ ${180-i}° = ${n} lados.`,s:PG_S({modo:1,n:Math.min(12,n),oc:1})})},
+ /* quantos fecham ao redor do ponto */
+ ()=>{const n=pick([3,4,6]),k=360/PG_INT(n),nm=PG_NOME[n];
+  return mk({q:`Quantos ${nm}s regulares iguais cabem ao redor de um mesmo vértice, sem sobrar nem faltar espaço?`,ok:String(k),
+   bad:[[String(k+1),'contou uma peça a mais','Confira: k × interno deve dar 360°.'],
+        [String(k-1),'contou uma peça a menos','Confira: k × interno deve dar 360°.'],
+        [String(n),'usou o número de lados','Divida 360° pelo ângulo interno.'],
+        [String(k*2),'dobrou','Divida 360° pelo ângulo interno.']],
+   fill:PG_FILLN,h:[`Ângulo interno do ${nm}: ${PG_INT(n)}°.`,'Quantas vezes ele cabe em 360°?'],
+   e:`360° ÷ ${PG_INT(n)}° = ${k}.`,s:PG_S({modo:2,n,k:Math.min(8,k),oc:1})})},
+ /* dois polígonos + um terceiro */
+ ()=>{const p=pick([[8],[12],[5],[6]]),n=p[0],t=360-2*PG_INT(n),l=360/(180-t);
+  return mk({q:`Dois ${PG_NOME[n]?PG_NOME[n]+'s':'polígonos de '+n+' lados'} regulares se encontram em um vértice com um terceiro polígono regular, sem sobrar espaço. Quantos lados tem o terceiro?`,ok:String(l),
+   bad:[[String(n),'repetiu o número de lados','Calcule o ângulo que falta.'],
+        [String(l+2),'somou 2','Ângulo que falta = 360° − 2 × interno.'],
+        [String(Math.max(3,l-1)),'errou uma conta','Ângulo que falta = 360° − 2 × interno.'],
+        [String(t),'deu o ângulo, não o número de lados','Descubra qual polígono regular tem esse ângulo interno.']],
+   fill:PG_FILLN,h:[`Os dois ângulos internos somam ${2*PG_INT(n)}°.`,'O terceiro ângulo completa 360°.'],
+   e:`360° − 2 × ${PG_INT(n)}° = ${t}°. Esse é o ângulo interno do polígono de ${l} lados.`,s:PG_S({modo:2,n:Math.min(12,n),k:2,oc:1})})},
+ /* soma → lados */
+ ()=>{const n=rnd(6,16),S=(n-2)*180;
+  return mk({q:`Os ângulos internos de um polígono somam ${S}°. Quantos lados ele tem?`,ok:String(n),
+   bad:[[String(n-2),'achou só o número de triângulos',`${S}° ÷ 180° dá o número de triângulos, e n = triângulos + 2.`],
+        [String(n+2),'somou 2 duas vezes','Some 2 uma vez só ao número de triângulos.'],
+        [String(S/180),'não somou 2','Triângulos = n − 2.'],
+        [String(Math.round(S/90)),'dividiu por 90','Divida por 180°.']],
+   fill:PG_FILLN,h:[`${S}° ÷ 180° = ${n-2} triângulos.`,'Some 2.'],
+   e:`${S} ÷ 180 = ${n-2}, então n = ${n-2} + 2 = ${n}.`,s:PG_S({modo:0,n:Math.min(12,n),oc:1})})}
+]};
+
+MODS.push({id:'poligonos',ano:7,ic:'⬢',nome:'Polígonos regulares e mosaicos',sub:'Triângulos dentro do polígono, ângulos internos e externos e ladrilhamento',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 triângulos · 1 ângulos · 2 mosaico)',min:0,max:2,v:0},
+      {k:'n',l:'Número de lados',min:3,max:12,v:6},{k:'k',l:'Polígonos ao redor do vértice (mosaico)',min:1,max:8,v:3}],
+ reset:{modo:0,n:6,k:3,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.modo=cl(v.modo,0,2);v.n=cl(v.n,3,12);v.k=cl(v.k,1,8);v.oc=cl(v.oc,0,1)},
+ info(v){const n=v.n,ocu=PG_OCU(v),i=PG_INT(n),r=n=>String(Math.round(n*100)/100).replace('.',',');
+  if(v.modo===0)return ocu?`Polígono de ${n} lados · quantos triângulos cabem dentro?`:`${n} lados · ${n-2} triângulos · soma dos ângulos internos = ${n-2} × 180° = ${(n-2)*180}°`;
+  if(v.modo===1)return ocu?`Polígono regular de ${n} lados · descubra os ângulos`:`${n} lados · interno ${r(i)}° · externo ${r(360/n)}° · soma ${r(i)}° + ${r(360/n)}° = 180°`;
+  const t=v.k*i;return ocu?`${v.k} polígonos de ${n} lados no mesmo vértice · fecha o espaço?`:`${v.k} × ${r(i)}° = ${r(t)}° · ${Math.abs(t-360)<1e-6?'fecha exatamente: ladrilha o plano':t<360?'sobra espaço de '+r(360-t)+'°':'passa de 360°: as peças se sobrepõem'}`},
+ desc(v){const n=v.n,ocu=PG_OCU(v),i=PG_INT(n);
+  if(v.modo===0)return `Polígono regular de ${n} lados com diagonais saindo de um vértice, formando triângulos.${ocu?'':` Há ${n-2} triângulos e a soma dos ângulos internos é ${(n-2)*180} graus.`}`;
+  if(v.modo===1)return `Polígono regular de ${n} lados com um ângulo interno e um ângulo externo marcados.${ocu?'':` O interno mede ${Math.round(i*100)/100} graus e o externo ${Math.round(36000/n)/100} graus.`}`;
+  return `${v.k} polígonos regulares de ${n} lados se encontrando em um mesmo vértice.${ocu?'':` Juntos, os ângulos somam ${Math.round(v.k*i*100)/100} graus.`}`},
+ draw(c,v,W,H,k){const n=v.n,ocu=PG_OCU(v),i=PG_INT(n),ex=360/n,r2=x=>String(Math.round(x*100)/100).replace('.',',');
+  const txt=(t,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(t,x,y)};
+  const cores=[k.c1,k.m,k.a,k.pk||k.c2];
+  if(v.modo===0||v.modo===1){const cx=W/2,cy=H/2+4,R=Math.min(W/2-26,(H-76)/2),P=[];
+   for(let j=0;j<n;j++){const t=-Math.PI/2-Math.PI/n+ j*2*Math.PI/n;P.push([cx+R*Math.cos(t),cy+R*Math.sin(t)])}
+   if(v.modo===0){for(let j=1;j<n-1;j++){c.globalAlpha=.85;c.fillStyle=cores[(j-1)%3];c.beginPath();c.moveTo(...P[0]);c.lineTo(...P[j]);c.lineTo(...P[j+1]);c.closePath();c.fill();c.globalAlpha=1}
+    c.strokeStyle=k.t;c.lineWidth=2;c.beginPath();P.forEach((p,j)=>j?c.lineTo(...p):c.moveTo(...p));c.closePath();c.stroke();
+    c.lineWidth=1.5;for(let j=2;j<n-1;j++){c.beginPath();c.moveTo(...P[0]);c.lineTo(...P[j]);c.stroke()}
+    txt(`${n} lados`,W/2,18,k.t,'bold 14px sans-serif');
+    txt(ocu?'quantos triângulos? quanto somam os ângulos?':`${n-2} triângulos × 180° = ${(n-2)*180}°`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left';return}
+   /* modo 1: interno e externo no vértice 0 */
+   c.globalAlpha=.4;c.fillStyle=k.c1;c.beginPath();P.forEach((p,j)=>j?c.lineTo(...p):c.moveTo(...p));c.closePath();c.fill();c.globalAlpha=1;
+   c.strokeStyle=k.t;c.lineWidth=2.5;c.beginPath();P.forEach((p,j)=>j?c.lineTo(...p):c.moveTo(...p));c.closePath();c.stroke();
+   const V=P[0],Pn=P[n-1],Ps=P[1],dx=V[0]-Pn[0],dy=V[1]-Pn[1],L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,ext=[V[0]+ux*R*.7,V[1]+uy*R*.7];
+   c.strokeStyle=k.a;c.lineWidth=2;c.setLineDash([5,4]);c.beginPath();c.moveTo(...V);c.lineTo(...ext);c.stroke();c.setLineDash([]);
+   const aE=Math.atan2(uy,ux),aS=Math.atan2(Ps[1]-V[1],Ps[0]-V[0]),aP=Math.atan2(Pn[1]-V[1],Pn[0]-V[0]),rr=Math.min(34,R*.4);
+   c.fillStyle=k.a;c.globalAlpha=.8;c.beginPath();c.moveTo(...V);c.arc(V[0],V[1],rr,aE,aS,false);c.closePath();c.fill();
+   c.fillStyle=k.m;c.beginPath();c.moveTo(...V);c.arc(V[0],V[1],rr*.75,aS,aP,false);c.closePath();c.fill();c.globalAlpha=1;
+   txt(`${n} lados regulares`,W/2,18,k.t,'bold 14px sans-serif');
+   txt(ocu?'interno + externo = 180°':`interno ${r2(i)}° + externo ${r2(ex)}° = 180°`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left';return}
+  /* modo 2: mosaico ao redor de um vértice */
+  const kk=v.k,m=Math.min(W,H-60),s=(m/2-8)*Math.sin(Math.PI/n),cx=W/2,cy=H/2+2,rad=i*Math.PI/180,ex2=ex*Math.PI/180;
+  for(let q=0;q<kk;q++){let x=cx,y=cy,d=q*rad;const pts=[[x,y]];for(let j=0;j<n-1;j++){x+=s*Math.cos(d);y+=s*Math.sin(d);pts.push([x,y]);d+=ex2}
+   c.globalAlpha=.75;c.fillStyle=cores[q%3];c.beginPath();pts.forEach((p,j)=>j?c.lineTo(...p):c.moveTo(...p));c.closePath();c.fill();c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=1.8;c.stroke()}
+  c.fillStyle=k.t;c.beginPath();c.arc(cx,cy,3.5,0,7);c.fill();
+  const tot=kk*i;
+  txt(`${kk} × ${n} lados`,W/2,18,k.t,'bold 14px sans-serif');
+  txt(ocu?'as peças fecham 360° ao redor do vértice?':`${kk} × ${r2(i)}° = ${r2(tot)}° ${Math.abs(tot-360)<1e-6?'(fecha)':tot<360?'< 360°, sobra espaço':'> 360°, sobrepõe'}`,W/2,H-6,Math.abs(tot-360)<1e-6?k.a:k.t,'bold 12px sans-serif');c.textAlign='left'},
+ rod:8,gens:PG_GENS});
+
+/* ===== Dízimas periódicas, fração geratriz e notação científica (módulo novo, arquivo separado) ===== */
+const DZ_S=o=>Object.assign({modo:0,p:1,q:7,m:0,r:1,A:0,B:3,c:45,e:4,oc:0},o);
+const DZ_OCU=v=>v.oc===1&&!locked;
+const DZ_SUP={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
+const DZ_EXP=e=>String(e).split('').map(ch=>DZ_SUP[ch]).join('');
+const DZ_VIRG=x=>String(x).replace('.',',');
+/* coeficiente c10 (10..99) vira 4,5 e assim por diante, sem zero sobrando */
+const DZ_COEF=c10=>DZ_VIRG((c10/10).toFixed(1)).replace(/,0$/,'');
+const DZ_SCI=(c10,e)=>`${DZ_COEF(c10)} × 10${DZ_EXP(e)}`;
+const DZ_SEP=s=>s.replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+/* o número c10/10 × 10^e escrito por extenso */
+const DZ_DEC=(c10,e)=>{const d=String(c10);
+ if(e<0)return '0,'+'0'.repeat(-e-1)+d.replace(/0+$/,'');
+ if(d.length-1<=e)return DZ_SEP(d+'0'.repeat(e-(d.length-1)));
+ return DZ_SEP(d.slice(0,e+1))+','+d.slice(e+1).replace(/0+$/,'')};
+/* expansão decimal de p/q: parte inteira, pré-período, período */
+const DZ_DIV=(p,q)=>{const inteiro=Math.floor(p/q);let r=p%q;const seen={},dig=[];let ini=-1;
+ while(r!==0&&dig.length<200){if(seen[r]!==undefined){ini=seen[r];break}seen[r]=dig.length;r*=10;dig.push(Math.floor(r/q));r%=q}
+ if(ini<0)return{inteiro,pre:dig.join(''),per:'',dig,ini:-1};
+ return{inteiro,pre:dig.slice(0,ini).join(''),per:dig.slice(ini).join(''),dig,ini}};
+const DZ_TXT=(p,q)=>{const d=DZ_DIV(p,q);return `${d.inteiro},${d.pre}${d.per?'('+d.per+')':''}`.replace(/,$/,'')};
+const DZ_GER=(m,r,A,B)=>{const n=parseInt(String(A||0)+String(B).padStart(r,'0'),10)-(m?A:0),d=(10**r-1)*10**m;return[n,d]};
+const DZ_FILLF=()=>{const d=rnd(2,99);return F(rnd(1,d-1),d)};
+const DZ_PADA=(A,m)=>m?String(A).padStart(m,'0'):'';
+const DZ_PADB=(B,r)=>String(B).padStart(r,'0');
+const DZ_FILLC=()=>DZ_SCI(rnd(10,99),rnd(-9,9));
+
+const DZ_GENS={
+1:[
+ /* período */
+ ()=>{const f=pick([[1,3],[2,3],[1,6],[5,6],[1,9],[4,9],[1,11],[5,11],[7,12],[1,15],[2,15],[7,9]]),d=DZ_DIV(f[0],f[1]);
+  const rev=d.per.split('').reverse().join('');
+  return mk({q:`Dividindo ${f[0]} por ${f[1]}, obtém-se ${DZ_TXT(f[0],f[1]).replace('(','').replace(')','')}... Qual é o período, a parte que se repete sem parar?`,ok:d.per,
+   bad:[[d.pre+d.per,'incluiu o que vem antes da repetição','O período é só o bloco que se repete.'],
+        [rev,'inverteu a ordem dos algarismos','O bloco se repete na mesma ordem em que aparece.'],
+        [d.per.slice(0,1),'pegou só o primeiro algarismo','O período é o bloco inteiro que se repete.'],
+        [d.per+d.per,'repetiu o bloco duas vezes','Escreva o bloco uma vez só.']],
+   fill:()=>String(rnd(1,99)),h:['Divida passo a passo e observe quando o resto volta a ser igual a um resto anterior.','A partir daí os algarismos repetem.'],
+   e:`${f[0]} ÷ ${f[1]} = ${DZ_TXT(f[0],f[1])}. O período é ${d.per}.`,s:DZ_S({modo:0,p:f[0],q:f[1],oc:0})})},
+ /* decimal finita */
+ ()=>{const fin=pick([[1,2],[3,4],[1,5],[7,8],[3,20],[9,25],[11,40],[13,50]]),inf=shuf([[1,3],[2,7],[5,6],[4,9],[3,11],[1,12],[5,18],[7,15]]).slice(0,3),lista=shuf([fin,...inf]).map(x=>`${x[0]}/${x[1]}`);
+  return mk({q:`Entre ${lista.slice(0,3).join(', ')} e ${lista[3]}, qual tem representação decimal finita, sem dízima?`,ok:`${fin[0]}/${fin[1]}`,
+   bad:inf.map(x=>[`${x[0]}/${x[1]}`,'não olhou o denominador','Só dá decimal finita se o denominador, na forma irredutível, tiver só os fatores 2 e 5.']),
+   fill:DZ_FILLF,h:['Fatore os denominadores.','Só 2 e 5 como fatores: decimal finita.'],
+   e:`${fin[1]} tem só fatores 2 e 5, então ${fin[0]}/${fin[1]} = ${DZ_TXT(fin[0],fin[1])}.`,s:DZ_S({modo:0,p:fin[0],q:fin[1],oc:0})})},
+ /* escrever em notação científica, número inteiro */
+ ()=>{const c=rnd(1,9),e=rnd(3,9),n=c*10**e;
+  return mk({q:`Escreva ${DZ_SEP(String(n))} em notação científica.`,ok:`${c} × 10${DZ_EXP(e)}`,
+   bad:[[`${c} × 10${DZ_EXP(e+1)}`,'contou um zero a mais','Conte os zeros depois do algarismo '+c+'.'],
+        [`${c} × 10${DZ_EXP(e-1)}`,'contou um zero a menos','Conte os zeros depois do algarismo '+c+'.'],
+        [`${c*10} × 10${DZ_EXP(e-1)}`,'deixou o coeficiente fora do intervalo','O coeficiente deve estar entre 1 e 10.'],
+        [`${c} × 10${DZ_EXP(-e)}`,'usou expoente negativo','Número grande leva expoente positivo.']],
+   fill:DZ_FILLC,h:['Conte quantas casas a vírgula anda até deixar um algarismo antes dela.','Esse número de casas é o expoente.'],
+   e:`${DZ_SEP(String(n))} = ${c} × 10${DZ_EXP(e)}.`,s:DZ_S({modo:2,c:c*10,e,oc:0})})},
+ /* 10 elevado a expoente negativo */
+ ()=>{const k=rnd(1,4);
+  return mk({q:`Quanto vale 10${DZ_EXP(-k)} escrito como número decimal?`,ok:'0,'+'0'.repeat(k-1)+'1',
+   bad:[['0,'+'0'.repeat(k)+'1','colocou um zero a mais','O expoente −'+k+' coloca o 1 na casa de número '+k+' depois da vírgula.'],
+        ['0,'+'0'.repeat(Math.max(0,k-2))+'1','colocou um zero a menos','O expoente −'+k+' coloca o 1 na casa de número '+k+' depois da vírgula.'],
+        ['-1'+'0'.repeat(k),'achou que o sinal negativo torna o número negativo','Expoente negativo dá número pequeno, mas positivo.'],
+        ['1'+'0'.repeat(k),'ignorou o sinal do expoente','Expoente negativo dá número menor que 1.']],
+   fill:()=>'0,'+'0'.repeat(rnd(0,8))+'1',h:['10⁻¹ = 0,1 e 10⁻² = 0,01.','O 1 ocupa a casa decimal de número igual ao expoente.'],
+   e:`10${DZ_EXP(-k)} = 1 ÷ 10${DZ_EXP(k)} = ${'0,'+'0'.repeat(k-1)+'1'}.`,s:DZ_S({modo:2,c:10,e:-k,oc:0})})}
+],
+2:[
+ /* geratriz simples */
+ ()=>{const r=rnd(1,2),B=r===1?rnd(1,8):rnd(1,98),[n,d]=DZ_GER(0,r,0,B);
+  return mk({q:`Qual é a fração geratriz, na forma mais simples, da dízima 0,(${DZ_PADB(B,r)})?`,ok:F(n,d),
+   bad:[[F(B,10**r),'usou potência de 10 no denominador','O denominador é formado só por noves: '+(10**r-1)+'.'],
+        [F(d,n),'inverteu numerador e denominador','O período vai no numerador.'],
+        [F(B,10**r+1),'somou 1 ao denominador','Denominador = 10'+DZ_EXP(r)+' − 1.'],
+        [F(B,9*r),'usou 9 vezes o tamanho do período','Um nove para cada algarismo do período: '+'9'.repeat(r)+'.']],
+   fill:DZ_FILLF,h:[`x = 0,(${DZ_PADB(B,r)}). Multiplique por ${10**r}.`,'Subtraia as duas igualdades para eliminar a parte que repete.'],
+   e:`${10**r}x = ${B},(${DZ_PADB(B,r)}). Subtraindo, ${10**r-1}x = ${B}, então x = ${B}/${10**r-1}${eqF(B,10**r-1)}.`,s:DZ_S({modo:1,m:0,r,A:0,B,oc:0})})},
+ /* notação científica de pequeno */
+ ()=>{const c=rnd(11,99),e=-rnd(2,5);
+  return mk({q:`Escreva ${DZ_DEC(c,e)} em notação científica.`,ok:DZ_SCI(c,e),
+   bad:[[DZ_SCI(c,e+1),'errou o número de casas em uma unidade','Conte as casas até a vírgula ficar depois do primeiro algarismo diferente de zero.'],
+        [DZ_SCI(c,e-1),'errou o número de casas em uma unidade','Conte as casas até a vírgula ficar depois do primeiro algarismo diferente de zero.'],
+        [DZ_SCI(c,-e),'usou expoente positivo','Número menor que 1 leva expoente negativo.'],
+        [DZ_SCI(c,e).replace(DZ_COEF(c),String(c)),'deixou o coeficiente fora do intervalo','O coeficiente deve estar entre 1 e 10.']],
+   fill:DZ_FILLC,h:['A vírgula anda para a direita até o primeiro algarismo diferente de zero.','O expoente é negativo e igual ao número de casas andadas.'],
+   e:`${DZ_DEC(c,e)} = ${DZ_SCI(c,e)}.`,s:DZ_S({modo:2,c,e,oc:0})})},
+ /* notação científica de grande */
+ ()=>{const c=rnd(11,99),e=rnd(3,9);
+  return mk({q:`Escreva ${DZ_DEC(c,e)} em notação científica.`,ok:DZ_SCI(c,e),
+   bad:[[DZ_SCI(c,e+1),'errou o número de casas em uma unidade','Conte as casas que a vírgula anda até ficar depois do primeiro algarismo.'],
+        [DZ_SCI(c,e-1),'errou o número de casas em uma unidade','Conte as casas que a vírgula anda até ficar depois do primeiro algarismo.'],
+        [DZ_SCI(c,-e),'usou expoente negativo','Número grande leva expoente positivo.'],
+        [DZ_SCI(c,e).replace(DZ_COEF(c),String(c)),'deixou o coeficiente fora do intervalo','O coeficiente deve estar entre 1 e 10.']],
+   fill:DZ_FILLC,h:['A vírgula anda para a esquerda até ficar depois do primeiro algarismo.','O expoente é igual ao número de casas andadas.'],
+   e:`${DZ_DEC(c,e)} = ${DZ_SCI(c,e)}.`,s:DZ_S({modo:2,c,e,oc:0})})},
+ /* decimal exata de fração com denominador 2,4,5,8 */
+ ()=>{const f=pick([[1,4],[3,8],[7,20],[9,40],[13,25],[17,50]]);
+  return mk({q:`Escreva ${f[0]}/${f[1]} como número decimal.`,ok:DZ_TXT(f[0],f[1]),
+   bad:[[DZ_TXT(f[1],f[0]>1?f[0]:7).replace(/\(.*\)/,''),'dividiu o denominador pelo numerador','Divida o numerador pelo denominador.'],
+        ['0,'+f[0]+String(f[1]).replace(/0/g,''),'juntou os dois números depois da vírgula','Fração é uma divisão.'],
+        [DZ_TXT(f[0]*10,f[1]),'multiplicou o numerador por 10','Divida o numerador pelo denominador.'],
+        [DZ_TXT(f[0],f[1]*10),'multiplicou o denominador por 10','Divida o numerador pelo denominador.']],
+   fill:()=>DZ_VIRG((rnd(1,99)/100).toFixed(2)),h:['Divisão: numerador dividido pelo denominador.','Se preferir, multiplique os dois por um número que torne o denominador 10, 100 ou 1000.'],
+   e:`${f[0]} ÷ ${f[1]} = ${DZ_TXT(f[0],f[1])}.`,s:DZ_S({modo:0,p:f[0],q:f[1],oc:0})})}
+],
+3:[
+ /* geratriz composta */
+ ()=>{const m=1,r=rnd(1,2),A=rnd(1,9),B=r===1?rnd(1,8):rnd(1,98),[n,d]=DZ_GER(m,r,A,B);
+  return mk({q:`Qual é a fração geratriz, na forma mais simples, da dízima 0,${DZ_PADA(A,m)}(${DZ_PADB(B,r)})?`,ok:F(n,d),
+   bad:[[F(parseInt(String(A)+DZ_PADB(B,r),10),10**(m+r)*0+(10**r-1)*10**m),'esqueceu de subtrair a parte que não repete','Numerador = (parte antes + período) − parte antes.'],
+        [F(parseInt(String(A)+DZ_PADB(B,r),10)-A,10**(m+r)),'usou potência de 10 no denominador','O denominador leva noves (para o período) e zeros (para a parte que não repete).'],
+        [F(n,10**r-1),'esqueceu o zero no denominador','Há '+m+' algarismo sem repetir: um zero no fim do denominador.'],
+        [F(B,(10**r-1)*10**m),'ignorou a parte que não repete','O numerador usa a parte antes do período e o período.']],
+   fill:DZ_FILLF,h:[`x = 0,${DZ_PADA(A,m)}(${DZ_PADB(B,r)}). Multiplique por ${10**m} e por ${10**(m+r)}.`,'Subtraia as duas igualdades.'],
+   e:`${10**(m+r)}x − ${10**m}x = ${n}, ou seja, ${d}x = ${n}. x = ${n}/${d}${eqF(n,d)}.`,s:DZ_S({modo:1,m,r,A,B,oc:0})})},
+ /* inteiro + dízima */
+ ()=>{const I=rnd(1,5),B=rnd(1,8),n=I*9+B;
+  return mk({q:`Qual é a fração geratriz, na forma mais simples, de ${I},(${B})?`,ok:F(n,9),
+   bad:[[F(B,9),'esqueceu a parte inteira',`A parte inteira ${I} também entra: ${I} + ${F(B,9)}.`],
+        [F(I*10+B,9),'colocou a parte inteira como dezena','Some a parte inteira como fração: '+I+' = '+(I*9)+'/9.'],
+        [F(I*10+B,10),'tratou como decimal finito','O período exige denominador 9.'],
+        [F(n,10),'usou 10 no denominador','O período de um algarismo leva denominador 9.']],
+   fill:DZ_FILLF,h:[`${I},(${B}) = ${I} + 0,(${B}).`,`0,(${B}) = ${F(B,9)}.`],
+   e:`${I},(${B}) = ${I} + ${F(B,9)} = ${F(I*9,9)} + ${F(B,9)} = ${F(n,9)}.`,s:DZ_S({modo:1,m:0,r:1,A:0,B,oc:0})})},
+ /* produto em notação científica */
+ ()=>{const a=rnd(2,9),b=rnd(2,9),x=rnd(2,9),y=rnd(-9,-2),P=a*b,eNew=x+y;
+  const ok=P<10?DZ_SCI(P*10,eNew):DZ_SCI(P,eNew+1);
+  /* P com dois algarismos vira coeficiente P/10 e expoente +1 */
+  const certo=P<10?`${P} × 10${DZ_EXP(eNew)}`:DZ_SCI(P,eNew+1);
+  return mk({q:`Calcule (${a} × 10${DZ_EXP(x)}) × (${b} × 10${DZ_EXP(y)}) e escreva em notação científica.`,ok:certo,
+   bad:[[`${P} × 10${DZ_EXP(eNew)}`,'deixou o coeficiente fora do intervalo','O coeficiente deve estar entre 1 e 10.'],
+        [`${P} × 10${DZ_EXP(x*y)}`,'multiplicou os expoentes','Na multiplicação de potências de mesma base, os expoentes se somam.'],
+        [`${DZ_COEF(P*10)} × 10${DZ_EXP(eNew-1)}`,'andou a vírgula para o lado errado','Ao diminuir o coeficiente, o expoente aumenta.'],
+        [`${a+b} × 10${DZ_EXP(eNew)}`,'somou os coeficientes','Os coeficientes se multiplicam.']],
+   fill:DZ_FILLC,h:['Multiplique os coeficientes e some os expoentes.','Se o coeficiente passar de 10, ajuste o expoente.'],
+   e:`${a} × ${b} = ${P} e ${x} + (${y}) = ${eNew}. Resultado: ${certo}.`,s:DZ_S({modo:2,c:Math.min(99,P<10?P*10:P),e:P<10?eNew:eNew+1,oc:0})})},
+ /* divisão em notação científica */
+ ()=>{const q=rnd(2,6),b=rnd(2,9),x=rnd(5,9),y=rnd(1,4),a=q*b,e=x-y;
+  const certo=q*b<10?'':''; void certo;
+  return mk({q:`Calcule (${a} × 10${DZ_EXP(x)}) ÷ (${b} × 10${DZ_EXP(y)}) e escreva em notação científica.`,ok:`${q} × 10${DZ_EXP(e)}`,
+   bad:[[`${q} × 10${DZ_EXP(x+y)}`,'somou os expoentes na divisão','Na divisão, subtraem-se os expoentes.'],
+        [`${q} × 10${DZ_EXP(x*y)}`,'multiplicou os expoentes','Na divisão, subtraem-se os expoentes.'],
+        [`${a-b} × 10${DZ_EXP(e)}`,'subtraiu os coeficientes','Os coeficientes se dividem.'],
+        [`${q} × 10${DZ_EXP(y-x)}`,'subtraiu na ordem trocada','Expoente do numerador menos o do denominador.']],
+   fill:DZ_FILLC,h:['Divida os coeficientes e subtraia os expoentes.',`${a} ÷ ${b} e ${x} − ${y}.`],
+   e:`${a} ÷ ${b} = ${q} e ${x} − ${y} = ${e}. Resultado: ${q} × 10${DZ_EXP(e)}.`,s:DZ_S({modo:2,c:Math.min(99,q*10),e,oc:0})})}
+]};
+
+MODS.push({id:'dizimas',ano:8,ic:'🔢',nome:'Dízimas, fração geratriz e notação científica',sub:'Quando a divisão não termina, como voltar à fração e como escrever números enormes ou minúsculos',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 divisão · 1 fração geratriz · 2 notação científica)',min:0,max:2,v:0},
+      {k:'p',l:'Numerador da divisão',min:1,max:99,v:1},{k:'q',l:'Denominador da divisão',min:2,max:30,v:7},
+      {k:'m',l:'Algarismos antes do período (geratriz)',min:0,max:2,v:0},{k:'r',l:'Algarismos do período (geratriz)',min:1,max:3,v:1},
+      {k:'A',l:'Parte que não repete (geratriz)',min:0,max:99,v:0},{k:'B',l:'Período (geratriz)',min:1,max:998,v:3},
+      {k:'c',l:'Coeficiente × 10 (45 vale 4,5)',min:10,max:99,v:45},{k:'e',l:'Expoente de 10',min:-9,max:9,v:4}],
+ reset:{modo:0,p:1,q:7,m:0,r:1,A:0,B:3,c:45,e:4,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));
+  v.modo=cl(v.modo,0,2);v.q=cl(v.q,2,30);v.p=cl(v.p,1,99);v.m=cl(v.m,0,2);v.r=cl(v.r,1,3);
+  v.A=cl(v.A,0,10**v.m-1);if(!v.m)v.A=0;v.B=cl(v.B,1,10**v.r-2);v.c=cl(v.c,10,99);v.e=cl(v.e,-9,9);v.oc=cl(v.oc,0,1)},
+ info(v){const ocu=DZ_OCU(v);
+  if(v.modo===0){const d=DZ_DIV(v.p,v.q);return ocu?`${v.p} ÷ ${v.q} · descubra como a divisão termina`:`${v.p} ÷ ${v.q} = ${DZ_TXT(v.p,v.q)} · ${d.per?`dízima periódica, período ${d.per}`:'decimal finita'}`}
+  if(v.modo===1){const[n,d]=DZ_GER(v.m,v.r,v.A,v.B);return ocu?`Dízima 0,${DZ_PADA(v.A,v.m)}(${DZ_PADB(v.B,v.r)}) · descubra a fração geratriz`:`0,${DZ_PADA(v.A,v.m)}(${DZ_PADB(v.B,v.r)}) = ${n}/${d}${eqF(n,d)}`}
+  return ocu?`${DZ_DEC(v.c,v.e)} · escreva em notação científica`:`${DZ_DEC(v.c,v.e)} = ${DZ_SCI(v.c,v.e)}`},
+ desc(v){const ocu=DZ_OCU(v);
+  if(v.modo===0)return `Divisão longa de ${v.p} por ${v.q} em células, mostrando o resto e o algarismo de cada passo; as células do período aparecem destacadas.${ocu?'':` Resultado: ${DZ_TXT(v.p,v.q)}.`}`;
+  if(v.modo===1)return `Passo a passo para encontrar a fração geratriz da dízima periódica 0,${DZ_PADA(v.A,v.m)}(${DZ_PADB(v.B,v.r)}), multiplicando por potências de 10 e subtraindo.`;
+  return `Número ${DZ_DEC(v.c,v.e)} com a vírgula andando ${Math.abs(v.e)} casas até virar ${DZ_COEF(v.c)} vezes dez elevado a ${v.e}.`},
+ draw(c,v,W,H,k){const ocu=DZ_OCU(v);
+  const txt=(t,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(t,x,y)};
+  const fit=(t,x,y,col,px,maxw,al)=>{let s=px;c.font=`bold ${s}px sans-serif`;while(c.measureText(t).width>maxw&&s>9){s--;c.font=`bold ${s}px sans-serif`}txt(t,x,y,col,`bold ${s}px sans-serif`,al)};
+  if(v.modo===0){const d=DZ_DIV(v.p,v.q),n=Math.min(8,d.dig.length||1);
+   fit(ocu?`${v.p} ÷ ${v.q} = ?`:`${v.p} ÷ ${v.q} = ${DZ_TXT(v.p,v.q)}`,W/2,26,k.t,17,W-16);
+   const cols=4,cw=(W-16)/cols,ch=64,x0=8,y0=46;let r=v.p%v.q;
+   for(let i=0;i<n;i++){const x=x0+(i%cols)*cw,y=y0+Math.floor(i/cols)*(ch+10),st=r*10,dg=Math.floor(st/v.q),rs=st%v.q,noPer=d.ini<0||i<d.ini;
+    c.globalAlpha=.85;c.fillStyle=noPer?k.c1:k.a;c.fillRect(x+3,y,cw-6,ch);c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=1.5;c.strokeRect(x+3,y,cw-6,ch);
+    txt(`${st} ÷ ${v.q}`,x+cw/2,y+16,k.t,'11px sans-serif');txt(ocu&&i>1?'?':String(dg),x+cw/2,y+40,k.t,'bold 20px sans-serif');txt(`resto ${rs}`,x+cw/2,y+58,k.t,'11px sans-serif');r=rs}
+   const last=d.dig.length>8;
+   txt(ocu?'os restos acabam ou voltam a se repetir?':(d.per?(last?'o bloco colorido em dourado se repete':'o resto volta a ser igual: o período repete'):'o resto chegou a zero: decimal finita'),W/2,H-8,k.a,'bold 12px sans-serif');c.textAlign='left';return}
+  if(v.modo===1){const{m,r,A,B}=v,[n,d]=DZ_GER(m,r,A,B),a=DZ_PADA(A,m),b=DZ_PADB(B,r),AB=parseInt(String(A||0)+b,10),L=[];
+   L.push([`x = 0,${a}(${b})`,k.t]);
+   if(m)L.push([`${10**m}x = ${A},(${b})`,k.c1]);
+   L.push([`${10**(m+r)}x = ${AB},(${b})`,k.m]);
+   L.push([ocu?'subtraia e descubra x':`${10**(m+r)-10**m}x = ${AB-(m?A:0)}`,k.a]);
+   L.push([ocu?'x = ?':`x = ${n}/${d}${eqF(n,d)}`,k.a]);
+   fit('Fração geratriz',W/2,22,k.t,15,W-16);
+   const lh=Math.min(40,(H-60)/L.length);
+   L.forEach((l,i)=>{fit(l[0],W/2,56+i*lh,l[1],19,W-24)});
+   txt(ocu?'multiplique para alinhar os períodos':'subtrair elimina a parte que se repete',W/2,H-8,k.a,'bold 12px sans-serif');c.textAlign='left';return}
+  const dec=DZ_DEC(v.c,v.e),sci=DZ_SCI(v.c,v.e),mov=Math.abs(v.e);
+  fit('Notação científica',W/2,22,k.t,15,W-16);
+  fit(dec,W/2,80,k.c1,28,W-20);
+  txt(v.e===0?'a vírgula não anda':`a vírgula anda ${mov} ${mov===1?'casa':'casas'} para a ${v.e>0?'esquerda':'direita'}`,W/2,122,k.m,'13px sans-serif');
+  c.strokeStyle=k.m;c.lineWidth=2;c.beginPath();c.moveTo(W/2,134);c.lineTo(W/2,158);c.moveTo(W/2-6,150);c.lineTo(W/2,158);c.lineTo(W/2+6,150);c.stroke();
+  if(ocu)fit('? × 10?',W/2,205,k.a,32,W-20);
+  else{const base=`${DZ_COEF(v.c)} × 10`,ex=String(v.e).replace('-','−');let z=32;const mw=()=>{c.font=`bold ${z}px sans-serif`;const w1=c.measureText(base).width;c.font=`bold ${Math.round(z*.6)}px sans-serif`;return[w1,c.measureText(ex).width]};
+   while(z>12&&mw()[0]+mw()[1]>W-24)z--;const[w1,w2]=mw(),x0=(W-w1-w2)/2;
+   c.textAlign='left';c.fillStyle=k.a;c.font=`bold ${z}px sans-serif`;c.fillText(base,x0,205);c.font=`bold ${Math.round(z*.6)}px sans-serif`;c.fillText(ex,x0+w1+2,205-z*.45)}
+  txt(ocu?'um algarismo antes da vírgula, vezes uma potência de 10':`coeficiente ${DZ_COEF(v.c)} entre 1 e 10 · expoente ${v.e}`,W/2,H-8,k.t,'12px sans-serif');c.textAlign='left'},
+ rod:8,gens:DZ_GENS});
+
+/* ===== Números irracionais e espiral de Teodoro (módulo novo, arquivo separado) ===== */
+const IR_S=o=>Object.assign({modo:0,n:6,k:10,idx:3,oc:0},o);
+const IR_OCU=v=>v.oc===1&&!locked;
+const IR_V=x=>String(x).replace('.',',');
+const IR_PERF=k=>Number.isInteger(Math.sqrt(k));
+const IR_R=k=>`√${k}`;
+const IR_1=x=>IR_V((Math.round(x*10)/10).toFixed(1));
+const IR_NAO=[2,3,5,6,7,8,10,11,12,13,14,15,17,18,19,20,21,22,23,24,26,27,28,29,30,31,32,33,34,35,37,38,39,40,41,42,43,44,45,46,47,48,50,51,52,53,54,55,56,57,58,59,60,61,62,63,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99];
+const IR_QUAD=[4,9,16,25,36,49,64,81];
+const IR_ITENS=[
+ {t:'3/4',d:'0,75',c:'Racional',w:'decimal finita'},
+ {t:'1/3',d:'0,333333…',c:'Racional',w:'dízima periódica'},
+ {t:'√16',d:'4',c:'Racional',w:'raiz exata, vale 4'},
+ {t:'√2',d:'1,41421356…',c:'Irracional',w:'infinito e sem período'},
+ {t:'√5',d:'2,23606797…',c:'Irracional',w:'infinito e sem período'},
+ {t:'π',d:'3,14159265…',c:'Irracional',w:'infinito e sem período'},
+ {t:'0,12345678910…',d:'0,12345678910111213…',c:'Irracional',w:'infinito e sem período'},
+ {t:'√(9/4)',d:'1,5',c:'Racional',w:'raiz exata, vale 3/2'}];
+const IR_RAC_TXT=['0,25','1/3','0,(7)','2,5','1/7','0,6'];
+
+const IR_GENS={
+1:[
+ /* qual é irracional */
+ ()=>{const ir=pick([IR_R(pick([2,3,5,6,7,10,11,13])),'π']),rac=shuf([IR_R(pick(IR_QUAD)),'0,25','1/3','0,(7)','2,5','0,6']).slice(0,3);
+  const lst=shuf([ir,...rac]);
+  return mk({q:`Entre ${lst.slice(0,3).join(', ')} e ${lst[3]}, qual é irracional?`,ok:ir,
+   bad:rac.map(x=>[x,'confundiu com número racional','Número racional pode ser escrito como fração; raiz exata também é racional.']),
+   fill:()=>IR_R(pick(IR_QUAD)),h:['Irracional tem decimal infinita e sem período.','Raiz exata vira número inteiro, e inteiro é racional.'],
+   e:`${ir} é irracional: sua representação decimal é infinita e não periódica.`,s:IR_S({modo:2,idx:ir==='π'?5:3,oc:1})})},
+ /* hipotenusa na espiral */
+ ()=>{const j=rnd(1,12);
+  return mk({q:`Na espiral de Teodoro, o triângulo de número ${j} tem catetos ${j===1?'1 e 1':`${IR_R(j)} e 1`}. Quanto mede a hipotenusa dele?`,ok:IR_R(j+1),
+   bad:[[IR_R(j+2),'somou 2','Pitágoras: hipotenusa² = '+j+' + 1.'],[IR_R(j),'repetiu o cateto','Somando 1 ao quadrado do cateto, o valor sobe.'],[String(j+1),'somou os catetos sem raiz','Use o teorema de Pitágoras.'],[IR_R(2*j),'dobrou','O outro cateto vale 1.']],
+   fill:()=>IR_R(rnd(2,30)),h:['Hipotenusa² = cateto² + cateto².',`Aqui: ${j} + 1.`],
+   e:`Hipotenusa² = ${j} + 1 = ${j+1}, então a hipotenusa mede ${IR_R(j+1)}.`,s:IR_S({modo:0,n:j,oc:1})})},
+ /* entre quais inteiros */
+ ()=>{const k=pick(IR_NAO.filter(x=>x<=99)),a=Math.floor(Math.sqrt(k));
+  return mk({q:`${IR_R(k)} está entre quais números inteiros consecutivos?`,ok:`${a} e ${a+1}`,
+   bad:[[`${a-1} e ${a}`,'ficou abaixo do correto',`Compare ${k} com os quadrados ${a*a} e ${(a+1)**2}.`],[`${a+1} e ${a+2}`,'passou do correto',`Compare ${k} com os quadrados ${a*a} e ${(a+1)**2}.`],[`${Math.floor(k/2)} e ${Math.floor(k/2)+1}`,'dividiu por 2','Raiz quadrada não é metade.'],[`${a+2} e ${a+3}`,'passou do correto','Compare com os quadrados perfeitos vizinhos.']],
+   fill:()=>{const z=rnd(1,12);return `${z} e ${z+1}`},h:['Ache os dois quadrados perfeitos que cercam o número.','As raízes deles são os inteiros vizinhos.'],
+   e:`${a}² = ${a*a} e ${a+1}² = ${(a+1)**2}. Como ${a*a} < ${k} < ${(a+1)**2}, ${IR_R(k)} está entre ${a} e ${a+1}.`,s:IR_S({modo:1,k,oc:1})})},
+ /* qual NÃO é irracional */
+ ()=>{const rac=pick([IR_R(pick(IR_QUAD)),'0,25','1/3','0,(7)']),ir=shuf([IR_R(2),IR_R(3),IR_R(5),IR_R(6),IR_R(7),IR_R(10),'π']).slice(0,3);
+  const lst=shuf([rac,...ir]);
+  return mk({q:`Entre ${lst.slice(0,3).join(', ')} e ${lst[3]}, qual NÃO é irracional?`,ok:rac,
+   bad:ir.map(x=>[x,'achou que raiz sempre é racional','Só a raiz exata é racional; as outras têm decimal infinita sem período.']),
+   fill:()=>IR_R(pick([2,3,5,7])),h:['Procure o número que dá para escrever como fração.','Raiz exata é um inteiro.'],
+   e:`${rac} é racional: ${rac.startsWith('√')?'a raiz é exata':'dá para escrever como fração'}.`,s:IR_S({modo:2,idx:rac.startsWith('√')?2:1,oc:1})})}
+],
+2:[
+ /* hipotenusa seguinte */
+ ()=>{const k=rnd(2,15);
+  return mk({q:`Na espiral de Teodoro, a hipotenusa de um triângulo mede ${IR_R(k)}. Quanto mede a hipotenusa do triângulo seguinte?`,ok:IR_R(k+1),
+   bad:[[IR_R(k)+' + 1','somou o cateto sem elevar ao quadrado','A hipotenusa nova usa Pitágoras: '+k+' + 1.'],[IR_R(2*k),'dobrou o valor dentro da raiz','O novo cateto vale 1.'],[IR_R(k+2),'somou 2','O novo cateto vale 1, e 1² = 1.'],[IR_R(k*k+1),'elevou ao quadrado duas vezes','(√'+k+')² já é '+k+'.']],
+   fill:()=>IR_R(rnd(2,30)),h:[`Os catetos são ${IR_R(k)} e 1.`,'Hipotenusa² = cateto² + cateto².'],
+   e:`(${IR_R(k)})² + 1² = ${k} + 1 = ${k+1}. A hipotenusa mede ${IR_R(k+1)}.`,s:IR_S({modo:0,n:Math.min(16,k-1),oc:1})})},
+ /* aproximação 1 casa */
+ ()=>{const k=pick(IR_NAO.filter(x=>x<=60)),x=Math.sqrt(k),ok=IR_1(x),fl=IR_V((Math.floor(x*10)/10).toFixed(1));
+  return mk({q:`Aproxime ${IR_R(k)} por um decimal com uma casa depois da vírgula (arredondado).`,ok,
+   bad:[[fl,'cortou em vez de arredondar','Olhe a casa seguinte para arredondar.'],[IR_V((Math.round(x*10)/10+0.1).toFixed(1)),'passou uma casa','Confira elevando ao quadrado.'],[IR_V((Math.round(x*10)/10-0.1).toFixed(1)),'ficou uma casa abaixo','Confira elevando ao quadrado.'],[IR_V((k/2).toFixed(1)),'dividiu por 2','Raiz quadrada não é metade.']],
+   fill:()=>IR_V((rnd(15,90)/10).toFixed(1)),h:['Descubra entre quais inteiros está a raiz.','Teste décimos: eleve ao quadrado e compare com '+k+'.'],
+   e:`${IR_R(k)} ≈ ${IR_V(x.toFixed(4))}, que arredondado é ${ok}.`,s:IR_S({modo:1,k,oc:1})})},
+ /* mais próximo inteiro */
+ ()=>{const k=pick(IR_NAO.filter(x=>x>=5&&x<=99)),a=Math.round(Math.sqrt(k));
+  return mk({q:`Qual número inteiro está mais próximo de ${IR_R(k)}?`,ok:String(a),
+   bad:[[String(a+1),'escolheu o inteiro vizinho','Compare '+k+' com '+a+'² = '+a*a+'.'],[String(a-1),'escolheu o inteiro vizinho','Compare '+k+' com '+a+'² = '+a*a+'.'],[String(Math.round(k/2)),'dividiu por 2','Raiz quadrada não é metade.'],[String(a+2),'passou do correto','Compare com os quadrados perfeitos vizinhos.']],
+   fill:()=>String(rnd(2,12)),h:['Ache os quadrados perfeitos vizinhos de '+k+'.','Veja de qual deles o número está mais perto.'],
+   e:`${a}² = ${a*a}, o quadrado mais próximo de ${k}. Então ${IR_R(k)} está mais perto de ${a}.`,s:IR_S({modo:1,k,oc:1})})},
+ /* ordem */
+ ()=>{const k=pick([2,3,5,6,7,10,11,13]),x=Math.sqrt(k),a=IR_V((Math.floor(x*10)/10).toFixed(1)),b=IR_V((Math.floor(x*10)/10+.1).toFixed(1)),R=IR_R(k);
+  return mk({q:`Qual é a ordem crescente correta de ${a}, ${R} e ${b}?`,ok:`${a} < ${R} < ${b}`,
+   bad:[[`${R} < ${a} < ${b}`,'achou que a raiz é menor que os dois','Eleve ao quadrado: '+a+'² < '+k+' < '+b+'².'],[`${a} < ${b} < ${R}`,'achou que a raiz é a maior','Eleve ao quadrado: '+a+'² < '+k+' < '+b+'².'],[`${b} < ${R} < ${a}`,'inverteu a ordem','Confira os valores.']],
+   fill:()=>`${a} < ${b} < ${R}`,h:['Eleve os três números ao quadrado e compare.',`${a}² e ${b}² cercam ${k}.`],
+   e:`${a}² = ${IR_V((Number(a.replace(',','.'))**2).toFixed(2))} < ${k} < ${IR_V((Number(b.replace(',','.'))**2).toFixed(2))} = ${b}². Logo ${a} < ${R} < ${b}.`,s:IR_S({modo:1,k,oc:1})})}
+],
+3:[
+ /* diagonal do quadrado */
+ ()=>{const L=rnd(2,9);
+  return mk({q:`Qual é a medida exata da diagonal de um quadrado de lado ${L} cm?`,ok:`${L}√2 cm`,
+   bad:[[`${2*L} cm`,'achou que a diagonal é o dobro do lado','Use Pitágoras: d² = L² + L².'],[`${L}√3 cm`,'confundiu com a diagonal do cubo','No quadrado, d² = 2L².'],[`√${L} cm`,'ignorou o lado ao quadrado','d² = '+L+'² + '+L+'² = '+2*L*L+'.'],[`${L*L}√2 cm`,'elevou o lado ao quadrado fora da raiz','d = √(2·'+L+'²) = '+L+'√2.']],
+   fill:()=>`${rnd(2,12)}√2 cm`,h:['Pitágoras no triângulo formado pela diagonal e dois lados.',`d² = ${L}² + ${L}².`],
+   e:`d² = ${L}² + ${L}² = ${2*L*L}, então d = √${2*L*L} = ${L}√2 cm.`,s:IR_S({modo:0,n:1,oc:0})})},
+ /* primeiro inteiro na espiral */
+ ()=>{const m=rnd(2,5),j=m*m-1;
+  return mk({q:`Na espiral de Teodoro, qual é o número do primeiro triângulo cuja hipotenusa mede exatamente ${m}?`,ok:String(j),
+   bad:[[String(m),'usou o próprio valor da hipotenusa','A hipotenusa do triângulo j mede √(j+1).'],[String(m*m),'esqueceu de subtrair 1','√(j+1) = '+m+' dá j + 1 = '+m*m+'.'],[String(m*m+1),'somou 1 em vez de subtrair','j + 1 = '+m*m+'.'],[String(2*m),'dobrou','A hipotenusa do triângulo j mede √(j+1).']],
+   fill:()=>String(rnd(3,30)),h:['A hipotenusa do triângulo j mede √(j + 1).',`Procure j com j + 1 = ${m}².`],
+   e:`√(j+1) = ${m} dá j + 1 = ${m*m}, então j = ${j}.`,s:IR_S({modo:0,n:Math.min(16,j),oc:1})})},
+ /* contar irracionais */
+ ()=>{const pool=shuf([IR_R(2),IR_R(3),IR_R(5),IR_R(7),'π',IR_R(4),IR_R(9),IR_R(16),'0,25','1/3','0,(7)','2,5']),L=pool.slice(0,6),n=L.filter(x=>/^√(2|3|5|7)$/.test(x)||x==='π').length;
+  return mk({q:`Quantos dos números ${L.slice(0,5).join(', ')} e ${L[5]} são irracionais?`,ok:String(n),
+   bad:[[String(n+1),'contou um número racional como irracional','Raiz exata, fração e decimal finita ou periódica são racionais.'],[String(Math.max(0,n-1)),'deixou um irracional de fora','Raiz não exata e π são irracionais.'],[String(L.filter(x=>x.startsWith('√')).length),'contou todas as raízes','Só a raiz não exata é irracional.'],[String(6-n),'contou os racionais','A pergunta é sobre os irracionais.']],
+   fill:()=>String(rnd(0,6)),h:['Cheque cada número: raiz exata é racional.','Fração e decimal com período também são racionais.'],
+   e:`Irracionais da lista: ${L.filter(x=>/^√(2|3|5|7)$/.test(x)||x==='π').join(', ')||'nenhum'}. Total: ${n}.`,s:IR_S({modo:2,idx:3,oc:1})})},
+ /* lado do quadrado pela área */
+ ()=>{const k=pick(IR_NAO.filter(x=>x<=60));
+  return mk({q:`Um quadrado tem área de ${k} cm². Qual é a medida exata do lado?`,ok:`√${k} cm`,
+   bad:[[`${IR_V((k/4).toFixed(1))} cm`,'dividiu a área por 4','Lado² = área; então lado = √área.'],[`${IR_V((k/2).toFixed(1))} cm`,'dividiu a área por 2','Lado² = área; então lado = √área.'],[`${k*k} cm`,'elevou a área ao quadrado','Lado² = área; então lado = √área.'],[`${2*k} cm`,'dobrou a área','Lado² = área; então lado = √área.']],
+   fill:()=>`${rnd(2,30)} cm`,h:['Área do quadrado = lado × lado.','O lado é a raiz quadrada da área.'],
+   e:`Lado² = ${k}, então o lado mede √${k} cm, aproximadamente ${IR_V(Math.sqrt(k).toFixed(2))} cm.`,s:IR_S({modo:1,k,oc:1})})}
+]};
+
+MODS.push({id:'irracionais',ano:9,ic:'🌀',nome:'Números irracionais e espiral de Teodoro',sub:'Raízes que não terminam, espiral de triângulos, reta numérica e classificação',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 espiral · 1 reta numérica · 2 racional ou irracional)',min:0,max:2,v:0},
+      {k:'n',l:'Triângulos da espiral',min:1,max:16,v:6},{k:'k',l:'Número dentro da raiz (reta numérica)',min:2,max:99,v:10},
+      {k:'idx',l:'Número a classificar (modo 2)',min:0,max:7,v:3}],
+ reset:{modo:0,n:6,k:10,idx:3,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.modo=cl(v.modo,0,2);v.n=cl(v.n,1,16);v.k=cl(v.k,2,99);v.idx=cl(v.idx,0,7);v.oc=cl(v.oc,0,1)},
+ info(v){const ocu=IR_OCU(v);
+  if(v.modo===0){const h=Math.sqrt(v.n+1);return ocu?`Espiral com ${v.n} ${v.n===1?'triângulo':'triângulos'} · qual é a hipotenusa do último?`:`${v.n} ${v.n===1?'triângulo':'triângulos'} · última hipotenusa √${v.n+1}${IR_PERF(v.n+1)?` = ${h}`:` ≈ ${IR_V(h.toFixed(3))}`}`}
+  if(v.modo===1){const x=Math.sqrt(v.k),a=Math.floor(x);return ocu?`√${v.k} · localize na reta numérica`:`√${v.k} ${IR_PERF(v.k)?`= ${a}, raiz exata`:`≈ ${IR_V(x.toFixed(4))} · entre ${a} e ${a+1}`}`}
+  const it=IR_ITENS[v.idx];return ocu?`${it.t} · racional ou irracional?`:`${it.t} = ${it.d} · ${it.c} (${it.w})`},
+ desc(v){const ocu=IR_OCU(v);
+  if(v.modo===0)return `Espiral de Teodoro com ${v.n} triângulos retângulos, todos com um cateto de medida 1, formando hipotenusas de raiz de 2, raiz de 3 e assim por diante.${ocu?'':` A última hipotenusa mede raiz de ${v.n+1}.`}`;
+  if(v.modo===1)return `Reta numérica entre ${Math.floor(Math.sqrt(v.k))} e ${Math.floor(Math.sqrt(v.k))+1}, dividida em décimos, com a posição da raiz de ${v.k}.`;
+  const it=IR_ITENS[v.idx];return `Cartão com o número ${it.t} e sua escrita decimal.${ocu?'':` Classificação: ${it.c}, ${it.w}.`}`},
+ draw(c,v,W,H,k){const ocu=IR_OCU(v);
+  const txt=(t,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(t,x,y)};
+  const fit=(t,x,y,col,px,maxw)=>{let s=px;c.font=`bold ${s}px sans-serif`;while(c.measureText(t).width>maxw&&s>9){s--;c.font=`bold ${s}px sans-serif`}txt(t,x,y,col,`bold ${s}px sans-serif`)};
+  if(v.modo===0){const n=v.n,cx=W/2,cy=H/2+8,s=Math.min(W/2-14,(H-56)/2)/Math.sqrt(n+1),P=[[1,0]];
+   for(let j=0;j<n;j++){const[x,y]=P[j],r=Math.hypot(x,y);P.push([x-y/r,y+x/r])}
+   const X=p=>cx+p[0]*s,Y=p=>cy-p[1]*s,cores=[k.c1,k.m,k.a,k.c2||k.c1];
+   for(let j=1;j<=n;j++){c.globalAlpha=j===n?.95:.6;c.fillStyle=cores[(j-1)%3];c.beginPath();c.moveTo(cx,cy);c.lineTo(X(P[j-1]),Y(P[j-1]));c.lineTo(X(P[j]),Y(P[j]));c.closePath();c.fill();c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=1.5;c.stroke()}
+   c.strokeStyle=k.a;c.lineWidth=3;c.beginPath();c.moveTo(cx,cy);c.lineTo(X(P[n]),Y(P[n]));c.stroke();
+   for(let j=1;j<=n;j++){const q=j+1,mostrar=n<=8||j===n||IR_PERF(q);if(!mostrar)continue;const p=P[j],r=Math.hypot(p[0],p[1]),f=1+16/(r*s);
+    const lab=ocu&&j===n?'?':(IR_PERF(q)?`${Math.sqrt(q)}`:`√${q}`);txt(lab,cx+p[0]*s*f,cy-p[1]*s*f+4,j===n?k.a:k.t,`bold ${n>10?10:11}px sans-serif`)}
+   fit('Espiral de Teodoro',W/2,18,k.t,15,W-16);
+   txt(ocu?'cada triângulo tem um cateto 1':`o último raio mede √${n+1}${IR_PERF(n+1)?` = ${Math.sqrt(n+1)}, número inteiro`:''}`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left';return}
+  if(v.modo===1){const K=v.k,x=Math.sqrt(K),a=Math.floor(x),x0=24,x1=W-24,L=x1-x0,Y=H/2+10,pos=t=>x0+(t-a)*L;
+   fit(ocu?`Onde está √${K}?`:`√${K} ${IR_PERF(K)?`= ${a}`:`≈ ${IR_V(x.toFixed(3))}`}`,W/2,26,k.t,17,W-16);
+   c.strokeStyle=k.t;c.lineWidth=2.5;c.beginPath();c.moveTo(x0,Y);c.lineTo(x1,Y);c.stroke();
+   for(let i=0;i<=10;i++){const X=x0+L*i/10,big=i===0||i===10;c.beginPath();c.moveTo(X,Y-(big?12:7));c.lineTo(X,Y+(big?12:7));c.stroke()}
+   txt(String(a),x0,Y+30,k.t,'bold 14px sans-serif');txt(String(a+1),x1,Y+30,k.t,'bold 14px sans-serif');
+   for(let i=1;i<10;i+=1)if(W>300||i%2===0)txt(IR_V((a+i/10).toFixed(1)),x0+L*i/10,Y+24,k.m,'10px sans-serif');
+   if(!ocu){const X=pos(x);c.fillStyle=k.a;c.beginPath();c.arc(X,Y,7,0,7);c.fill();c.strokeStyle=k.t;c.lineWidth=1.5;c.stroke();
+    txt(`√${K}`,Math.max(x0+14,Math.min(x1-14,X)),Y-22,k.a,'bold 14px sans-serif');
+    const d=Math.floor((x-a)*10),lo=x0+L*d/10,hi=x0+L*(d+1)/10;c.fillStyle=k.a;c.globalAlpha=.22;c.fillRect(lo,Y-30,hi-lo,60);c.globalAlpha=1}
+   txt(ocu?`entre quais inteiros está √${K}?`:(IR_PERF(K)?'raiz exata: cai em cima de um inteiro':`entre ${a} e ${a+1}, e entre ${IR_V((a+Math.floor((x-a)*10)/10).toFixed(1))} e ${IR_V((a+Math.floor((x-a)*10)/10+.1).toFixed(1))}`),W/2,H-8,k.a,'bold 12px sans-serif');c.textAlign='left';return}
+  const it=IR_ITENS[v.idx];
+  fit('Racional ou irracional?',W/2,22,k.t,15,W-16);
+  fit(it.t,W/2,88,k.c1,38,W-30);
+  fit(it.d,W/2,132,k.m,20,W-24);
+  const rac=it.c==='Racional',bx=W*.12,bw=W*.76;
+  c.globalAlpha=.9;c.fillStyle=ocu?k.f:(rac?k.c1:k.a);c.fillRect(bx,160,bw,50);c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=2;c.strokeRect(bx,160,bw,50);
+  fit(ocu?'?':it.c,W/2,182,k.t,20,bw-12);if(!ocu)fit(it.w,W/2,201,k.t,12,bw-12);
+  fit(ocu?'a decimal termina, repete ou nunca repete?':'racional: vira fração · irracional: não vira',W/2,H-8,k.a,12,W-14);c.textAlign='left'},
+ rod:8,gens:IR_GENS});
+
+/* ===== Simetrias: reflexão, rotação e translação (módulo novo, arquivo separado) ===== */
+const SM_S=o=>Object.assign({modo:0,eixo:0,m:2,rot:1,tx:3,ty:2,px:2,py:1,oc:0},o);
+const SM_OCU=v=>v.oc===1&&!locked;
+const SM_N=n=>n<0?'−'+(-n):String(n);
+const SM_P=(a,b)=>`(${SM_N(a)}, ${SM_N(b)})`;
+const SM_F=[[0,0],[1,0],[1,1.5],[2,1.5],[2,2.5],[1,2.5],[1,3],[3,3],[3,4],[0,4]].map(p=>[p[0]*.5,p[1]*.5]);
+const SM_NZ=(lo,hi)=>{let x=0;while(!x)x=rnd(lo,hi);return x};
+/* transformação de um ponto segundo o estado do simulador */
+const SM_T=(v,x,y)=>{
+ if(v.modo===0){if(v.eixo===0)return[-x,y];if(v.eixo===1)return[x,-y];if(v.eixo===2)return[2*v.m-x,y];return[x,2*v.m-y]}
+ if(v.modo===1){const r=v.rot%4;return r===0?[x,y]:r===1?[-y,x]:r===2?[-x,-y]:[y,-x]}
+ return[x+v.tx,y+v.ty]};
+/* sorteia 3 respostas erradas: o resto fica por conta de mk, que remove repetidos */
+const SM_ERR=(a,b,ok)=>[[-a,-b],[a,-b],[-a,b],[b,a],[-b,-a],[b,-a],[-b,a],[a,b]].map(p=>SM_P(p[0],p[1])).filter(t=>t!==ok);
+const SM_FILLP=()=>SM_P(rnd(-9,9),rnd(-9,9));
+
+const SM_GENS={
+1:[
+ /* reflexão no eixo x */
+ ()=>{const a=SM_NZ(-5,5),b=SM_NZ(-3,2),ok=SM_P(a,-b);
+  return mk({q:`O ponto A${SM_P(a,b)} é refletido no eixo x. Quais são as coordenadas da imagem A'?`,ok,
+   bad:[[SM_P(-a,b),'refletiu no eixo y','Refletir no eixo x troca só o sinal de y.'],[SM_P(-a,-b),'trocou os dois sinais','Isso é uma rotação de 180°, e não uma reflexão.'],[SM_P(b,a),'trocou x e y','Isso seria reflexão na reta y = x.'],[SM_P(a,b),'não mudou nada','A imagem fica do outro lado do eixo.']],
+   fill:SM_FILLP,h:['O eixo x é o espelho: o x fica igual.','A distância ao espelho se mantém, do outro lado: y muda de sinal.'],
+   e:`Na reflexão no eixo x, (x, y) vira (x, −y). A${SM_P(a,b)} vira A'${ok}.`,s:SM_S({modo:0,eixo:1,px:a,py:b,oc:1})})},
+ /* reflexão no eixo y */
+ ()=>{const a=SM_NZ(-5,5),b=SM_NZ(-3,2),ok=SM_P(-a,b);
+  return mk({q:`O ponto A${SM_P(a,b)} é refletido no eixo y. Quais são as coordenadas da imagem A'?`,ok,
+   bad:[[SM_P(a,-b),'refletiu no eixo x','Refletir no eixo y troca só o sinal de x.'],[SM_P(-a,-b),'trocou os dois sinais','Isso é uma rotação de 180°, e não uma reflexão.'],[SM_P(b,a),'trocou x e y','Isso seria reflexão na reta y = x.'],[SM_P(a,b),'não mudou nada','A imagem fica do outro lado do eixo.']],
+   fill:SM_FILLP,h:['O eixo y é o espelho: o y fica igual.','A distância ao espelho se mantém, do outro lado: x muda de sinal.'],
+   e:`Na reflexão no eixo y, (x, y) vira (−x, y). A${SM_P(a,b)} vira A'${ok}.`,s:SM_S({modo:0,eixo:0,px:a,py:b,oc:1})})},
+ /* translação */
+ ()=>{const a=rnd(-5,3),b=rnd(-3,1),tx=SM_NZ(-4,4),ty=SM_NZ(-3,3),ok=SM_P(a+tx,b+ty);
+  return mk({q:`O ponto A${SM_P(a,b)} é transladado pelo vetor ${SM_P(tx,ty)}. Quais são as coordenadas da imagem A'?`,ok,
+   bad:[[SM_P(a-tx,b-ty),'subtraiu o vetor','Translação soma o vetor às coordenadas.'],[SM_P(a+ty,b+tx),'trocou as componentes do vetor','A primeira componente move o x, a segunda move o y.'],[SM_P(a*tx,b*ty),'multiplicou','Translação soma o vetor às coordenadas.'],[SM_P(a+tx,b)  ,'esqueceu de mover o y','Some as duas componentes.']],
+   fill:SM_FILLP,h:['Some a primeira componente do vetor ao x.','Some a segunda componente ao y.'],
+   e:`(${SM_N(a)} + ${SM_N(tx)}, ${SM_N(b)} + ${SM_N(ty)}) = ${ok}.`,s:SM_S({modo:2,px:a,py:b,tx,ty,oc:1})})},
+ /* eixos de simetria */
+ ()=>{const f=pick([['um triângulo equilátero',3],['um quadrado',4],['um retângulo que não é quadrado',2],['um pentágono regular',5],['um hexágono regular',6],['um losango que não é quadrado',2]]);
+  return mk({q:`Quantos eixos de simetria de reflexão tem ${f[0]}?`,ok:String(f[1]),
+   bad:[[String(f[1]+1),'contou um a mais','Cada eixo divide a figura em duas metades que se encaixam.'],[String(Math.max(1,f[1]-1)),'contou um a menos','Teste os eixos que passam por vértices e por pontos médios.'],[String(f[1]*2),'dobrou','Cada eixo foi contado duas vezes.'],[f[1]===2?'4':'1','pensou só em um eixo','Teste outros eixos possíveis.']],
+   fill:()=>String(rnd(1,8)),h:['Dobre a figura em pensamento: as metades devem coincidir.','Teste eixos por vértices e por pontos médios dos lados.'],
+   e:`${f[0][0].toUpperCase()+f[0].slice(1)} tem ${f[1]} eixos de simetria.`,s:SM_S({modo:0,eixo:0,oc:0})})}
+],
+2:[
+ /* reflexão em x = m */
+ ()=>{const a=rnd(-5,5),b=SM_NZ(-3,2),m=SM_NZ(-3,3),ok=SM_P(2*m-a,b);
+  return mk({q:`O ponto A${SM_P(a,b)} é refletido na reta vertical x = ${SM_N(m)}. Quais são as coordenadas de A'?`,ok,
+   bad:[[SM_P(-a,b),'refletiu no eixo y','O espelho é a reta x = '+SM_N(m)+', e não o eixo y.'],[SM_P(m-a,b),'esqueceu de dobrar a distância','A imagem fica à mesma distância, do outro lado: x\' = 2m − x.'],[SM_P(2*m+a,b),'somou em vez de subtrair','x\' = 2m − x.'],[SM_P(a,2*m-b),'refletiu na horizontal','O espelho vertical só muda o x.']],
+   fill:SM_FILLP,h:[`Distância de A ao espelho: ${SM_N(m)} − (${SM_N(a)}).`,'A imagem fica à mesma distância, do outro lado.'],
+   e:`x' = 2 · ${SM_N(m)} − (${SM_N(a)}) = ${SM_N(2*m-a)}. O y não muda. A' = ${ok}.`,s:SM_S({modo:0,eixo:2,m,px:Math.max(-5,Math.min(5,a)),py:b,oc:1})})},
+ /* reflexão em y = m */
+ ()=>{const a=SM_NZ(-5,5),b=rnd(-3,2),m=SM_NZ(-3,3),ok=SM_P(a,2*m-b);
+  return mk({q:`O ponto A${SM_P(a,b)} é refletido na reta horizontal y = ${SM_N(m)}. Quais são as coordenadas de A'?`,ok,
+   bad:[[SM_P(a,-b),'refletiu no eixo x','O espelho é a reta y = '+SM_N(m)+', e não o eixo x.'],[SM_P(a,m-b),'esqueceu de dobrar a distância','y\' = 2m − y.'],[SM_P(a,2*m+b),'somou em vez de subtrair','y\' = 2m − y.'],[SM_P(2*m-a,b),'refletiu na vertical','O espelho horizontal só muda o y.']],
+   fill:SM_FILLP,h:[`Distância de A ao espelho: ${SM_N(m)} − (${SM_N(b)}).`,'A imagem fica à mesma distância, do outro lado.'],
+   e:`y' = 2 · ${SM_N(m)} − (${SM_N(b)}) = ${SM_N(2*m-b)}. O x não muda. A' = ${ok}.`,s:SM_S({modo:0,eixo:3,m,px:a,py:Math.max(-3,Math.min(2,b)),oc:1})})},
+ /* rotação em torno da origem */
+ ()=>{const a=SM_NZ(-4,4),b=SM_NZ(-3,2),t=pick([['90° no sentido anti-horário',(x,y)=>[-y,x],1],['180°',(x,y)=>[-x,-y],2],['90° no sentido horário',(x,y)=>[y,-x],3],['270° no sentido anti-horário',(x,y)=>[y,-x],3]]),r=t[1](a,b),ok=SM_P(r[0],r[1]);
+  return mk({q:`O ponto A${SM_P(a,b)} gira ${t[0]} em torno da origem. Quais são as coordenadas de A'?`,ok,
+   bad:SM_ERR(a,b,ok).map(x=>[x,'erro no giro','Imagine o ponto no plano e gire o ângulo pedido, passo a passo.']),
+   fill:SM_FILLP,h:['Gire o ponto em passos de 90°.','Em 90° anti-horário, (x, y) vira (−y, x).'],
+   e:`A rotação de ${t[0]} leva ${SM_P(a,b)} a ${ok}.`,s:SM_S({modo:1,rot:t[2],px:a,py:b,oc:1})})},
+ /* qual vetor leva A a B */
+ ()=>{const a=rnd(-5,3),b=rnd(-3,1),tx=SM_NZ(-4,4),ty=SM_NZ(-3,3),ok=SM_P(tx,ty);
+  return mk({q:`Uma translação leva o ponto A${SM_P(a,b)} ao ponto B${SM_P(a+tx,b+ty)}. Qual é o vetor da translação?`,ok,
+   bad:[[SM_P(-tx,-ty),'inverteu o sentido','O vetor vai de A para B: B − A.'],[SM_P(ty,tx),'trocou as componentes','A primeira componente é a variação em x.'],[SM_P(a+tx,b+ty),'deu o ponto B','O vetor é B − A.'],[SM_P(tx,-ty),'trocou o sinal da segunda componente','Calcule B − A nas duas coordenadas.']],
+   fill:SM_FILLP,h:['Variação em x: x de B menos x de A.','Variação em y: y de B menos y de A.'],
+   e:`(${SM_N(a+tx)} − (${SM_N(a)}), ${SM_N(b+ty)} − (${SM_N(b)})) = ${ok}.`,s:SM_S({modo:2,px:a,py:b,tx,ty,oc:1})})}
+],
+3:[
+ /* reflexão e translação */
+ ()=>{const a=SM_NZ(-4,4),b=rnd(-2,2),tx=SM_NZ(-3,3),ty=SM_NZ(-2,2),ok=SM_P(-a+tx,b+ty);
+  return mk({q:`O ponto A${SM_P(a,b)} é refletido no eixo y e, depois, transladado pelo vetor ${SM_P(tx,ty)}. Onde fica a imagem final?`,ok,
+   bad:[[SM_P(a+tx,b+ty),'só fez a translação','Primeiro reflita no eixo y.'],[SM_P(-(a+tx),b+ty),'fez a translação antes da reflexão','A ordem importa: primeiro reflexão, depois translação.'],[SM_P(-a+tx,-b+ty),'refletiu no eixo x','O espelho é o eixo y: só o x muda de sinal.'],[SM_P(-a-tx,b-ty),'subtraiu o vetor','Translação soma o vetor.']],
+   fill:SM_FILLP,h:[`Reflexão no eixo y: ${SM_P(a,b)} vai para ${SM_P(-a,b)}.`,'Depois some o vetor.'],
+   e:`Reflexão: ${SM_P(-a,b)}. Translação: (${SM_N(-a)} + ${SM_N(tx)}, ${SM_N(b)} + ${SM_N(ty)}) = ${ok}.`,s:SM_S({modo:0,eixo:0,px:a,py:Math.max(-3,Math.min(2,b)),oc:1})})},
+ /* rotação 90 e reflexão em x */
+ ()=>{const a=SM_NZ(-4,4),b=SM_NZ(-3,2),ok=SM_P(-b,-a);
+  return mk({q:`O ponto A${SM_P(a,b)} gira 90° no sentido anti-horário em torno da origem e, depois, é refletido no eixo x. Onde fica a imagem final?`,ok,
+   bad:[[SM_P(-b,a),'só fez a rotação','Depois da rotação, reflita no eixo x.'],[SM_P(b,a),'trocou o sinal errado','Depois da rotação o ponto é (−y, x); o eixo x muda o sinal da segunda coordenada.'],[SM_P(a,-b),'só fez a reflexão','Primeiro gire.'],[SM_P(b,-a),'girou no sentido horário','Anti-horário: (x, y) vira (−y, x).']],
+   fill:SM_FILLP,h:[`Rotação de 90° anti-horário: ${SM_P(a,b)} vai para ${SM_P(-b,a)}.`,'Reflexão no eixo x: muda o sinal do y.'],
+   e:`Rotação: ${SM_P(-b,a)}. Reflexão no eixo x: ${ok}.`,s:SM_S({modo:1,rot:1,px:a,py:b,oc:1})})},
+ /* duas reflexões paralelas */
+ ()=>{const m1=rnd(-3,2),d=rnd(1,3),m2=m1+d,ok=SM_P(2*d,0);
+  return mk({q:`Um ponto é refletido na reta x = ${SM_N(m1)} e, em seguida, na reta x = ${SM_N(m2)}. Essas duas reflexões equivalem a qual translação?`,ok,
+   bad:[[SM_P(d,0),'esqueceu de dobrar a distância','O deslocamento é o dobro da distância entre os espelhos.'],[SM_P(-2*d,0),'inverteu o sentido','Do primeiro espelho para o segundo, o sentido é para a direita.'],[SM_P(0,2*d),'moveu na vertical','Os espelhos são verticais, então o ponto anda na horizontal.'],[SM_P(2*m2,0),'usou a posição de um espelho','Conte a distância entre os espelhos.']],
+   fill:SM_FILLP,h:[`Distância entre os espelhos: ${SM_N(m2)} − (${SM_N(m1)}) = ${d}.`,'O ponto anda o dobro dessa distância.'],
+   e:`A distância entre os espelhos é ${d}, então o ponto anda 2 × ${d} = ${2*d} na horizontal: vetor ${ok}.`,s:SM_S({modo:0,eixo:2,m:m1,oc:1})})},
+ /* duas reflexões perpendiculares */
+ ()=>{const a=SM_NZ(-5,5),b=SM_NZ(-3,2),ok=SM_P(-a,-b);
+  return mk({q:`O ponto A${SM_P(a,b)} é refletido no eixo x e, depois, no eixo y. Onde fica a imagem final?`,ok,
+   bad:[[SM_P(-a,b),'só fez uma reflexão','Reflita duas vezes, em sequência.'],[SM_P(a,-b),'só fez uma reflexão','Reflita duas vezes, em sequência.'],[SM_P(a,b),'achou que as reflexões se anulam','Eixos diferentes não se anulam: o resultado é um giro de 180°.'],[SM_P(b,a),'trocou x e y','Reflexões nos eixos só mudam sinais.']],
+   fill:SM_FILLP,h:[`Eixo x: ${SM_P(a,b)} vai para ${SM_P(a,-b)}.`,'Depois, eixo y: muda o sinal do x.'],
+   e:`${SM_P(a,b)} → ${SM_P(a,-b)} → ${ok}. É o mesmo que girar 180° em torno da origem.`,s:SM_S({modo:1,rot:2,px:a,py:Math.max(-3,Math.min(2,b)),oc:1})})}
+]};
+
+MODS.push({id:'simetria',ano:7,ic:'🪞',nome:'Simetrias: reflexão, rotação e translação',sub:'Espelho, giro e deslocamento de figuras no plano',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 reflexão · 1 rotação · 2 translação)',min:0,max:2,v:0},
+      {k:'eixo',l:'Espelho (0 eixo y · 1 eixo x · 2 reta vertical · 3 reta horizontal)',min:0,max:3,v:0},{k:'m',l:'Posição do espelho (retas x = m ou y = m)',min:-5,max:5,v:2},
+      {k:'rot',l:'Giro em torno da origem (1 = 90°, 2 = 180°, 3 = 270°)',min:0,max:3,v:1},
+      {k:'tx',l:'Vetor: deslocamento em x',min:-8,max:8,v:3},{k:'ty',l:'Vetor: deslocamento em y',min:-5,max:5,v:2},
+      {k:'px',l:'Ponto A: x',min:-5,max:5,v:2},{k:'py',l:'Ponto A: y',min:-3,max:2,v:1}],
+ reset:{modo:0,eixo:0,m:2,rot:1,tx:3,ty:2,px:2,py:1,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));
+  v.modo=cl(v.modo,0,2);v.eixo=cl(v.eixo,0,3);v.m=cl(v.m,-5,5);v.rot=cl(v.rot,0,3);v.tx=cl(v.tx,-8,8);v.ty=cl(v.ty,-5,5);v.px=cl(v.px,-5,5);v.py=cl(v.py,-3,2);v.oc=cl(v.oc,0,1)},
+ info(v){const ocu=SM_OCU(v),A=SM_P(v.px,v.py),B=SM_T(v,v.px,v.py),I=SM_P(B[0],B[1]);
+  if(v.modo===0){const nm=['eixo y','eixo x',`reta x = ${SM_N(v.m)}`,`reta y = ${SM_N(v.m)}`][v.eixo];return ocu?`Reflexão na ${nm.startsWith('eixo')?nm:nm} · A${A} · onde fica A'?`:`Reflexão no(a) ${nm} · A${A} vira A'${I} · cada ponto fica à mesma distância do espelho`}
+  if(v.modo===1)return ocu?`Rotação de ${v.rot*90}° em torno da origem · A${A} · onde fica A'?`:`Rotação de ${v.rot*90}° anti-horário · A${A} vira A'${I}`;
+  return ocu?`Translação pelo vetor ${SM_P(v.tx,v.ty)} · A${A} · onde fica A'?`:`Translação pelo vetor ${SM_P(v.tx,v.ty)} · A${A} vira A'${I}`},
+ desc(v){const ocu=SM_OCU(v),B=SM_T(v,v.px,v.py);
+  const base=v.modo===0?'Figura em forma de letra F e sua imagem refletida em um espelho tracejado, sobre um plano com eixos.':v.modo===1?`Figura em forma de letra F e sua imagem girada ${v.rot*90} graus em torno da origem.`:`Figura em forma de letra F e sua imagem deslocada pelo vetor de componentes ${v.tx} e ${v.ty}.`;
+  return base+(ocu?'':` O ponto A de coordenadas ${v.px} e ${v.py} vai para ${B[0]} e ${B[1]}.`)},
+ draw(c,v,W,H,k){const ocu=SM_OCU(v),u=Math.min((W-24)/12,(H-50)/8),ox=W/2,oy=H/2-2;
+  const X=x=>ox+x*u,Y=y=>oy-y*u;
+  const txt=(t,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(t,x,y)};
+  c.save();c.beginPath();c.rect(X(-6),Y(4),12*u,8*u);c.clip();
+  c.strokeStyle=k.m;c.globalAlpha=.3;c.lineWidth=1;for(let i=-6;i<=6;i++){c.beginPath();c.moveTo(X(i),Y(-4));c.lineTo(X(i),Y(4));c.stroke()}for(let j=-4;j<=4;j++){c.beginPath();c.moveTo(X(-6),Y(j));c.lineTo(X(6),Y(j));c.stroke()}c.globalAlpha=1;
+  c.strokeStyle=k.t;c.lineWidth=2;c.beginPath();c.moveTo(X(-6),Y(0));c.lineTo(X(6),Y(0));c.moveTo(X(0),Y(-4));c.lineTo(X(0),Y(4));c.stroke();
+  const poly=(pts,col,al)=>{c.globalAlpha=al;c.fillStyle=col;c.beginPath();pts.forEach((p,i)=>i?c.lineTo(X(p[0]),Y(p[1])):c.moveTo(X(p[0]),Y(p[1])));c.closePath();c.fill();c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=1.5;c.stroke()};
+  const F0=SM_F.map(p=>[p[0]+v.px,p[1]+v.py]),F1=F0.map(p=>SM_T(v,p[0],p[1]));
+  if(v.modo===0){c.strokeStyle=k.a;c.lineWidth=2.5;c.setLineDash([6,4]);c.beginPath();
+   if(v.eixo===0){c.moveTo(X(0),Y(-4));c.lineTo(X(0),Y(4))}else if(v.eixo===1){c.moveTo(X(-6),Y(0));c.lineTo(X(6),Y(0))}else if(v.eixo===2){c.moveTo(X(v.m),Y(-4));c.lineTo(X(v.m),Y(4))}else{c.moveTo(X(-6),Y(v.m));c.lineTo(X(6),Y(v.m))}c.stroke();c.setLineDash([])}
+  poly(F0,k.c1,.75);if(!ocu)poly(F1,k.a,.65);
+  if(v.modo===1){c.strokeStyle=k.a;c.lineWidth=2;const r=Math.hypot(v.px,v.py)*u,a0=Math.atan2(-v.py,v.px),a1=a0-v.rot*Math.PI/2;if(r>4&&v.rot){c.beginPath();c.arc(X(0),Y(0),Math.min(r,u*6),a0,a1,true);c.stroke()}c.fillStyle=k.a;c.beginPath();c.arc(X(0),Y(0),4,0,7);c.fill()}
+  if(v.modo===2&&(v.tx||v.ty)){c.strokeStyle=k.a;c.lineWidth=2.5;const B=SM_T(v,v.px,v.py),x0=X(v.px),y0=Y(v.py),x1=X(B[0]),y1=Y(B[1]),an=Math.atan2(y1-y0,x1-x0);
+   c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke();c.fillStyle=k.a;c.beginPath();c.moveTo(x1,y1);c.lineTo(x1-9*Math.cos(an-.4),y1-9*Math.sin(an-.4));c.lineTo(x1-9*Math.cos(an+.4),y1-9*Math.sin(an+.4));c.closePath();c.fill()}
+  const B=SM_T(v,v.px,v.py);
+  c.fillStyle=k.t;c.beginPath();c.arc(X(v.px),Y(v.py),3.5,0,7);c.fill();if(!ocu){c.beginPath();c.arc(X(B[0]),Y(B[1]),3.5,0,7);c.fill()}
+  c.restore();
+  txt('A',X(v.px)-9,Y(v.py)+14,k.t,'bold 12px sans-serif');if(!ocu)txt("A'",X(B[0])-9,Y(B[1])+14,k.t,'bold 12px sans-serif');
+  txt(v.modo===0?'Reflexão':v.modo===1?`Rotação de ${v.rot*90}°`:`Translação ${SM_P(v.tx,v.ty)}`,W/2,16,k.t,'bold 14px sans-serif');
+  txt(ocu?'onde fica a imagem A\'?':`A${SM_P(v.px,v.py)} → A'${SM_P(B[0],B[1])}`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left'},
+ rod:8,gens:SM_GENS});
+
 const O6=['nat','adsub','muldiv','tabmul','tabdiv','fra','solidos'],ix=MODS.map((m,i)=>m.ano===6?i:-1).filter(i=>i>=0),st=ix.map(i=>MODS[i]).sort((x,y)=>{const a=O6.indexOf(x.id),b=O6.indexOf(y.id);return (a<0?99:a)-(b<0?99:b)});ix.forEach((i,j)=>{MODS[i]=st[j]});
 })();
 
@@ -4729,6 +6069,14 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
     balanca:{ eixo:'Álgebra', bncc:['EF06MA14','EF07MA18'], prereq:['eq'], proximo:['equiv','eq2'], objetivos:['Manter a balança em equilíbrio fazendo o mesmo nos dois pratos','Resolver equações com números negativos','Resolver equações com x nos dois lados'], tempo:'3 aulas' },
     probexp:{ eixo:'Probabilidade e Estatística', bncc:['EF07MA34','EF08MA22','EF09MA20'], prereq:['prob','fra'], proximo:[], objetivos:['Comparar frequência obtida e probabilidade teórica','Entender a lei dos grandes números','Calcular probabilidades com dois dados, eventos independentes e o complementar'], tempo:'3 aulas' },
     prop:   { eixo:'Álgebra', bncc:['EF07MA17','EF08MA12','EF08MA13','EF09MA08'], prereq:['fra','alg'], proximo:['func'], objetivos:['Reconhecer grandezas diretamente e inversamente proporcionais','Resolver problemas com regra de três','Dividir um total em partes proporcionais'], tempo:'4 aulas' },
+    sist:   { eixo:'Álgebra', bncc:['EF08MA08'], prereq:['eq','balanca','cart'], proximo:['func'], objetivos:['Interpretar a solução como o cruzamento de duas retas','Resolver sistemas por eliminação e por substituição','Resolver problemas de compras com duas incógnitas'], tempo:'4 aulas' },
+    juros:  { eixo:'Números', bncc:['EF07MA02','EF08MA04','EF09MA05'], prereq:['dec'], proximo:['func'], objetivos:['Calcular aumentos e descontos com o fator multiplicador','Entender por que aumentos e descontos sucessivos não se anulam','Comparar juros simples, juros compostos e pagamento parcelado'], tempo:'4 aulas' },
+    volume: { eixo:'Grandezas e Medidas', bncc:['EF07MA30','EF08MA20','EF08MA21'], prereq:['med','area'], proximo:['solidos'], objetivos:['Contar cubinhos para entender volume como espaço ocupado','Relacionar 1 dm³ com 1 litro e 1 cm³ com 1 mL','Converter entre cm³, dm³, m³, litros e mL em problemas do dia a dia'], tempo:'2 aulas' },
+    notaveis:{ eixo:'Álgebra', bncc:['EF08MA06','EF09MA09'], prereq:['alg','equiv'], proximo:['eq2'], objetivos:['Enxergar o quadrado da soma e da diferença como áreas','Entender por que (a + b)² não é a² + b²','Usar a soma pela diferença e a fatoração em contas do dia a dia'], tempo:'3 aulas' },
+    poligonos:{ eixo:'Geometria', bncc:['EF07MA27','EF07MA28'], prereq:['ang','tri'], proximo:['pi'], objetivos:['Descobrir que um polígono de n lados se divide em n − 2 triângulos','Relacionar ângulo interno e externo de polígonos regulares','Entender por que só triângulos, quadrados e hexágonos ladrilham o plano sozinhos'], tempo:'3 aulas' },
+    dizimas:{ eixo:'Números', bncc:['EF07MA10','EF08MA01','EF08MA05','EF09MA04'], prereq:['fra','dec'], proximo:['pot'], objetivos:['Perceber quando uma divisão termina e quando vira dízima periódica','Encontrar a fração geratriz de uma dízima','Escrever números muito grandes ou muito pequenos em notação científica'], tempo:'4 aulas' },
+    irracionais:{ eixo:'Números', bncc:['EF09MA01','EF09MA02','EF09MA03'], prereq:['pit','pot'], proximo:['func'], objetivos:['Reconhecer que existem medidas que não são frações, como a diagonal do quadrado','Construir a espiral de Teodoro com o teorema de Pitágoras','Localizar raízes na reta numérica e classificar números em racionais e irracionais'], tempo:'3 aulas' },
+    simetria:{ eixo:'Geometria', bncc:['EF07MA21','EF08MA18'], prereq:['cart'], proximo:['tales'], objetivos:['Reconhecer reflexão, rotação e translação de figuras','Calcular as coordenadas da imagem de um ponto','Compor transformações e perceber que a ordem importa'], tempo:'3 aulas' },
     prob:   { eixo:'Probabilidade e Estatística', bncc:['EF06MA30','EF07MA34','EF07MA35','EF08MA22','EF08MA25'], prereq:['fra','dec'], proximo:[], objetivos:['Calcular probabilidade teórica','Comparar frequência relativa e probabilidade teórica','Calcular média, mediana e moda'], tempo:'4 aulas' }
 };
   for (const m of MODS) {
@@ -4738,7 +6086,7 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
   }
   window.__meta = META;
   /* Ordem pedagógica na home: dentro de cada eixo, do mais básico ao mais avançado */
-  const ORDEM_HOME=['nat','adsub','muldiv','tabmul','tabdiv','mmc','primos','fra','dec','pot','expr','int','sinais','alg','prop','equiv','eq','balanca','eq2','func','solidos','ang','pi','tri','area','pit','tales','cart','med','prob','probexp'];
+  const ORDEM_HOME=['nat','adsub','muldiv','tabmul','tabdiv','mmc','primos','fra','dec','dizimas','juros','pot','expr','int','sinais','alg','prop','equiv','notaveis','eq','balanca','sist','eq2','func','solidos','ang','pi','tri','poligonos','area','pit','irracionais','tales','cart','simetria','med','volume','prob','probexp'];
   const pos=m=>{const i=ORDEM_HOME.indexOf(m.id);return i<0?999:i};
   MODS.sort((a,b)=>pos(a)-pos(b));
 })();
@@ -4916,7 +6264,7 @@ window.__desc=DESC;
 
 /* ===== BOLETIM DO ALUNO E RELATÓRIO DA TURMA (PDF por impressão) ===== */
 (()=>{
-const DICAS={prop:'Voltar ao simulador: mudar o modo e comparar a reta da proporção direta com a curva da inversa.',probexp:'Voltar ao simulador: aumentar o número de lançamentos e observar a frequência se aproximar da probabilidade teórica.',balanca:'Voltar à balança: mexer no passo da resolução e ver o que acontece ao tirar o mesmo dos dois pratos.',pi:'Voltar ao simulador do círculo desenrolado: ver quantos diâmetros cabem na volta e refazer a conta com 3,14.',func:'Voltar ao gráfico do simulador: mexer em a e em b e observar o que muda na reta e na tabela.',prob:'Comparar no simulador a frequência observada com a probabilidade teórica e aumentar o número de lançamentos.',fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
+const DICAS={simetria:'Voltar ao simulador: mover o ponto A e ver como cada transformação muda as coordenadas.',irracionais:'Voltar ao simulador: aumentar os triângulos da espiral e ver quando a hipotenusa vira número inteiro.',dizimas:'Voltar ao simulador: escolher uma divisão e ver em que passo o resto repete.',poligonos:'Voltar ao simulador: mudar o número de lados e ver o ângulo interno encaixar em 360 graus no mosaico.',notaveis:'Voltar ao simulador: mudar a e b e ver quais pedaços do quadrado formam o termo do meio.',volume:'Voltar ao simulador: montar o bloco de cubinhos e comparar com o aquário, vendo o volume virar litros.',juros:'Voltar ao simulador: mudar o aumento e o desconto e ver o fator multiplicador mudar o resultado.',sist:'Voltar ao simulador: mudar os números das compras e ver onde as duas retas se cruzam.',prop:'Voltar ao simulador: mudar o modo e comparar a reta da proporção direta com a curva da inversa.',probexp:'Voltar ao simulador: aumentar o número de lançamentos e observar a frequência se aproximar da probabilidade teórica.',balanca:'Voltar à balança: mexer no passo da resolução e ver o que acontece ao tirar o mesmo dos dois pratos.',pi:'Voltar ao simulador do círculo desenrolado: ver quantos diâmetros cabem na volta e refazer a conta com 3,14.',func:'Voltar ao gráfico do simulador: mexer em a e em b e observar o que muda na reta e na tabela.',prob:'Comparar no simulador a frequência observada com a probabilidade teórica e aumentar o número de lançamentos.',fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
 const fmtData=d=>d?String(d).split('-').reverse().join('/'):'';
 const pct=(n,d)=>d?Math.round(n*100/d):null;
 const pctT=(n,d)=>d?Math.round(n*100/d)+'%':'—';
@@ -5760,7 +7108,7 @@ const EIXO_META={
  'Grandezas e Medidas':{n:4,d:'Comprimento, massa, tempo, capacidade e conversões entre unidades.',ic:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="26" height="10" rx="2"/><path d="M9 11v5M15 11v7M21 11v5"/></svg>'},
  'Probabilidade e Estatística':{n:5,d:'Chance, tabelas, médias e leitura de dados.',ic:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="24" height="24" rx="5"/><circle cx="11" cy="11" r="1.6" fill="currentColor"/><circle cx="21" cy="21" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/><circle cx="21" cy="11" r="1.6" fill="currentColor"/><circle cx="11" cy="21" r="1.6" fill="currentColor"/></svg>'}
 };
-const NOVOS=['pi','balanca','probexp','prop'];
+const NOVOS=['pi','balanca','probexp','prop','sist','juros','volume','notaveis','poligonos','dizimas','irracionais','simetria'];
 let skEixo=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const skinAtiva=()=>S.skin!=='classico';

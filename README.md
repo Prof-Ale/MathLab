@@ -342,3 +342,52 @@ Módulo `prop`, 7º ano, eixo Álgebra (BNCC EF07MA17, EF08MA12, EF08MA13 e EF09
 proporção inversa (curva e retângulo de área constante), regra de três (direta e inversa, com os fatores nas setas) e partes proporcionais
 (barra dividida). São 12 geradores em 3 níveis, elegíveis para a Arena. A trigonometria (seno, cosseno e tangente) fica reservada
 para a etapa do Ensino Médio.
+
+## Sistemas de equações (módulo novo)
+
+Módulo `sist`, 8º ano, eixo Álgebra (BNCC EF08MA08). Três modos: gráfico com as duas retas e o ponto de cruzamento (inclui retas paralelas
+e coincidentes), duas compras na papelaria e eliminação passo a passo. São 12 geradores em 3 níveis, elegíveis para a Arena.
+
+## Porcentagem, juros e dinheiro (módulo novo)
+
+Módulo `juros`, 8º ano, eixo Números (BNCC EF07MA02, EF08MA04 e EF09MA05). Três modos: aumento e desconto sucessivos com o fator multiplicador,
+juros simples contra juros compostos e pagamento à vista contra parcelado. São 12 geradores em 3 níveis, todos com a resposta
+conferida por cálculo independente nos testes, e elegíveis para a Arena.
+
+## Volume, capacidade e litro (módulo novo)
+
+Módulo `volume`, 7º ano, eixo Grandezas e Medidas (BNCC EF07MA30, EF08MA20 e EF08MA21). Três modos: bloco de cubinhos em perspectiva,
+aquário com nível de água e tabela de unidades ligada ao cubo de 1 dm de aresta (1 dm³ = 1 litro, 1 cm³ = 1 mL). São 12 geradores em 3 níveis,
+11 com resposta conferida por cálculo independente nos testes, e elegíveis para a Arena.
+
+## Produtos notáveis (módulo novo)
+
+Módulo `notaveis`, 8º ano, eixo Álgebra (BNCC EF08MA06 e EF09MA09). Três modos de quebra-cabeça de áreas: quadrado da soma, quadrado da diferença
+e soma pela diferença (figura em L que vira retângulo). São 12 geradores em 3 níveis, todos com a resposta conferida por cálculo independente
+nos testes, e elegíveis para a Arena.
+
+## Polígonos regulares e mosaicos (módulo novo)
+
+Módulo `poligonos`, 7º ano, eixo Geometria (BNCC EF07MA27 e EF07MA28). Três modos: triângulos dentro do polígono (soma dos ângulos internos descoberta
+antes da fórmula), ângulo interno e externo de polígono regular e mosaico ao redor de um vértice (quais polígonos fecham 360°). São 12 geradores
+em 3 níveis, todos com a resposta conferida por cálculo independente nos testes, e elegíveis para a Arena.
+
+## Dízimas, fração geratriz e notação científica (módulo novo)
+
+Módulo `dizimas`, 8º ano, eixo Números (BNCC EF07MA10, EF08MA01, EF08MA05 e EF09MA04). Três modos: divisão passo a passo com os restos (o período aparece quando o
+resto repete), fração geratriz por multiplicar e subtrair e notação científica com a vírgula andando. São 12 geradores em 3 níveis, todos com a resposta
+conferida por cálculo independente nos testes, e elegíveis para a Arena.
+
+## Números irracionais e espiral de Teodoro (módulo novo)
+
+Módulo `irracionais`, 9º ano, eixo Números (BNCC EF09MA01, EF09MA02 e EF09MA03). Três modos: espiral de Teodoro desenhada com triângulos retângulos (as
+hipotenusas aparecem como √2, √3 e assim por diante, e viram inteiros em √4, √9 e √16), reta numérica com zoom em décimos e cartões de classificação em
+racional ou irracional. São 12 geradores em 3 níveis, todos com a resposta conferida por cálculo independente nos testes, e elegíveis para a Arena.
+O desenho é feito no próprio simulador e funciona sem internet. Uma versão com GeoGebra pode vir depois como camada à parte.
+
+## Simetrias: reflexão, rotação e translação (módulo novo)
+
+Módulo `simetria`, 7º ano, eixo Geometria (BNCC EF07MA21 e EF08MA18). Uma figura em forma de letra F, que não tem simetria própria, mostra bem cada
+transformação: reflexão em eixos e em retas x = m ou y = m, rotação de 90°, 180° e 270° em torno da origem e translação por um vetor. O aluno move o ponto A
+e vê as coordenadas da imagem. São 12 geradores em 3 níveis, incluindo composições (a ordem importa), todos com a resposta conferida por cálculo independente
+nos testes, e elegíveis para a Arena.
