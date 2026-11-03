@@ -165,6 +165,7 @@ const estat = d => {
   return { media, med, modas: Object.keys(f).filter(k => f[k] === mx).map(Number).sort((a, b) => a - b) };
 };
 
+const vMat = txt => { const m = txt.match(/Linha 1 \(frente\): (\d), (\d), (\d)\. Linha 2: (\d), (\d), (\d)\. Linha 3 \(fundo\): (\d), (\d), (\d)\./); const n = m.slice(1).map(Number); return [n.slice(0, 3), n.slice(3, 6), n.slice(6, 9)]; };
 // Conferências de resposta. Chave "modulo:nivel:gerador" (gerador começa em 1; "*" vale para todos os níveis).
 // Cada função recebe a questão e devolve null se estiver certa, ou um texto explicando o erro.
 // Ela deve recalcular a resposta só a partir do enunciado, sem usar código do app.
@@ -342,6 +343,45 @@ const CONF = {
   'graficos:3:2': q => { const g = +q.q.match(/ângulo de (\d+)°/)[1]; return igualNum(pt(certo(q)), g / 360 * 100, 1e-9); },
   'graficos:3:3': q => { let m; if ((m = q.q.match(/dos (\d+) alunos de uma escola, foram sorteados (\d+) alunos/))) return igualNum(pt(certo(q)), m[2] / m[1] * 100, 1e-9); return igual(certo(q), /perguntou-se a todos/.test(q.q) ? 'Censo' : /sortearam-se/.test(q.q) ? 'Amostra' : '?'); },
   'graficos:3:4': q => { const d = q.q.match(/foram: ([\d, ]+)\./)[1].split(', ').map(Number); const m = q.q.match(/classe \[(\d+), (\d+)\)\?/); return igualNum(pt(certo(q)), d.filter(x => x >= +m[1] && x < +m[2]).length / d.length * 100, 1e-9); },
+  // ---------- sequencias ----------
+  'sequencias:1:1': q => { const l = q.q.match(/sequência (\d+(?:, \d+)*), \.\.\./)[1].split(', ').map(Number); return igual(certo(q), l[l.length - 1] + (l[1] - l[0])); },
+  'sequencias:1:2': q => { const l = q.q.match(/sequência (\d+(?:, \d+)*), \.\.\./)[1].split(', ').map(Number); return igual(certo(q), l[1] - l[0]); },
+  'sequencias:1:3': q => { const m = q.q.match(/Com 1 \S+ são usados (\d+) palitos, com 2 são usados (\d+) palitos .* Quantos palitos são usados com (\d+)/); return igual(certo(q), +m[1] + (m[3] - 1) * (m[2] - m[1])); },
+  'sequencias:1:4': q => { const l = q.q.match(/sequência (\d+(?:, \d+)*), \.\.\./)[1].split(', ').map(Number); return igual(certo(q), l[l.length - 1] * (l[1] / l[0])); },
+  'sequencias:2:1': q => { const m = q.q.match(/começa com (\d+(?:, \d+)*), e continua do mesmo jeito\. Qual é o (\d+)º termo/); const l = m[1].split(', ').map(Number); return igual(certo(q), l[0] + (m[2] - 1) * (l[1] - l[0])); },
+  'sequencias:2:2': q => { const m = q.q.match(/sequência (\d+(?:, \d+)*), \.\.\., o número (\d+) é um dos termos/); const l = m[1].split(', ').map(Number); return igual(certo(q), `${(m[2] - l[0]) / (l[1] - l[0]) + 1}ª posição`); },
+  'sequencias:2:3': q => { const m = q.q.match(/Com 1 \S+ são usados (\d+) palitos, com 2 são usados (\d+) palitos .* Quantos palitos são usados com (\d+)/); return igual(certo(q), +m[1] + (m[3] - 1) * (m[2] - m[1])); },
+  'sequencias:2:4': q => { const m = q.q.match(/começa com (\d+(?:, \d+)*), e continua multiplicando .* Qual é o (\d+)º termo/); const l = m[1].split(', ').map(Number); return igual(certo(q), l[0] * (l[1] / l[0]) ** (m[2] - 1)); },
+  'sequencias:3:1': q => { const l = q.q.match(/começa com (\d+(?:, \d+)*)\. Qual é o termo geral/)[1].split(', ').map(Number); const r = l[1] - l[0], c = l[0] - r; return igual(certo(q), `an = ${c === 0 ? r + 'n' : r + 'n ' + (c < 0 ? '−' : '+') + ' ' + Math.abs(c)}`); },
+  'sequencias:3:2': q => { const m = q.q.match(/Com 1 \S+ são usados (\d+) palitos, com 2 são usados (\d+) palitos .* Com (\d+) palitos, quantos/); return igual(certo(q), (m[3] - m[1]) / (m[2] - m[1]) + 1); },
+  'sequencias:3:3': q => { const m = q.q.match(/a\(1\) = (\d+) e a\(n\) = a\(n−1\) (\+|×) (\d+), para n maior que 1\. Qual é o valor de a\((\d+)\)/); let a = +m[1]; for (let i = 2; i <= +m[4]; i++) a = m[2] === '+' ? a + +m[3] : a * m[3]; return igual(certo(q), a); },
+  'sequencias:3:4': q => { const m = q.q.match(/número (\d+) faz parte da sequência de termo geral an = (\d+)n \+ (\d+)\?/); const n = (m[1] - m[3]) / m[2]; return igual(certo(q), Number.isInteger(n) && n >= 1 ? `Sim, na posição ${n}` : 'Não faz parte da sequência'); },
+  // ---------- contagem ----------
+  'contagem:1:1': q => { const m = q.q.match(/tem (\d+) camisetas e (\d+) bermudas/); return igual(certo(q), m[1] * m[2]); },
+  'contagem:1:2': q => { const m = q.q.match(/oferece (\d+) sabores, (\d+) coberturas e (\d+) tipos/); return igual(certo(q), m[1] * m[2] * m[3]); },
+  'contagem:1:3': q => { const m = q.q.match(/tem (\d+) dígitos, .* de (\d+) símbolos/); return igual(certo(q), m[2] ** m[1]); },
+  'contagem:1:4': q => { const n = +q.q.match(/De quantas maneiras (\d+) pessoas/)[1]; let r = 1; for (let i = 2; i <= n; i++) r *= i; return igual(certo(q), r); },
+  'contagem:2:1': q => { const m = q.q.match(/tem (\d+) entradas, (\d+) pratos principais e (\d+) sobremesas/); return igual(certo(q), m[1] * m[2] * m[3]); },
+  'contagem:2:2': q => { const m = q.q.match(/tem (\d+) algarismos diferentes, .* entre (\d+) algarismos/); let r = 1; for (let i = 0; i < +m[1]; i++) r *= m[2] - i; return igual(certo(q), r); },
+  'contagem:2:3': q => { const n = +q.q.match(/(\d+) atletas disputam/)[1]; return igual(certo(q), n * (n - 1) * (n - 2)); },
+  'contagem:2:4': q => { const m = q.q.match(/Quantos números de (\d) algarismos( distintos)? existem/); let r = 9; for (let i = 1; i < +m[1]; i++) r *= m[2] ? 10 - i : 10; return igual(certo(q), r); },
+  'contagem:3:1': q => { const m = q.q.match(/tem (\d+) camisas e (\d+) calças\. .*, (\d+) combinações/); return igual(certo(q), m[1] * m[2] - m[3]); },
+  'contagem:3:2': q => { const w = q.q.match(/palavra (\S+),/)[1]; if (new Set(w).size !== w.length) return 'palavra com letra repetida'; let r = 1; for (let i = 2; i <= w.length; i++) r *= i; return igual(certo(q), r); },
+  'contagem:3:3': q => { const m = q.q.match(/valor de (\d+)! ÷ (\d+)!/); let r = 1; for (let i = +m[2] + 1; i <= +m[1]; i++) r *= i; return igual(certo(q), r); },
+  'contagem:3:4': q => { const n = +q.q.match(/^(\d+) pessoas em uma reunião/)[1]; return igual(certo(q), n * (n - 1) / 2); },
+  // ---------- vistas ----------
+  'vistas:1:1': q => { const m = vMat(q.q); return igual(certo(q), m.flat().reduce((a, b) => a + b, 0)); },
+  'vistas:1:2': q => { const m = vMat(q.q); return igual(certo(q), m.flat().filter(x => x > 0).length); },
+  'vistas:1:3': q => { const r = +q.q.match(/raio da base de (\d+) cm/)[1]; return igualNum(pt(certo(q)), 3.14 * r * r, 1e-9); },
+  'vistas:1:4': q => { const m = q.q.match(/na (vista de [a-z]+) de (.*)\?/); const t = { 'um cilindro em pé': { 'vista de cima': 'Círculo', 'vista de frente': 'Retângulo' }, 'um cone em pé': { 'vista de cima': 'Círculo', 'vista de frente': 'Triângulo' }, 'uma esfera': { 'vista de frente': 'Círculo', 'vista de cima': 'Círculo' }, 'um cubo': { 'vista de cima': 'Quadrado', 'vista de frente': 'Quadrado' } }; return igual(certo(q), t[m[2]][m[1]]); },
+  'vistas:2:1': q => { const m = vMat(q.q), c = +q.q.match(/coluna (\d) \(contando/)[1] - 1; return igual(certo(q), Math.max(m[0][c], m[1][c], m[2][c])); },
+  'vistas:2:2': q => { const m = q.q.match(/raio da base de (\d+) cm e altura de (\d+) cm/); return igualNum(pt(certo(q)), 3.14 * m[1] * m[1] * m[2], 1e-9); },
+  'vistas:2:3': q => { const m = vMat(q.q), l = +q.q.match(/para a linha (\d)\?/)[1] - 1; return igual(certo(q), Math.max(...m[l])); },
+  'vistas:2:4': q => { const m = q.q.match(/tem (\d+) cm de diâmetro e (\d+) cm de altura/); const r = m[1] / 2; return igualNum(pt(certo(q)), 3.14 * r * r * m[2] / 1000, 1e-9); },
+  'vistas:3:1': q => { const m = q.q.match(/raio (\d+) cm e altura (\d+) cm cabe/); return igualNum(pt(certo(q)), (4 - 3.14) * m[1] * m[1] * m[2], 1e-9); },
+  'vistas:3:2': q => { const k = { 'o raio dobra e a altura continua a mesma': 4, 'o raio triplica e a altura continua a mesma': 9, 'a altura dobra e o raio continua o mesmo': 2, 'o raio dobra e a altura também dobra': 8 }; const f = Object.keys(k).find(x => q.q.includes(x)); return f ? igual(certo(q), `${k[f]} vezes`) : 'caso não reconhecido'; },
+  'vistas:3:3': q => { const m = q.q.match(/volume de ([\d.,]+) cm³ e altura de (\d+) cm/); const r = Math.sqrt(pt(m[1]) / (3.14 * m[2])); return igualNum(pt(certo(q)), r, 1e-6); },
+  'vistas:3:4': q => { const m = q.q.match(/colunas, da esquerda para a direita, são (\d), (\d), (\d)\. .* linhas, da frente para o fundo, são (\d), (\d), (\d)\./); const f = [+m[1], +m[2], +m[3]], l = [+m[4], +m[5], +m[6]]; let s = 0; for (const a of l) for (const b of f) s += Math.min(a, b); return igual(certo(q), s); },
   // ---------- juros ----------
   'juros:1:1': q => { const m = q.q.match(/custa (R\$ [\d.,]+) e está com (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 - m[2] / 100), 1e-6); },
   'juros:1:2': q => { const m = q.q.match(/de (R\$ [\d.,]+) sofreu aumento de (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 + m[2] / 100), 1e-6); },

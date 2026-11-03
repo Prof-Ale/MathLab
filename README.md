@@ -405,3 +405,19 @@ Módulo `graficos`, 9º ano, eixo Probabilidade e Estatística (BNCC EF08MA23, E
 (mostra como o eixo truncado exagera uma diferença), histograma de 20 notas com amplitude de classe ajustável e gráfico de setores com a conversão de porcentagem em ângulo.
 São 12 geradores em 3 níveis, incluindo escolha do gráfico adequado, número de classes, frequência relativa e a diferença entre censo e amostra. Todos têm a resposta
 conferida por cálculo independente nos testes e são elegíveis para a Arena. As médias, a mediana e a moda continuam no módulo de probabilidade e estatística.
+
+## Sequências e padrões (módulo novo)
+
+Módulo `sequencias`, 7º ano, eixo Álgebra (BNCC EF07MA13 a EF07MA16, EF08MA10 e EF08MA11). Três modos: sequência que soma a razão, fila de triângulos ou quadrados de palitos e
+sequência que multiplica pela razão, com os termos desenhados em barras. São 12 geradores em 3 níveis: próximo termo, razão, termo da posição n, posição de um termo, termo geral
+(an = rn + c), quantas figuras cabem com certo número de palitos, regra recursiva e a pergunta se um número faz parte da sequência. Todos têm a resposta conferida por cálculo
+independente nos testes e são elegíveis para a Arena. A contagem (princípio multiplicativo) fica para o módulo seguinte.
+
+## Contagem e possibilidades (módulo novo)
+
+Módulo `contagem`, 8º ano, eixo Números (BNCC EF05MA09 e EF08MA03). Três modos: quadro de combinações (camisetas e bermudas), árvore de possibilidades com até três escolhas e senhas e filas
+com e sem repetição, com as caixas mostrando quantas opções cada posição tem. São 12 geradores em 3 níveis: princípio multiplicativo com duas e três escolhas, senhas, filas, pódio,
+números de 2 e 3 algarismos, combinações proibidas, anagramas, fatorial e apertos de mão. Todos têm a resposta conferida por cálculo independente nos testes e são elegíveis para a Arena.
+
+## Vistas ortogonais e cilindro (módulo novo, v3.7)
+9º ano, Geometria (EF09MA17 e EF09MA19). Três modos: vistas de pilhas de cubos (frente, lado e de cima), volume do cilindro com litros (π = 3,14) e cilindro dentro de uma caixa (espaço vazio). 12 geradores em 3 níveis, com conferência independente das respostas em testes-geradores.mjs. Não testado em Safari/iOS nem com leitor de tela.
