@@ -5939,6 +5939,322 @@ MODS.push({id:'simetria',ano:7,ic:'🪞',nome:'Simetrias: reflexão, rotação e
   txt(ocu?'onde fica a imagem A\'?':`A${SM_P(v.px,v.py)} → A'${SM_P(B[0],B[1])}`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left'},
  rod:8,gens:SM_GENS});
 
+/* ===== Semelhança, ampliação e redução (módulo novo, arquivo separado) ===== */
+const SE_FAT=[0.5,1,1.5,2,2.5,3];
+const SE_S=o=>Object.assign({modo:0,f:3,p:3,q:4,h1:15,s1:20,s2:40,oc:0},o);
+const SE_OCU=v=>v.oc===1&&!locked;
+const SE_V=x=>String(Math.round(x*100)/100).replace('.',',');
+const SE_FILLN=()=>String(rnd(2,90));
+const SE_CASA=[[0,0],[4,0],[4,2],[2,3.5],[0,2]];
+const SE_BASES=[[3,4,5],[5,12,13],[6,8,10],[8,15,17],[7,24,25],[9,12,15]];
+const SE_ALT=(h1d,s1d,s2)=>h1d*s2/s1d; /* altura da árvore em metros */
+
+const SE_GENS={
+1:[
+ /* ampliação */
+ ()=>{const k=pick([2,3,4,5]),L=rnd(2,9);
+  return mk({q:`Uma figura é ampliada na razão ${k}. Um lado que media ${L} cm passa a medir quanto?`,ok:`${L*k} cm`,
+   bad:[[`${L+k} cm`,'somou a razão ao lado','Ampliar na razão '+k+' é multiplicar as medidas por '+k+'.'],[`${L*k*k} cm`,'multiplicou duas vezes','Cada medida de comprimento é multiplicada uma vez só.'],[`${Math.max(1,Math.round(L/k))} cm`,'dividiu em vez de multiplicar','Ampliação aumenta o lado.'],[`${L*k+k} cm`,'errou uma conta','Confira a multiplicação.']],
+   fill:()=>`${rnd(2,60)} cm`,h:['Na ampliação, todos os comprimentos são multiplicados pela mesma razão.',`${L} × ${k}.`],
+   e:`${L} × ${k} = ${L*k} cm.`,s:SE_S({modo:0,f:Math.min(5,Math.max(0,SE_FAT.indexOf(k))),oc:1})})},
+ /* redução */
+ ()=>{const k=pick([2,3,4,5]),r=rnd(2,9),L=r*k;
+  return mk({q:`Uma figura é reduzida para 1/${k} do tamanho. Um lado que media ${L} cm passa a medir quanto?`,ok:`${r} cm`,
+   bad:[[`${L*k} cm`,'multiplicou em vez de dividir','Redução diminui o lado.'],[`${L-k} cm`,'subtraiu a razão','Reduzir a 1/'+k+' é dividir por '+k+'.'],[`${r+1} cm`,'errou uma conta','Confira a divisão.'],[`${L/k/k>=1?Math.round(L/k/k):1} cm`,'dividiu duas vezes','Divida só uma vez.']],
+   fill:()=>`${rnd(1,40)} cm`,h:[`Reduzir para 1/${k} é dividir por ${k}.`,`${L} ÷ ${k}.`],
+   e:`${L} ÷ ${k} = ${r} cm.`,s:SE_S({modo:0,f:0,oc:1})})},
+ /* razão de semelhança */
+ ()=>{const k=pick([2,3,4]),b=pick(SE_BASES),i=rnd(0,2);
+  return mk({q:`Dois triângulos são semelhantes. O primeiro tem lados ${b[0]}, ${b[1]} e ${b[2]}. O lado de ${b[i]} corresponde, no segundo, a um lado de ${b[i]*k}. Qual é a razão de semelhança do segundo para o primeiro?`,ok:String(k),
+   bad:[[String(b[i]*k-b[i]),'subtraiu as medidas','A razão é uma divisão: lado novo ÷ lado antigo.'],[F(1,k),'inverteu a razão','Do segundo para o primeiro: lado do segundo ÷ lado do primeiro.'],[String(b[i]*k),'deu o próprio lado novo','Divida o lado novo pelo antigo.'],[String(k+1),'errou uma conta','Confira a divisão.']],
+   fill:()=>String(rnd(2,9)),h:['Razão = lado do segundo ÷ lado correspondente do primeiro.',`${b[i]*k} ÷ ${b[i]}.`],
+   e:`${b[i]*k} ÷ ${b[i]} = ${k}.`,s:SE_S({modo:1,f:Math.min(5,Math.max(0,SE_FAT.indexOf(k))),p:b[0]%7+2,q:Math.min(6,Math.max(2,b[0]%5+2)),oc:1})})},
+ /* ângulos */
+ ()=>{const a=pick([30,35,40,45,50,55,60,70]),k=pick([2,3]);
+  return mk({q:`Dois triângulos são semelhantes, na razão ${k}. Um ângulo do primeiro mede ${a}°. Quanto mede o ângulo correspondente do segundo?`,ok:`${a}°`,
+   bad:[[`${a*k}°`,'multiplicou o ângulo pela razão','Ângulos não mudam na ampliação, só os comprimentos.'],[`${Math.round(a/k)}°`,'dividiu o ângulo pela razão','Ângulos não mudam na ampliação, só os comprimentos.'],[`${a+k}°`,'somou a razão','Ângulos correspondentes são iguais.'],[`${180-a}°`,'usou o suplemento','Ângulos correspondentes são iguais.']],
+   fill:()=>`${rnd(10,150)}°`,h:['Semelhança conserva a forma.','Ângulos correspondentes são iguais.'],
+   e:`Ângulos correspondentes de figuras semelhantes são iguais: ${a}°.`,s:SE_S({modo:1,f:Math.min(5,SE_FAT.indexOf(k)),oc:1})})}
+],
+2:[
+ /* lado correspondente */
+ ()=>{const b=pick(SE_BASES.slice(0,3)),k=pick([2,3,4]),i=rnd(0,1),j=2;
+  return mk({q:`Triângulos semelhantes: o primeiro tem lados ${b[0]}, ${b[1]} e ${b[2]}. No segundo, o lado correspondente a ${b[i]} mede ${b[i]*k}. Quanto mede o lado correspondente a ${b[j]}?`,ok:String(b[j]*k),
+   bad:[[String(b[j]+b[i]*k-b[i]),'somou a diferença','A relação é de multiplicação pela razão '+k+'.'],[String(b[j]*k+k),'errou uma conta','Confira a multiplicação.'],[String(b[j]),'repetiu o lado','O segundo triângulo é maior.'],[String(Math.round(b[j]/k)),'dividiu em vez de multiplicar','O segundo triângulo é maior.']],
+   fill:SE_FILLN,h:[`Razão: ${b[i]*k} ÷ ${b[i]} = ${k}.`,`Multiplique ${b[j]} por ${k}.`],
+   e:`Razão = ${k}. ${b[j]} × ${k} = ${b[j]*k}.`,s:SE_S({modo:1,f:Math.min(5,SE_FAT.indexOf(k)),oc:1})})},
+ /* perímetro */
+ ()=>{const k=pick([2,3,4]),P=rnd(4,20)*2;
+  return mk({q:`Uma figura tem perímetro de ${P} cm e é ampliada na razão ${k}. Qual é o perímetro da figura ampliada?`,ok:`${P*k} cm`,
+   bad:[[`${P*k*k} cm`,'usou a razão ao quadrado','Perímetro é comprimento: multiplica-se pela razão, e não pelo seu quadrado.'],[`${P+k} cm`,'somou a razão','Multiplique pela razão.'],[`${P*k+P} cm`,'somou o original ao ampliado','O perímetro novo é só '+k+' vezes o antigo.'],[`${Math.round(P/k)} cm`,'dividiu','Ampliação aumenta o perímetro.']],
+   fill:()=>`${rnd(8,200)} cm`,h:['Perímetro é uma soma de comprimentos.','Todos os comprimentos são multiplicados pela razão.'],
+   e:`${P} × ${k} = ${P*k} cm.`,s:SE_S({modo:0,f:Math.min(5,SE_FAT.indexOf(k)),oc:1})})},
+ /* área */
+ ()=>{const k=pick([2,3,4]),A=rnd(2,15);
+  return mk({q:`Uma figura tem área de ${A} cm² e é ampliada na razão ${k}. Qual é a área da figura ampliada?`,ok:`${A*k*k} cm²`,
+   bad:[[`${A*k} cm²`,'multiplicou a área só pela razão','A área é medida em duas dimensões: multiplica-se pelo quadrado da razão.'],[`${A+k*k} cm²`,'somou o quadrado da razão','Multiplique pelo quadrado da razão.'],[`${A*k*k*k} cm²`,'usou a razão ao cubo','Cubo é para o volume.'],[`${A*2*k} cm²`,'dobrou e multiplicou','A área fica multiplicada por '+k+'².']],
+   fill:()=>`${rnd(4,400)} cm²`,h:['Comprimento e largura ficam multiplicados pela razão.','A área é comprimento × largura.'],
+   e:`${A} × ${k}² = ${A} × ${k*k} = ${A*k*k} cm².`,s:SE_S({modo:0,f:Math.min(5,SE_FAT.indexOf(k)),oc:1})})},
+ /* sombra */
+ ()=>{let h,s1,s2,tries=0;do{h=pick([1,2,3]);s1=pick([1,2,3,4,5,6]);s2=rnd(2,30);tries++}while((h*s2)%s1&&tries<300);if((h*s2)%s1){h=2;s1=1;s2=10}
+  const x=h*s2/s1;
+  return mk({q:`No mesmo instante, uma vara de ${h} m projeta uma sombra de ${s1} m e uma árvore projeta uma sombra de ${s2} m. Qual é a altura da árvore?`,ok:`${x} m`,
+   bad:[[`${h+s2-s1} m`,'somou e subtraiu as medidas','Use proporção: altura ÷ sombra é igual nos dois casos.'],[`${s2*s1/h} m`,'inverteu a razão','Altura ÷ sombra da vara é igual a altura ÷ sombra da árvore.'],[`${s2} m`,'repetiu a sombra','A altura é outra medida.'],[`${x+h} m`,'errou uma conta','Confira a proporção.']],
+   fill:()=>`${rnd(2,60)} m`,h:['Os triângulos formados são semelhantes: altura ÷ sombra é constante.',`${h}/${s1} = x/${s2}.`],
+   e:`${h}/${s1} = x/${s2}, então x = ${h} × ${s2} ÷ ${s1} = ${x} m.`,s:SE_S({modo:2,h1:h*10,s1:s1*10,s2,oc:1})})}
+],
+3:[
+ /* razão de áreas */
+ ()=>{const p=pick([[2,3],[3,4],[2,5],[3,5],[1,2],[1,3],[3,2],[4,3]]),ok=F(p[0]*p[0],p[1]*p[1]);
+  return mk({q:`A razão de semelhança entre duas figuras é ${p[0]}/${p[1]}. Qual é a razão entre as áreas delas?`,ok,
+   bad:[[F(p[0],p[1]),'repetiu a razão dos lados','A razão entre as áreas é o quadrado da razão de semelhança.'],[F(2*p[0],2*p[1]),'dobrou a razão','Eleve numerador e denominador ao quadrado.'],[F(p[0]**3,p[1]**3),'usou o cubo','O cubo vale para volumes.'],[F(p[0]*p[0],p[1]),'elevou só o numerador','Eleve numerador e denominador ao quadrado.']],
+   fill:()=>F(rnd(1,9),rnd(2,12)),h:['A razão entre áreas é a razão de semelhança elevada ao quadrado.',`(${p[0]}/${p[1]})².`],
+   e:`(${p[0]}/${p[1]})² = ${p[0]*p[0]}/${p[1]*p[1]}${eqF(p[0]*p[0],p[1]*p[1])}.`,s:SE_S({modo:0,f:3,oc:1})})},
+ /* razão de lados pela razão de áreas */
+ ()=>{const p=pick([[1,2],[2,3],[3,4],[2,5],[3,5],[4,5]]),A=F(p[0]*p[0],p[1]*p[1]);
+  return mk({q:`Duas figuras semelhantes têm áreas na razão ${p[0]*p[0]}/${p[1]*p[1]}${A!==`${p[0]*p[0]}/${p[1]*p[1]}`?'':''}. Qual é a razão entre os lados correspondentes?`,ok:`${p[0]}/${p[1]}`,
+   bad:[[`${p[0]*p[0]}/${p[1]*p[1]}`,'repetiu a razão das áreas','Os lados estão na raiz quadrada da razão das áreas.'],[`${p[0]*2}/${p[1]*2}`,'dobrou','Extraia a raiz quadrada de numerador e denominador.'],[`${p[0]}/${p[1]*p[1]}`,'tirou a raiz só de um termo','Extraia a raiz dos dois termos.'],[`${p[1]}/${p[0]}`,'inverteu','Mantenha a ordem da razão.']],
+   fill:()=>F(rnd(1,9),rnd(2,12)),h:['Lados: raiz quadrada da razão das áreas.','Extraia a raiz do numerador e do denominador.'],
+   e:`√${p[0]*p[0]} = ${p[0]} e √${p[1]*p[1]} = ${p[1]}. Razão dos lados: ${p[0]}/${p[1]}.`,s:SE_S({modo:0,f:3,oc:1})})},
+ /* escala */
+ ()=>{const S=pick([100,200,500,1000,2000]),d=rnd(2,15),m=d*S/100;
+  return mk({q:`Em um mapa na escala 1:${S}, dois pontos estão a ${d} cm um do outro. Qual é a distância real entre eles, em metros?`,ok:`${m} m`,
+   bad:[[`${d*S} m`,'não converteu de cm para m','1 m = 100 cm. Divida o resultado em cm por 100.'],[`${d*S/10} m`,'dividiu por 10 e não por 100','1 m = 100 cm.'],[`${Math.round(d/S*100*100)/100} m`,'dividiu em vez de multiplicar','Distância real = distância no mapa × '+S+'.'],[`${m*10} m`,'errou a conversão','1 m = 100 cm.']],
+   fill:()=>`${rnd(2,300)} m`,h:[`Distância real em cm: ${d} × ${S}.`,'Converta de cm para m: divida por 100.'],
+   e:`${d} × ${S} = ${d*S} cm = ${m} m.`,s:SE_S({modo:0,f:3,oc:1})})},
+ /* sombra com decimal */
+ ()=>{let h,s1,s2,tries=0;do{h=pick([1.2,1.5,1.6,1.8]);s1=pick([2,3,4,5,6]);s2=rnd(4,30);tries++}while((Math.round(h*10)*s2)%(s1*10)&&tries<400);if((Math.round(h*10)*s2)%(s1*10)){h=1.5;s1=2;s2=40}
+  const x=Math.round(h*10)*s2/(s1*10);
+  return mk({q:`No mesmo instante, uma pessoa de ${SE_V(h)} m de altura projeta uma sombra de ${s1} m, e um prédio projeta uma sombra de ${s2} m. Qual é a altura do prédio?`,ok:`${x} m`,
+   bad:[[`${SE_V(x+h)} m`,'somou a altura da pessoa','Use proporção: altura ÷ sombra é constante.'],[`${SE_V(s2*s1/h)} m`,'inverteu a razão','Altura ÷ sombra da pessoa é igual a altura ÷ sombra do prédio.'],[`${SE_V(s2-s1+h)} m`,'somou e subtraiu','Use proporção.'],[`${SE_V(x*10)} m`,'errou a vírgula','Confira a conta com decimais.']],
+   fill:()=>`${rnd(3,80)} m`,h:['Os triângulos são semelhantes: altura ÷ sombra é constante.',`${SE_V(h)}/${s1} = x/${s2}.`],
+   e:`x = ${SE_V(h)} × ${s2} ÷ ${s1} = ${x} m.`,s:SE_S({modo:2,h1:Math.round(h*10),s1:s1*10,s2,oc:1})})},
+ /* critérios de semelhança */
+ ()=>{const OP=['Sim, pelo critério AA','Sim, pelo critério LLL','Sim, pelo critério LAL','Não são semelhantes'],t=rnd(0,3);
+  let q,ok,h,e;
+  if(t===0){const a=pick([40,50,60,70]),b=pick([30,45,55,65,80]),c=180-a-b;q=`O triângulo A tem ângulos de ${a}° e ${b}°. O triângulo B tem ângulos de ${b}° e ${c}°. Eles são semelhantes? Qual a justificativa?`;ok=OP[0];h=['Calcule o terceiro ângulo de cada triângulo.','Dois ângulos iguais bastam.'];e=`O terceiro ângulo de A é ${c}°, e o de B é ${a}°. Os ângulos são ${a}°, ${b}° e ${c}° nos dois: critério AA.`}
+  else if(t===1){const b=pick(SE_BASES),k=pick([2,3]);q=`O triângulo A tem lados ${b[0]}, ${b[1]} e ${b[2]}. O triângulo B tem lados ${b[0]*k}, ${b[1]*k} e ${b[2]*k}. Eles são semelhantes? Qual a justificativa?`;ok=OP[1];h=['Divida cada lado de B pelo lado correspondente de A.','Se a razão for a mesma, os lados são proporcionais.'];e=`${b[0]*k} ÷ ${b[0]} = ${b[1]*k} ÷ ${b[1]} = ${b[2]*k} ÷ ${b[2]} = ${k}: critério LLL.`}
+  else if(t===2){const x=rnd(3,6),y=rnd(4,8),k=pick([2,3]),g=pick([40,50,60,70]);q=`O triângulo A tem lados ${x} e ${y}, com um ângulo de ${g}° entre eles. O triângulo B tem lados ${x*k} e ${y*k}, com um ângulo de ${g}° entre eles. Eles são semelhantes? Qual a justificativa?`;ok=OP[2];h=['Veja se os dois lados são proporcionais.','Veja se o ângulo entre eles é igual.'];e=`${x*k} ÷ ${x} = ${y*k} ÷ ${y} = ${k} e o ângulo entre os lados é ${g}° nos dois: critério LAL.`}
+  else{const b=pick(SE_BASES.slice(0,3)),k=pick([2,3]);q=`O triângulo A tem lados ${b[0]}, ${b[1]} e ${b[2]}. O triângulo B tem lados ${b[0]*k}, ${b[1]*k} e ${b[2]*k+1}. Eles são semelhantes? Qual a justificativa?`;ok=OP[3];h=['Divida cada lado de B pelo lado correspondente de A.','Se alguma razão for diferente, não são semelhantes.'];e=`${b[0]*k} ÷ ${b[0]} = ${k}, mas ${b[2]*k+1} ÷ ${b[2]} não é ${k}. Os lados não são proporcionais.`}
+  return mk({q,ok,bad:OP.filter(x=>x!==ok).map(x=>[x,'não conferiu todas as condições','Compare ângulos ou razões entre lados correspondentes.']),fill:()=>OP[rnd(0,3)],h,e,s:SE_S({modo:1,f:3,oc:0})})}
+]};
+
+MODS.push({id:'semelhanca',ano:9,ic:'🔍',nome:'Semelhança, ampliação e redução',sub:'Mesma forma, tamanhos diferentes: razão, ângulos, perímetro, área e sombra',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 ampliar e reduzir · 1 triângulos semelhantes · 2 sombra e altura)',min:0,max:2,v:0},
+      {k:'f',l:'Razão (0 = 1/2 · 1 = 1 · 2 = 1,5 · 3 = 2 · 4 = 2,5 · 5 = 3)',min:0,max:5,v:3},
+      {k:'p',l:'Cateto horizontal do triângulo',min:2,max:6,v:3},{k:'q',l:'Cateto vertical do triângulo',min:2,max:6,v:4},
+      {k:'h1',l:'Altura da vara (decímetros)',min:5,max:40,v:15},{k:'s1',l:'Sombra da vara (decímetros)',min:5,max:60,v:20},{k:'s2',l:'Sombra da árvore (metros)',min:1,max:60,v:40}],
+ reset:{modo:0,f:3,p:3,q:4,h1:15,s1:20,s2:40,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));
+  v.modo=cl(v.modo,0,2);v.f=cl(v.f,0,5);v.p=cl(v.p,2,6);v.q=cl(v.q,2,6);v.h1=cl(v.h1,5,40);v.s1=cl(v.s1,5,60);v.s2=cl(v.s2,1,60);v.oc=cl(v.oc,0,1)},
+ info(v){const ocu=SE_OCU(v),f=SE_FAT[v.f];
+  if(v.modo===0)return ocu?`Razão ${SE_V(f)} · como ficam lados, perímetro e área?`:`Razão ${SE_V(f)} · lados × ${SE_V(f)} · perímetro × ${SE_V(f)} · área × ${SE_V(f*f)}`;
+  if(v.modo===1)return ocu?`Triângulos com catetos ${v.p} e ${v.q} e o semelhante na razão ${SE_V(f)}`:`Catetos ${v.p} e ${v.q} viram ${SE_V(v.p*f)} e ${SE_V(v.q*f)} · razão ${SE_V(f)} · ângulos iguais`;
+  const x=SE_ALT(v.h1,v.s1,v.s2);return ocu?`Vara de ${SE_V(v.h1/10)} m com sombra de ${SE_V(v.s1/10)} m · árvore com sombra de ${v.s2} m · qual é a altura?`:`${SE_V(v.h1/10)} ÷ ${SE_V(v.s1/10)} = altura ÷ ${v.s2} · altura da árvore = ${SE_V(x)} m`},
+ desc(v){const ocu=SE_OCU(v),f=SE_FAT[v.f];
+  if(v.modo===0)return `Casa desenhada em malha e sua versão ${f<1?'reduzida':f>1?'ampliada':'igual'} na razão ${SE_V(f)}.${ocu?'':` Lados e perímetro ficam multiplicados por ${SE_V(f)} e a área por ${SE_V(f*f)}.`}`;
+  if(v.modo===1)return `Dois triângulos retângulos semelhantes, o segundo na razão ${SE_V(f)} do primeiro, com os mesmos ângulos.`;
+  return `Vara e árvore com suas sombras no mesmo instante, formando triângulos semelhantes.${ocu?'':` A árvore mede ${SE_V(SE_ALT(v.h1,v.s1,v.s2))} metros.`}`},
+ draw(c,v,W,H,k){const ocu=SE_OCU(v),f=SE_FAT[v.f];
+  const txt=(t,x,y,col,fn,al)=>{c.fillStyle=col;c.font=fn;c.textAlign=al||'center';c.fillText(t,x,y)};
+  const fit=(t,x,y,col,px,maxw)=>{let s=px;c.font=`bold ${s}px sans-serif`;while(c.measureText(t).width>maxw&&s>9){s--;c.font=`bold ${s}px sans-serif`}txt(t,x,y,col,`bold ${s}px sans-serif`)};
+  const poly=(pts,col,al)=>{c.globalAlpha=al;c.fillStyle=col;c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fill();c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=2;c.stroke()};
+  const grid=(x0,y0,w,h,u)=>{c.strokeStyle=k.m;c.globalAlpha=.3;c.lineWidth=1;for(let i=0;i<=Math.floor(w/u);i++){c.beginPath();c.moveTo(x0+i*u,y0);c.lineTo(x0+i*u,y0-h);c.stroke()}for(let j=0;j<=Math.floor(h/u);j++){c.beginPath();c.moveTo(x0,y0-j*u);c.lineTo(x0+w,y0-j*u);c.stroke()}c.globalAlpha=1};
+  if(v.modo===0){const w0=4,h0=3.5,tot=w0+f*w0+1,u=Math.min((W-20)/tot,(H-70)/Math.max(h0,f*h0)),y0=H-40,x0=(W-tot*u)/2;
+   grid(x0,y0,tot*u,Math.max(h0,f*h0)*u,u);
+   const P=(ox,s)=>SE_CASA.map(p=>[ox+p[0]*s*u,y0-p[1]*s*u]);
+   poly(P(x0,1),k.c1,.8);poly(P(x0+(w0+1)*u,f),k.a,.7);
+   txt('original',x0+w0*u/2,y0+16,k.t,'12px sans-serif');txt(`razão ${SE_V(f)}`,x0+(w0+1)*u+w0*f*u/2,y0+16,k.a,'bold 12px sans-serif');
+   fit(f<1?'Redução':f>1?'Ampliação':'Mesmo tamanho',W/2,18,k.t,15,W-16);
+   txt(ocu?'lado, perímetro e área mudam do mesmo jeito?':`lados × ${SE_V(f)} · área × ${SE_V(f*f)}`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left';return}
+  if(v.modo===1){const p=v.p,q=v.q,tot=p+f*p+1.2,u=Math.min((W-24)/tot,(H-76)/Math.max(q,f*q)),y0=H-40,x0=(W-tot*u)/2,x1=x0+(p+1.2)*u;
+   const tri=(ox,s)=>[[ox,y0],[ox+p*s*u,y0],[ox,y0-q*s*u]];
+   poly(tri(x0,1),k.c1,.8);poly(tri(x1,f),k.a,.7);
+   const ang=(ox,s)=>{const a=Math.atan2(q,p),r=Math.min(18,p*s*u*.3);c.strokeStyle=k.t;c.lineWidth=1.5;c.beginPath();c.arc(ox+p*s*u,y0,r,Math.PI,Math.PI+a);c.stroke();c.beginPath();c.moveTo(ox,y0-Math.min(12,q*s*u*.3));c.lineTo(ox+Math.min(12,q*s*u*.3),y0-Math.min(12,q*s*u*.3));c.lineTo(ox+Math.min(12,q*s*u*.3),y0);c.stroke()};
+   ang(x0,1);ang(x1,f);
+   txt(`${p}`,x0+p*u/2,y0+15,k.t,'12px sans-serif');txt(ocu?'?':SE_V(p*f),x1+p*f*u/2,y0+15,k.a,'bold 12px sans-serif');
+   txt(`${q}`,x0-7,y0-q*u/2,k.t,'12px sans-serif');txt(ocu?'?':SE_V(q*f),x1-8,y0-q*f*u/2,k.a,'bold 12px sans-serif');
+   fit('Triângulos semelhantes',W/2,18,k.t,15,W-16);
+   txt(ocu?'mesmos ângulos, lados na mesma razão':`razão ${SE_V(f)} · ângulos iguais · lados × ${SE_V(f)}`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left';return}
+  const hv=v.h1/10,sv=v.s1/10,xT=SE_ALT(v.h1,v.s1,v.s2),pxm=Math.min((W-70)/(sv+v.s2+2.5),(H-106)/Math.max(hv,xT)),y0=H-36,xA=18,xB=xA+(sv+1)*pxm;
+  c.strokeStyle=k.t;c.lineWidth=2;c.beginPath();c.moveTo(6,y0);c.lineTo(W-6,y0);c.stroke();
+  c.strokeStyle=k.a;c.lineWidth=1.5;c.globalAlpha=.7;c.beginPath();c.moveTo(W-30,6);c.lineTo(W-14,10);c.stroke();c.globalAlpha=1;
+  c.fillStyle=k.a;c.beginPath();c.arc(W-28,16,8,0,7);c.fill();
+  c.strokeStyle=k.c1;c.lineWidth=4;c.beginPath();c.moveTo(xA,y0);c.lineTo(xA,y0-hv*pxm);c.stroke();
+  c.strokeStyle=k.m;c.lineWidth=5;c.beginPath();c.moveTo(xA,y0);c.lineTo(xA+sv*pxm,y0);c.stroke();
+  c.strokeStyle=k.c1;c.lineWidth=2;c.setLineDash([4,4]);c.beginPath();c.moveTo(xA,y0-hv*pxm);c.lineTo(xA+sv*pxm,y0);c.stroke();c.setLineDash([]);
+  c.strokeStyle='#8a5a2b';c.lineWidth=7;c.beginPath();c.moveTo(xB,y0);c.lineTo(xB,y0-xT*pxm);c.stroke();
+  c.strokeStyle=k.m;c.lineWidth=5;c.beginPath();c.moveTo(xB,y0);c.lineTo(xB+v.s2*pxm,y0);c.stroke();
+  c.strokeStyle=k.a;c.lineWidth=2;c.setLineDash([4,4]);c.beginPath();c.moveTo(xB,y0-xT*pxm);c.lineTo(xB+v.s2*pxm,y0);c.stroke();c.setLineDash([]);
+  c.fillStyle='#2f9e44';c.beginPath();c.arc(xB,y0-xT*pxm,Math.max(6,Math.min(24,xT*pxm*.18)),0,7);c.fill();
+  txt(`${SE_V(hv)} m`,xA,y0-hv*pxm-6,k.c1,'bold 11px sans-serif');txt(`${SE_V(sv)} m`,xA+sv*pxm/2,y0+15,k.t,'11px sans-serif');
+  txt(ocu?'? m':`${SE_V(xT)} m`,xB,y0-xT*pxm-Math.max(8,Math.min(24,xT*pxm*.18))-6,k.a,'bold 13px sans-serif');txt(`${v.s2} m`,xB+v.s2*pxm/2,y0+15,k.t,'11px sans-serif');
+  fit('Mesmo instante, triângulos semelhantes',W/2,18,k.t,14,W-60);
+  txt(ocu?'altura ÷ sombra é igual nos dois triângulos':`${SE_V(hv)}/${SE_V(sv)} = ${SE_V(xT)}/${v.s2}`,W/2,H-6,k.a,'bold 12px sans-serif');c.textAlign='left'},
+ rod:8,gens:SE_GENS});
+
+/* ===== Gráficos e histograma (módulo novo, arquivo separado) ===== */
+const GR_W=[7,10,14,35];
+const GR_V=x=>String(Math.round(x*100)/100).replace('.',',');
+const GR_S=o=>Object.assign({modo:0,ds:7,ib:0,va:60,vb:90,ia:1,p1:25,p2:30,p3:25,oc:0},o);
+const GR_OCU=v=>v.oc===1&&!locked;
+const GR_BASE=v=>v.ib*10;
+function GR_DATA(seed){let x=(Math.abs(Math.round(seed))*7919+13)%2147483647||1;const r=()=>{x=(x*48271)%2147483647;return x/2147483647};
+ const a=[];for(let i=0;i<20;i++){a.push(Math.min(99,30+Math.floor((r()+r())/2*70)))}return a.sort((p,q)=>p-q)}
+const GR_CLS=(d,w)=>{const n=70/w,c=Array(n).fill(0);d.forEach(x=>{c[Math.min(n-1,Math.floor((x-30)/w))]++});return c};
+const GR_TXT=d=>`As notas de 20 alunos foram: ${d.join(', ')}.`;
+const GR_REGRA=w=>`As notas foram agrupadas em classes de amplitude ${w}, a partir de 30, e cada classe inclui o limite inferior e não inclui o superior.`;
+const GR_P4=v=>100-v.p1-v.p2-v.p3;
+const GR_CORES=['#1f77b4','#f59f00','#2f9e44','#9c36b5'];
+const GR_FILLN=()=>String(rnd(2,90));
+const GR_CLASSE=(d,w)=>{const c=GR_CLS(d,w),ok=c.map((n,i)=>n>0?i:-1).filter(i=>i>=0);return{c,i:pick(ok)}};
+const GR_ESCOLHAS=[
+ ['a evolução da temperatura de uma cidade ao longo de um dia','Gráfico de linhas',0,'linhas mostram mudanças ao longo do tempo'],
+ ['a participação de cada gasto no total do orçamento de uma família','Gráfico de setores',2,'setores mostram partes de um todo'],
+ ['a comparação das vendas de quatro produtos em um mês','Gráfico de colunas',0,'colunas comparam categorias separadas'],
+ ['como as alturas de 200 pessoas se distribuem em faixas de 5 cm','Histograma',1,'o histograma agrupa dados numéricos em classes contínuas']];
+const GR_NOMES=['Gráfico de linhas','Gráfico de setores','Gráfico de colunas','Histograma'];
+
+const GR_GENS={
+1:[
+ /* ler colunas */
+ ()=>{const va=rnd(20,60),vb=va+rnd(10,40);
+  return mk({q:`Um gráfico de colunas, com o eixo começando no zero, mostra A = ${va} e B = ${vb}. Qual é a diferença entre B e A?`,ok:String(vb-va),
+   bad:[[String(vb+va),'somou os valores','Diferença é subtração: o maior menos o menor.'],[String(vb),'usou só o valor de B','Subtraia o valor de A.'],[String(va),'usou só o valor de A','Subtraia o valor de A do valor de B.'],[String(vb-va+10),'errou uma conta','Confira a subtração.']],
+   fill:GR_FILLN,h:['Diferença é uma subtração.',`${vb} menos ${va}.`],
+   e:`${vb} − ${va} = ${vb-va}.`,s:GR_S({modo:0,va,vb,ib:0,oc:1})})},
+ /* porcentagem em graus */
+ ()=>{const p=pick([10,20,25,30,40,50]),g=p*3.6;
+  return mk({q:`Em um gráfico de setores, um setor representa ${p}% dos dados. Qual é o ângulo desse setor?`,ok:`${g}°`,
+   bad:[[`${p}°`,'usou a porcentagem como ângulo','O círculo todo tem 360° e vale 100%.'],[`${p*2}°`,'dobrou a porcentagem','Cada 1% vale 3,6°.'],[`${360-g}°`,'calculou o que sobra','O ângulo pedido é o do próprio setor.'],[`${p*3}°`,'usou 3° por 1%','Cada 1% vale 3,6°, pois 360 ÷ 100 = 3,6.']],
+   fill:()=>`${rnd(10,300)}°`,h:['O círculo inteiro tem 360° e representa 100%.','Cada 1% vale 3,6°.'],
+   e:`${p} × 3,6 = ${g}°.`,s:GR_S({modo:2,p1:p,p2:10,p3:Math.min(30,95-p-10),oc:1})})},
+ /* frequência numa classe */
+ ()=>{const sd=rnd(1,60),d=GR_DATA(sd),{c,i}=GR_CLASSE(d,10),a=30+i*10;
+  return mk({q:`${GR_TXT(d)} ${GR_REGRA(10)} Quantos alunos estão na classe [${a}, ${a+10})?`,ok:String(c[i]),
+   bad:[[String(c[i]+1),'contou um a mais','Conte só as notas de '+a+' até '+(a+9)+'.'],[String(Math.max(0,c[i]-1)),'contou um a menos','Confira cada nota da lista.'],[String(c[Math.min(c.length-1,i+1)]),'olhou a classe vizinha','Use a classe pedida.'],[String(c[Math.max(0,i-1)]),'olhou a classe anterior','Use a classe pedida.']],
+   fill:()=>String(rnd(0,9)),h:[`Procure na lista as notas de ${a} até ${a+9}.`,'Conte uma a uma.'],
+   e:`Na classe [${a}, ${a+10}) há ${c[i]} notas.`,s:GR_S({modo:1,ds:sd,ia:1,oc:1})})},
+ /* qual gráfico */
+ ()=>{const e=pick(GR_ESCOLHAS);
+  return mk({q:`Qual gráfico é o mais adequado para mostrar ${e[0]}?`,ok:e[1],
+   bad:GR_NOMES.filter(n=>n!==e[1]).map(n=>[n,'escolheu o gráfico para outra situação','Pense no tipo de dado: tempo, partes de um todo, categorias ou classes contínuas.']),
+   fill:()=>pick(GR_NOMES),h:['Pergunte: os dados mudam no tempo, são partes de um todo, categorias ou números em faixas?',e[3]+'.'],
+   e:`${e[1]}: ${e[3]}.`,s:GR_S({modo:e[2],oc:0})})}
+],
+2:[
+ /* frequência em classe larga */
+ ()=>{const sd=rnd(1,60),w=pick([14,35]),d=GR_DATA(sd),{c,i}=GR_CLASSE(d,w),a=30+i*w;
+  return mk({q:`${GR_TXT(d)} ${GR_REGRA(w)} Quantos alunos estão na classe [${a}, ${a+w})?`,ok:String(c[i]),
+   bad:[[String(c[i]+1),'contou um a mais','Conte só as notas de '+a+' até '+(a+w-1)+'.'],[String(Math.max(0,c[i]-1)),'contou um a menos','Confira cada nota da lista.'],[String(20-c[i]),'contou as que ficaram de fora','Conte as que estão dentro da classe.'],[String(c[(i+1)%c.length]),'olhou outra classe','Use a classe pedida.']],
+   fill:()=>String(rnd(0,20)),h:[`A classe vai de ${a} até ${a+w-1}.`,'Conte as notas dentro dela.'],
+   e:`Na classe [${a}, ${a+w}) há ${c[i]} notas.`,s:GR_S({modo:1,ds:sd,ia:GR_W.indexOf(w),oc:1})})},
+ /* ângulo a partir de contagem */
+ ()=>{const tot=pick([20,40,60,90,120,180]),n=rnd(2,Math.floor(tot/2)),g=n*360/tot,sab=pick(['morango','chocolate','baunilha','limão']);
+  return mk({q:`Em uma pesquisa com ${tot} pessoas, ${n} preferem o sabor ${sab}. No gráfico de setores, qual é o ângulo do setor do ${sab}?`,ok:`${GR_V(g)}°`,
+   bad:[[`${GR_V(n/tot*100)}°`,'usou a porcentagem como ângulo','Primeiro ache a fração n/total e multiplique por 360°.'],[`${GR_V(n*tot%360||n+tot)}°`,'multiplicou n por total','O ângulo é a fração do círculo: n ÷ total × 360°.'],[`${GR_V(360-g)}°`,'calculou o que sobra','O ângulo pedido é o do próprio setor.'],[`${GR_V(n*10)}°`,'usou 10° por pessoa','O ângulo depende do total: n ÷ total × 360°.']],
+   fill:()=>`${rnd(10,300)}°`,h:['O círculo inteiro é o total de pessoas e mede 360°.',`${n} ÷ ${tot} × 360.`],
+   e:`${n} ÷ ${tot} × 360 = ${GR_V(g)}°.`,s:GR_S({modo:2,p1:Math.max(5,Math.min(60,Math.round(n/tot*100))),p2:10,p3:10,oc:1})})},
+ /* eixo truncado, aparência */
+ ()=>{let base,d,m,va,vb,t=0;do{base=pick([10,20,30,40,50]);d=pick([5,10]);m=pick([2,3,4]);va=base+d;vb=base+m*d;t++}while((vb>100||va<20)&&t<200);
+  if(vb>100||va<20){base=20;d=10;m=3;va=30;vb=50}
+  return mk({q:`Em um gráfico de colunas, o eixo vertical começa em ${base}. A coluna A representa ${va} e a coluna B representa ${vb}. Quantas vezes a coluna B parece mais alta que a coluna A?`,ok:`${m} vezes`,
+   bad:[[`${GR_V(vb/va)} vezes`,'usou os valores inteiros','A altura da coluna só conta a partir do início do eixo.'],[`${m+1} vezes`,'errou uma conta','Divida a altura de B pela altura de A, contadas a partir do início do eixo.'],[`${Math.max(1,m-1)} vezes`,'errou uma conta','Divida a altura de B pela altura de A, contadas a partir do início do eixo.'],[`${vb-va} vezes`,'usou a diferença dos valores','Compare as alturas dividindo, não subtraindo.']],
+   fill:()=>`${rnd(1,9)} vezes`,h:[`A altura que se vê é o valor menos ${base}.`,`A: ${va} − ${base}. B: ${vb} − ${base}.`],
+   e:`Alturas: A = ${va} − ${base} = ${d} e B = ${vb} − ${base} = ${m*d}. ${m*d} ÷ ${d} = ${m}.`,s:GR_S({modo:0,va,vb,ib:base/10,oc:1})})},
+ /* número de classes */
+ ()=>{const lo=pick([30,40,50]),hi=pick([90,100,110]),w=pick([5,10,20]),n=Math.floor((hi-lo)/w)+1;
+  return mk({q:`Os valores vão de ${lo} a ${hi}. As classes têm amplitude ${w}, começam em ${lo} e cada uma inclui o limite inferior e não inclui o superior. Quantas classes são necessárias para incluir o valor ${hi}?`,ok:String(n),
+   bad:[[String(n-1),'esqueceu a classe que contém o valor final',`O valor ${hi} cai numa classe que começa em ${lo+(n-1)*w}.`],[String(n+1),'contou uma classe a mais','Pare na classe que contém o valor final.'],[String((hi-lo)/w+2),'somou duas classes','Divida e some só uma classe, a do valor final.'],[String(hi-lo),'usou a diferença como número de classes','Divida a diferença pela amplitude.']],
+   fill:()=>String(rnd(2,16)),h:[`Divida ${hi} − ${lo} pela amplitude ${w}.`,'O valor final fica numa classe própria, some mais uma.'],
+   e:`(${hi} − ${lo}) ÷ ${w} = ${(hi-lo)/w}. Somando a classe do valor ${hi}: ${n} classes.`,s:GR_S({modo:1,ia:1,oc:0})})}
+],
+3:[
+ /* início do eixo */
+ ()=>{let base,d,m,va,vb,t=0;do{base=pick([10,20,30,40,50]);d=pick([5,10]);m=pick([2,3,4,5]);va=base+d;vb=base+m*d;t++}while((vb>100||va<20)&&t<300);
+  if(vb>100||va<20){base=20;d=10;m=3;va=30;vb=50}
+  return mk({q:`Em um gráfico de colunas, a altura da coluna B é ${m} vezes a altura da coluna A. Os valores são A = ${va} e B = ${vb}. Em que valor começa o eixo vertical?`,ok:String(base),
+   bad:[['0','supôs que o eixo começa no zero','Se começasse em 0, a razão das alturas seria a razão dos valores.'],[String(base+d),'confundiu com o valor de A','O eixo começa abaixo dos dois valores.'],[String(Math.max(0,base-10)),'errou uma conta','Monte: vB − início = '+m+' × (vA − início).'],[String(va-vb),'usou a diferença dos valores','Monte: vB − início = '+m+' × (vA − início).']],
+   fill:()=>String(rnd(0,60)),h:[`Chame o início do eixo de x. Então ${vb} − x = ${m} × (${va} − x).`,'Resolva a equação.'],
+   e:`${vb} − x = ${m}(${va} − x) → ${vb} − x = ${m*va} − ${m}x → ${m-1}x = ${m*va-vb} → x = ${base}.`,s:GR_S({modo:0,va,vb,ib:base/10,oc:1})})},
+ /* ângulo para porcentagem */
+ ()=>{const g=pick([18,36,54,72,90,108,144,180,216]),p=g/3.6;
+  return mk({q:`Em um gráfico de setores, um setor tem ângulo de ${g}°. Que porcentagem do total ele representa?`,ok:`${p}%`,
+   bad:[[`${g}%`,'usou o ângulo como porcentagem','O círculo todo, 360°, vale 100%.'],[`${Math.round(g/36)}%`,'dividiu por 36','Divida o ângulo por 3,6.'],[`${Math.round(g/2)}%`,'dividiu por 2','Divida o ângulo por 3,6.'],[`${Math.round(g/360*10)}%`,'errou a escala','Divida por 360 e multiplique por 100.']],
+   fill:()=>`${rnd(2,90)}%`,h:['360° valem 100%.','Divida o ângulo por 3,6.'],
+   e:`${g} ÷ 3,6 = ${p}%.`,s:GR_S({modo:2,p1:Math.max(5,Math.min(60,p)),p2:10,p3:10,oc:1})})},
+ /* censo e amostra */
+ ()=>{if(Math.random()<.5){const pop=pick([400,800,1200,2000,5000]),pct=pick([2,5,10]),n=pop*pct/100;
+   return mk({q:`Para saber a opinião dos ${pop} alunos de uma escola, foram sorteados ${n} alunos. Qual porcentagem da população foi pesquisada?`,ok:`${pct}%`,
+    bad:[[`${n}%`,'usou o tamanho da amostra como porcentagem','Divida a amostra pela população e multiplique por 100.'],[`${pct*2}%`,'dobrou o resultado','Confira a divisão.'],[`${Math.max(1,pct-1)}%`,'errou uma conta','Confira a divisão.'],[`${pct*10}%`,'errou a casa decimal','Confira a divisão.']],
+    fill:()=>`${rnd(1,60)}%`,h:['Porcentagem = amostra ÷ população × 100.',`${n} ÷ ${pop}.`],
+    e:`${n} ÷ ${pop} = ${pct/100} = ${pct}%.`,s:GR_S({modo:0,oc:0})})}
+  const cen=Math.random()<.5,N=pick([30,120,250]),pop=pick([800,1500,3000]),n=pick([40,60,100]);
+  const desc=cen?`perguntou-se a todos os ${N} moradores de um prédio sobre o horário da coleta de lixo`:`sortearam-se ${n} dos ${pop} eleitores de uma cidade e perguntou-se a eles em quem votariam`;
+  return mk({q:`Em uma pesquisa, ${desc}. Esse tipo de pesquisa é um censo ou uma amostra?`,ok:cen?'Censo':'Amostra',
+   bad:[[cen?'Amostra':'Censo','trocou os conceitos',cen?'Censo é quando todos os elementos da população são pesquisados.':'Amostra é quando só uma parte da população é pesquisada.'],['População','confundiu o tipo de pesquisa com o grupo estudado','População é o grupo todo que se quer conhecer.'],['Variável','confundiu o tipo de pesquisa com a característica medida','Variável é o que se mede em cada elemento.']],
+   fill:()=>pick(['Média','Moda','Frequência']),h:['Censo pesquisa todos. Amostra pesquisa só uma parte.','Veja se todos os elementos foram consultados.'],
+   e:cen?'Todos os moradores foram consultados: é um censo.':'Só uma parte dos eleitores foi consultada: é uma amostra.',s:GR_S({modo:0,oc:0})})},
+ /* frequência relativa */
+ ()=>{const sd=rnd(1,60),d=GR_DATA(sd),{c,i}=GR_CLASSE(d,10),a=30+i*10;
+  return mk({q:`${GR_TXT(d)} ${GR_REGRA(10)} Que porcentagem dos alunos está na classe [${a}, ${a+10})?`,ok:`${c[i]*5}%`,
+   bad:[[`${c[i]}%`,'usou a contagem como porcentagem','Divida a contagem pelo total, 20, e multiplique por 100.'],[`${c[i]*10}%`,'dividiu por 10 e não por 20','O total de alunos é 20, e cada aluno vale 5%.'],[`${c[i]*4}%`,'dividiu por 25','O total de alunos é 20, e cada aluno vale 5%.'],[`${Math.max(0,c[i]-1)*5}%`,'contou um aluno a menos','Confira a contagem na lista.']],
+   fill:()=>`${rnd(1,10)*5}%`,h:[`Conte os alunos da classe e divida por 20.`,'Cada aluno vale 5% do total.'],
+   e:`${c[i]} alunos em 20: ${c[i]} ÷ 20 = ${c[i]*5}%.`,s:GR_S({modo:1,ds:sd,ia:1,oc:1})})}
+]};
+
+MODS.push({id:'graficos',ano:9,ic:'📊',nome:'Gráficos e histograma',sub:'Eixo truncado, histograma por classes, setores, censo e amostra',liveInfo:true,
+ ctl:[{k:'modo',l:'Modo (0 colunas e eixo · 1 histograma · 2 setores)',min:0,max:2,v:0},
+      {k:'va',l:'Valor da coluna A',min:20,max:100,v:60},{k:'vb',l:'Valor da coluna B',min:20,max:100,v:90},
+      {k:'ib',l:'Início do eixo (0 = zero · 1 = 10 · 2 = 20 · e assim por diante)',min:0,max:9,v:0},
+      {k:'ds',l:'Conjunto de notas (histograma)',min:1,max:60,v:7},
+      {k:'ia',l:'Amplitude da classe (0 = 7 · 1 = 10 · 2 = 14 · 3 = 35)',min:0,max:3,v:1},
+      {k:'p1',l:'Setor 1, em %',min:5,max:60,v:25},{k:'p2',l:'Setor 2, em %',min:5,max:60,v:30},{k:'p3',l:'Setor 3, em %',min:5,max:60,v:25}],
+ reset:{modo:0,ds:7,ib:0,va:60,vb:90,ia:1,p1:25,p2:30,p3:25,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));
+  v.modo=cl(v.modo,0,2);v.va=cl(v.va,20,100);v.vb=cl(v.vb,20,100);v.ib=cl(v.ib,0,9);v.ds=cl(v.ds,1,60);v.ia=cl(v.ia,0,3);v.oc=cl(v.oc,0,1);
+  v.p1=cl(v.p1,5,60);v.p2=cl(v.p2,5,60);v.p3=cl(v.p3,5,60);
+  const mn=Math.min(v.va,v.vb);if(v.ib*10>=mn)v.ib=Math.max(0,Math.floor((mn-1)/10));
+  let g=0;while(v.p1+v.p2+v.p3>95&&g++<100){const k=v.p1>=v.p2&&v.p1>=v.p3?'p1':v.p2>=v.p3?'p2':'p3';v[k]--}},
+ info(v){const ocu=GR_OCU(v);
+  if(v.modo===0){const b=GR_BASE(v),ap=(v.vb-b)/(v.va-b);return ocu?`Eixo começando em ${b} · compare a altura das colunas com os valores`:`Altura aparente: B parece ${GR_V(ap)} vez(es) A · valor real: B é ${GR_V(v.vb/v.va)} de A`}
+  if(v.modo===1){const w=GR_W[v.ia],c=GR_CLS(GR_DATA(v.ds),w);return ocu?`20 notas em ${c.length} classes de amplitude ${w}`:`Frequências por classe: ${c.join(', ')} · soma ${c.reduce((a,b)=>a+b,0)}`}
+  const p4=GR_P4(v);return ocu?`Setores de ${v.p1}%, ${v.p2}%, ${v.p3}% e ${p4}%`:`${v.p1}% = ${GR_V(v.p1*3.6)}° · ${v.p2}% = ${GR_V(v.p2*3.6)}° · ${v.p3}% = ${GR_V(v.p3*3.6)}° · ${p4}% = ${GR_V(p4*3.6)}°`},
+ desc(v){const ocu=GR_OCU(v);
+  if(v.modo===0){const b=GR_BASE(v);return `Gráfico de colunas com duas colunas, A = ${v.va} e B = ${v.vb}, e o eixo vertical começando em ${b}.${ocu?'':` A coluna B parece ${GR_V((v.vb-b)/(v.va-b))} vez(es) a altura de A.`}`}
+  if(v.modo===1){const w=GR_W[v.ia],c=GR_CLS(GR_DATA(v.ds),w);return `Histograma de 20 notas com classes de amplitude ${w}, a partir de 30.${ocu?'':` Frequências: ${c.join(', ')}.`}`}
+  return `Gráfico de setores com quatro setores: ${v.p1}%, ${v.p2}%, ${v.p3}% e ${GR_P4(v)}%.${ocu?'':' Cada 1% vale 3,6 graus.'}`},
+ draw(c,v,W,H,k){const ocu=GR_OCU(v);
+  const txt=(t,x,y,col,fn,al)=>{c.fillStyle=col;c.font=fn;c.textAlign=al||'center';c.fillText(t,x,y)};
+  const fit=(t,x,y,col,px,maxw)=>{let s=px;c.font=`bold ${s}px sans-serif`;while(c.measureText(t).width>maxw&&s>9){s--;c.font=`bold ${s}px sans-serif`}txt(t,x,y,col,`bold ${s}px sans-serif`)};
+  if(v.modo===0){const b=GR_BASE(v),top=Math.ceil(Math.max(v.va,v.vb)/10)*10,x0=58,x1=W-28,yT=36,yB=H-54,Y=n=>yB-(n-b)/(top-b)*(yB-yT),step=(top-b)>60?20:10;
+   c.strokeStyle=k.m;c.globalAlpha=.3;c.lineWidth=1;for(let n=b;n<=top;n+=step){c.beginPath();c.moveTo(x0,Y(n));c.lineTo(x1,Y(n));c.stroke()}c.globalAlpha=1;
+   for(let n=b;n<=top;n+=step)txt(String(n),x0-8,Y(n)+4,k.m,'11px sans-serif','right');
+   c.strokeStyle=k.t;c.lineWidth=2;c.beginPath();c.moveTo(x0,yT-6);c.lineTo(x0,yB);c.lineTo(x1,yB);c.stroke();
+   if(b>0){c.strokeStyle=k.a;c.lineWidth=2;c.beginPath();c.moveTo(x0-8,yB-8);c.lineTo(x0+8,yB-14);c.moveTo(x0-8,yB-2);c.lineTo(x0+8,yB-8);c.stroke()}
+   const bw=Math.min(110,(x1-x0)/4),cx=[x0+(x1-x0)*.3,x0+(x1-x0)*.7],val=[v.va,v.vb],cor=[k.c1,k.a],nm=['A','B'];
+   val.forEach((n,i)=>{const y=Y(n);c.globalAlpha=.8;c.fillStyle=cor[i];c.fillRect(cx[i]-bw/2,y,bw,yB-y);c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=1.5;c.strokeRect(cx[i]-bw/2,y,bw,yB-y);
+    txt(nm[i],cx[i],yB+17,k.t,'bold 14px sans-serif');if(!ocu)txt(String(n),cx[i],y-6,k.t,'bold 13px sans-serif')});
+   fit('Gráfico de colunas',W/2,18,k.t,15,W-16);
+   fit(ocu?`o eixo começa em ${b}: compare a altura das colunas`:`B parece ${GR_V((v.vb-b)/(v.va-b))} vez(es) A · na verdade B é ${GR_V(v.vb/v.va)} de A`,W/2,H-8,k.a,12,W-16);c.textAlign='left';return}
+  if(v.modo===1){const w=GR_W[v.ia],cn=GR_CLS(GR_DATA(v.ds),w),n=cn.length,x0=46,x1=W-16,yT=40,yB=H-48,mx=Math.max(4,Math.max(...cn)+1),bw=(x1-x0)/n,Y=f=>yB-f/mx*(yB-yT),st=mx>10?2:1;
+   c.strokeStyle=k.m;c.globalAlpha=.3;c.lineWidth=1;for(let f=0;f<=mx;f+=st){c.beginPath();c.moveTo(x0,Y(f));c.lineTo(x1,Y(f));c.stroke()}c.globalAlpha=1;
+   for(let f=0;f<=mx;f+=st)txt(String(f),x0-8,Y(f)+4,k.m,'11px sans-serif','right');
+   cn.forEach((q,i)=>{const x=x0+i*bw;c.globalAlpha=.75;c.fillStyle=k.c1;c.fillRect(x,Y(q),bw,yB-Y(q));c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=1.5;c.strokeRect(x,Y(q),bw,yB-Y(q));if(!ocu&&q>0)txt(String(q),x+bw/2,Y(q)-5,k.t,'bold 13px sans-serif')});
+   c.strokeStyle=k.t;c.lineWidth=2;c.beginPath();c.moveTo(x0,yT-6);c.lineTo(x0,yB);c.lineTo(x1,yB);c.stroke();
+   for(let i=0;i<=n;i++)txt(String(30+i*w),x0+i*bw,yB+15,k.t,'11px sans-serif');
+   txt('alunos',x0-4,yT-12,k.m,'11px sans-serif','right');txt('notas',W/2,yB+32,k.m,'11px sans-serif');
+   fit('Histograma das notas de 20 alunos',W/2,18,k.t,15,W-16);
+   fit(ocu?'barras coladas: classes contínuas':`${n} classes de amplitude ${w} · barras coladas`,W/2,H-6,k.a,12,W-16);c.textAlign='left';return}
+  const P=[v.p1,v.p2,v.p3,GR_P4(v)],R=Math.min(H/2-34,W*.26),cx=W*.3,cy=H/2+10;let ang=-Math.PI/2;
+  P.forEach((p,i)=>{const a=p/100*Math.PI*2;c.beginPath();c.moveTo(cx,cy);c.arc(cx,cy,R,ang,ang+a);c.closePath();c.globalAlpha=.85;c.fillStyle=GR_CORES[i];c.fill();c.globalAlpha=1;c.strokeStyle=k.t;c.lineWidth=1.5;c.stroke();
+   const m=ang+a/2;if(p>=8)txt(`${p}%`,cx+Math.cos(m)*R*.62,cy+Math.sin(m)*R*.62+4,'#fff','bold 13px sans-serif');ang+=a});
+  P.forEach((p,i)=>{const y=60+i*44,x=W*.58;c.fillStyle=GR_CORES[i];c.fillRect(x,y-12,18,18);c.strokeStyle=k.t;c.lineWidth=1;c.strokeRect(x,y-12,18,18);
+   txt(`Setor ${i+1}: ${p}%`,x+26,y+2,k.t,'bold 14px sans-serif','left');txt(ocu?'ângulo: ?':`${p} × 3,6 = ${GR_V(p*3.6)}°`,x+26,y+19,k.a,'12px sans-serif','left')});
+  fit('Gráfico de setores',W/2,18,k.t,15,W-16);
+  fit(ocu?'o círculo inteiro vale 100% e 360°':'o círculo inteiro: 100% = 360° · cada 1% vale 3,6°',W/2,H-8,k.a,12,W-16);c.textAlign='left'},
+ rod:8,gens:GR_GENS});
+
 const O6=['nat','adsub','muldiv','tabmul','tabdiv','fra','solidos'],ix=MODS.map((m,i)=>m.ano===6?i:-1).filter(i=>i>=0),st=ix.map(i=>MODS[i]).sort((x,y)=>{const a=O6.indexOf(x.id),b=O6.indexOf(y.id);return (a<0?99:a)-(b<0?99:b)});ix.forEach((i,j)=>{MODS[i]=st[j]});
 })();
 
@@ -6077,6 +6393,8 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
     dizimas:{ eixo:'Números', bncc:['EF07MA10','EF08MA01','EF08MA05','EF09MA04'], prereq:['fra','dec'], proximo:['pot'], objetivos:['Perceber quando uma divisão termina e quando vira dízima periódica','Encontrar a fração geratriz de uma dízima','Escrever números muito grandes ou muito pequenos em notação científica'], tempo:'4 aulas' },
     irracionais:{ eixo:'Números', bncc:['EF09MA01','EF09MA02','EF09MA03'], prereq:['pit','pot'], proximo:['func'], objetivos:['Reconhecer que existem medidas que não são frações, como a diagonal do quadrado','Construir a espiral de Teodoro com o teorema de Pitágoras','Localizar raízes na reta numérica e classificar números em racionais e irracionais'], tempo:'3 aulas' },
     simetria:{ eixo:'Geometria', bncc:['EF07MA21','EF08MA18'], prereq:['cart'], proximo:['tales'], objetivos:['Reconhecer reflexão, rotação e translação de figuras','Calcular as coordenadas da imagem de um ponto','Compor transformações e perceber que a ordem importa'], tempo:'3 aulas' },
+    semelhanca:{ eixo:'Geometria', bncc:['EF05MA18','EF06MA21','EF06MA29','EF09MA12'], prereq:['prop','tri'], proximo:['tales'], objetivos:['Perceber que semelhança conserva ângulos e multiplica comprimentos por uma razão','Entender por que a área muda pelo quadrado da razão','Usar semelhança de triângulos para medir alturas pela sombra'], tempo:'3 aulas' },
+    graficos:{ eixo:'Probabilidade e Estatística', bncc:['EF08MA23','EF08MA24','EF09MA21','EF09MA22'], prereq:['prob','prop'], proximo:[], objetivos:['Reconhecer quando o eixo truncado exagera uma diferença','Organizar dados em classes e ler um histograma','Converter porcentagem em ângulo no gráfico de setores e distinguir censo de amostra'], tempo:'3 aulas' },
     prob:   { eixo:'Probabilidade e Estatística', bncc:['EF06MA30','EF07MA34','EF07MA35','EF08MA22','EF08MA25'], prereq:['fra','dec'], proximo:[], objetivos:['Calcular probabilidade teórica','Comparar frequência relativa e probabilidade teórica','Calcular média, mediana e moda'], tempo:'4 aulas' }
 };
   for (const m of MODS) {
@@ -6086,7 +6404,7 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
   }
   window.__meta = META;
   /* Ordem pedagógica na home: dentro de cada eixo, do mais básico ao mais avançado */
-  const ORDEM_HOME=['nat','adsub','muldiv','tabmul','tabdiv','mmc','primos','fra','dec','dizimas','juros','pot','expr','int','sinais','alg','prop','equiv','notaveis','eq','balanca','sist','eq2','func','solidos','ang','pi','tri','poligonos','area','pit','irracionais','tales','cart','simetria','med','volume','prob','probexp'];
+  const ORDEM_HOME=['nat','adsub','muldiv','tabmul','tabdiv','mmc','primos','fra','dec','dizimas','juros','pot','expr','int','sinais','alg','prop','equiv','notaveis','eq','balanca','sist','eq2','func','solidos','ang','pi','tri','poligonos','area','pit','irracionais','semelhanca','tales','cart','simetria','med','volume','prob','probexp','graficos'];
   const pos=m=>{const i=ORDEM_HOME.indexOf(m.id);return i<0?999:i};
   MODS.sort((a,b)=>pos(a)-pos(b));
 })();
@@ -6264,7 +6582,7 @@ window.__desc=DESC;
 
 /* ===== BOLETIM DO ALUNO E RELATÓRIO DA TURMA (PDF por impressão) ===== */
 (()=>{
-const DICAS={simetria:'Voltar ao simulador: mover o ponto A e ver como cada transformação muda as coordenadas.',irracionais:'Voltar ao simulador: aumentar os triângulos da espiral e ver quando a hipotenusa vira número inteiro.',dizimas:'Voltar ao simulador: escolher uma divisão e ver em que passo o resto repete.',poligonos:'Voltar ao simulador: mudar o número de lados e ver o ângulo interno encaixar em 360 graus no mosaico.',notaveis:'Voltar ao simulador: mudar a e b e ver quais pedaços do quadrado formam o termo do meio.',volume:'Voltar ao simulador: montar o bloco de cubinhos e comparar com o aquário, vendo o volume virar litros.',juros:'Voltar ao simulador: mudar o aumento e o desconto e ver o fator multiplicador mudar o resultado.',sist:'Voltar ao simulador: mudar os números das compras e ver onde as duas retas se cruzam.',prop:'Voltar ao simulador: mudar o modo e comparar a reta da proporção direta com a curva da inversa.',probexp:'Voltar ao simulador: aumentar o número de lançamentos e observar a frequência se aproximar da probabilidade teórica.',balanca:'Voltar à balança: mexer no passo da resolução e ver o que acontece ao tirar o mesmo dos dois pratos.',pi:'Voltar ao simulador do círculo desenrolado: ver quantos diâmetros cabem na volta e refazer a conta com 3,14.',func:'Voltar ao gráfico do simulador: mexer em a e em b e observar o que muda na reta e na tabela.',prob:'Comparar no simulador a frequência observada com a probabilidade teórica e aumentar o número de lançamentos.',fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
+const DICAS={graficos:'Voltar ao simulador: mudar o início do eixo, a amplitude da classe e os setores para ver o que muda.',semelhanca:'Voltar ao simulador: mudar a razão e comparar o que acontece com os lados, o perímetro e a área.',simetria:'Voltar ao simulador: mover o ponto A e ver como cada transformação muda as coordenadas.',irracionais:'Voltar ao simulador: aumentar os triângulos da espiral e ver quando a hipotenusa vira número inteiro.',dizimas:'Voltar ao simulador: escolher uma divisão e ver em que passo o resto repete.',poligonos:'Voltar ao simulador: mudar o número de lados e ver o ângulo interno encaixar em 360 graus no mosaico.',notaveis:'Voltar ao simulador: mudar a e b e ver quais pedaços do quadrado formam o termo do meio.',volume:'Voltar ao simulador: montar o bloco de cubinhos e comparar com o aquário, vendo o volume virar litros.',juros:'Voltar ao simulador: mudar o aumento e o desconto e ver o fator multiplicador mudar o resultado.',sist:'Voltar ao simulador: mudar os números das compras e ver onde as duas retas se cruzam.',prop:'Voltar ao simulador: mudar o modo e comparar a reta da proporção direta com a curva da inversa.',probexp:'Voltar ao simulador: aumentar o número de lançamentos e observar a frequência se aproximar da probabilidade teórica.',balanca:'Voltar à balança: mexer no passo da resolução e ver o que acontece ao tirar o mesmo dos dois pratos.',pi:'Voltar ao simulador do círculo desenrolado: ver quantos diâmetros cabem na volta e refazer a conta com 3,14.',func:'Voltar ao gráfico do simulador: mexer em a e em b e observar o que muda na reta e na tabela.',prob:'Comparar no simulador a frequência observada com a probabilidade teórica e aumentar o número de lançamentos.',fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
 const fmtData=d=>d?String(d).split('-').reverse().join('/'):'';
 const pct=(n,d)=>d?Math.round(n*100/d):null;
 const pctT=(n,d)=>d?Math.round(n*100/d)+'%':'—';
@@ -7108,7 +7426,7 @@ const EIXO_META={
  'Grandezas e Medidas':{n:4,d:'Comprimento, massa, tempo, capacidade e conversões entre unidades.',ic:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="26" height="10" rx="2"/><path d="M9 11v5M15 11v7M21 11v5"/></svg>'},
  'Probabilidade e Estatística':{n:5,d:'Chance, tabelas, médias e leitura de dados.',ic:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="24" height="24" rx="5"/><circle cx="11" cy="11" r="1.6" fill="currentColor"/><circle cx="21" cy="21" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/><circle cx="21" cy="11" r="1.6" fill="currentColor"/><circle cx="11" cy="21" r="1.6" fill="currentColor"/></svg>'}
 };
-const NOVOS=['pi','balanca','probexp','prop','sist','juros','volume','notaveis','poligonos','dizimas','irracionais','simetria'];
+const NOVOS=['pi','balanca','probexp','prop','sist','juros','volume','notaveis','poligonos','dizimas','irracionais','simetria','semelhanca','graficos'];
 let skEixo=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const skinAtiva=()=>S.skin!=='classico';

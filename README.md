@@ -391,3 +391,17 @@ Módulo `simetria`, 7º ano, eixo Geometria (BNCC EF07MA21 e EF08MA18). Uma figu
 transformação: reflexão em eixos e em retas x = m ou y = m, rotação de 90°, 180° e 270° em torno da origem e translação por um vetor. O aluno move o ponto A
 e vê as coordenadas da imagem. São 12 geradores em 3 níveis, incluindo composições (a ordem importa), todos com a resposta conferida por cálculo independente
 nos testes, e elegíveis para a Arena.
+
+## Semelhança, ampliação e redução (módulo novo)
+
+Módulo `semelhanca`, 9º ano, eixo Geometria (BNCC EF05MA18, EF06MA21, EF06MA29 e EF09MA12). Três modos: ampliação e redução em malha (lados e perímetro
+multiplicados pela razão, área pelo quadrado da razão), triângulos retângulos semelhantes com os mesmos ângulos e sombra e altura no mesmo instante, desenhados
+em escala. São 13 geradores em 3 níveis, incluindo os critérios AA, LLL e LAL, todos com a resposta conferida por cálculo independente nos testes, e
+elegíveis para a Arena. O Teorema de Tales continua no módulo próprio, que não foi alterado.
+
+## Gráficos e histograma (módulo novo)
+
+Módulo `graficos`, 9º ano, eixo Probabilidade e Estatística (BNCC EF08MA23, EF08MA24, EF09MA21 e EF09MA22). Três modos: gráfico de colunas com início do eixo ajustável
+(mostra como o eixo truncado exagera uma diferença), histograma de 20 notas com amplitude de classe ajustável e gráfico de setores com a conversão de porcentagem em ângulo.
+São 12 geradores em 3 níveis, incluindo escolha do gráfico adequado, número de classes, frequência relativa e a diferença entre censo e amostra. Todos têm a resposta
+conferida por cálculo independente nos testes e são elegíveis para a Arena. As médias, a mediana e a moda continuam no módulo de probabilidade e estatística.
