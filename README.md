@@ -421,3 +421,16 @@ números de 2 e 3 algarismos, combinações proibidas, anagramas, fatorial e ape
 
 ## Vistas ortogonais e cilindro (módulo novo, v3.7)
 9º ano, Geometria (EF09MA17 e EF09MA19). Três modos: vistas de pilhas de cubos (frente, lado e de cima), volume do cilindro com litros (π = 3,14) e cilindro dentro de uma caixa (espaço vazio). 12 geradores em 3 níveis, com conferência independente das respostas em testes-geradores.mjs. Não testado em Safari/iOS nem com leitor de tela.
+
+## Quadriláteros e congruência (módulo novo, v3.8)
+Geometria, a partir do 6º ano (EF06MA18, EF06MA20 e EF08MA14). Um só desenho que muda de nome conforme os lados e o ângulo: quadrado, retângulo, losango, paralelogramo e trapézio, com marcas de lados iguais, setas de lados paralelos, ângulos retos e diagonais. 12 geradores em 3 níveis: classificar, perímetro, ângulos e soma de 360°, diagonais e Pitágoras, e congruência de triângulos (LLL e LAL).
+Decisão de conteúdo: neste app o trapézio tem um único par de lados paralelos. Isso aparece no enunciado da questão de classificação para não gerar dúvida.
+
+## Paralelas e transversal (módulo novo, v3.9)
+Geometria, 7º e 9º ano (EF07MA23 e EF09MA10). Duas paralelas cortadas por uma transversal, com os oito ângulos numerados, inclinação ajustável e destaque dos seis pares: correspondentes, alternos internos e externos, colaterais internos e externos e opostos pelo vértice. 12 geradores em 3 níveis: nomear o par, iguais ou suplementares, equações com x, soma dos ângulos do triângulo e ângulo externo.
+
+## Ângulos na circunferência (módulo novo, v3.10)
+Geometria, 9º ano (EF09MA11). Circunferência com os pontos A, B e P: o ângulo central é igual ao arco e o inscrito é a metade. Três modos: central e inscrito, diâmetro (inscrito sempre reto) e dois inscritos no mesmo arco. 12 geradores em 3 níveis: arco, central e inscrito, triângulo isósceles AOB, equações com x, triângulo inscrito e triângulo com lado no diâmetro.
+
+## Fechamento da auditoria BNCC (v3.11)
+Cinco módulos novos para as habilidades que estavam só em parte: Estimativas e arredondamento (EF06MA12), Ler tabelas e gráficos (EF06MA31, EF06MA32, EF07MA37), Multiplicar e dividir racionais (EF07MA11, EF07MA12), Razões entre grandezas diferentes (EF09MA07) e Rigidez dos triângulos (EF07MA25). Também foram incluídos no registro os códigos que já estavam cobertos no conteúdo: EF06MA15 (razão e proporção), EF07MA37 (gráficos) e EF08MA07 (sistemas).

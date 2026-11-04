@@ -166,6 +166,30 @@ const estat = d => {
 };
 
 const vMat = txt => { const m = txt.match(/Linha 1 \(frente\): (\d), (\d), (\d)\. Linha 2: (\d), (\d), (\d)\. Linha 3 \(fundo\): (\d), (\d), (\d)\./); const n = m.slice(1).map(Number); return [n.slice(0, 3), n.slice(3, 6), n.slice(6, 9)]; };
+
+// Ajudantes do módulo paralelas: classificação independente dos pares de ângulos e leitura de expressões "mx + n".
+function plClasse(i, j) {
+  const pos = n => ({ topo: n <= 4, q: (n - 1) % 4 });
+  const a = pos(i), b = pos(j);
+  if (a.topo === b.topo) return Math.abs(a.q - b.q) === 2 ? 'opostos pelo vértice' : '?';
+  if (a.q === b.q) return 'correspondentes';
+  const lado = p => (p.q === 1 || p.q === 2 ? 'E' : 'D');
+  const interno = p => (p.topo ? p.q >= 2 : p.q <= 1);
+  const ia = interno(a), ib = interno(b);
+  if (ia !== ib) return '?';
+  const mesmo = lado(a) === lado(b);
+  return ia ? (mesmo ? 'colaterais internos' : 'alternos internos') : (mesmo ? 'colaterais externos' : 'alternos externos');
+}
+function plExp(s) { const m = s.match(/(\d+)x ([+−]) (\d+)/); return [+m[1], (m[2] === '−' ? -1 : 1) * m[3]]; }
+
+function ciExp(s) { const m = s.match(/(\d+)x ([+−]) (\d+)/); return [+m[1], (m[2] === '−' ? -1 : 1) * m[3]]; }
+
+const esN = x => String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+function lgDados(txt) { const m = txt.match(/: (.+?)\. /) || txt.match(/: (.+?)\.$/); const t = {}; const seg = txt.split(': ')[1].split('. ')[0]; seg.split(', ').forEach(p => { const k = p.lastIndexOf(' '); t[p.slice(0, k)] = +p.slice(k + 1); }); return t; }
+
+function rmF(n, d) { const sg = (n < 0) !== (d < 0) ? -1 : 1, a = Math.abs(n), b = Math.abs(d), g = (x, y) => (y ? g(y, x % y) : x), z = g(a, b) || 1, x = a / z, y = b / z; return (sg < 0 && x !== 0 ? '−' : '') + (y === 1 ? String(x) : `${x}/${y}`); }
+
 // Conferências de resposta. Chave "modulo:nivel:gerador" (gerador começa em 1; "*" vale para todos os níveis).
 // Cada função recebe a questão e devolve null se estiver certa, ou um texto explicando o erro.
 // Ela deve recalcular a resposta só a partir do enunciado, sem usar código do app.
@@ -369,6 +393,19 @@ const CONF = {
   'contagem:3:2': q => { const w = q.q.match(/palavra (\S+),/)[1]; if (new Set(w).size !== w.length) return 'palavra com letra repetida'; let r = 1; for (let i = 2; i <= w.length; i++) r *= i; return igual(certo(q), r); },
   'contagem:3:3': q => { const m = q.q.match(/valor de (\d+)! ÷ (\d+)!/); let r = 1; for (let i = +m[2] + 1; i <= +m[1]; i++) r *= i; return igual(certo(q), r); },
   'contagem:3:4': q => { const n = +q.q.match(/^(\d+) pessoas em uma reunião/)[1]; return igual(certo(q), n * (n - 1) / 2); },
+  // ---------- quadril ----------
+  'quadril:1:1': q => { const t = q.q.match(/tem (.*)\. Qual é o nome/)[1]; const M = { '4 lados iguais e 4 ângulos retos': 'Quadrado', '4 ângulos retos e lados vizinhos com medidas diferentes': 'Retângulo', '4 lados iguais e ângulos que não são retos': 'Losango', 'lados opostos paralelos e iguais, sem ângulos retos e sem os 4 lados iguais': 'Paralelogramo', 'apenas um par de lados paralelos': 'Trapézio' }; return igual(certo(q), M[t]); },
+  'quadril:1:2': q => { const n = q.q.match(/tem um (\S+)\?/)[1]; return igual(certo(q), n === 'trapézio' ? 1 : 2); },
+  'quadril:1:3': q => { const V = ['quadrado>retângulo', 'quadrado>losango', 'quadrado>paralelogramo', 'retângulo>paralelogramo', 'losango>paralelogramo']; const m = certo(q).match(/Todo (\S+) é (\S+)\./); return V.includes(m[1] + '>' + m[2]) ? null : 'afirmação marcada como certa é falsa: ' + certo(q); },
+  'quadril:1:4': q => { const P = +q.q.match(/perímetro de (\d+) cm/)[1]; return igual(certo(q), P / 4 + ' cm'); },
+  'quadril:2:1': q => { const m = q.q.match(/medem (\d+)°, (\d+)° e (\d+)°/); return igual(certo(q), 360 - m[1] - m[2] - m[3] + '°'); },
+  'quadril:2:2': q => { const a = +q.q.match(/um ângulo mede (\d+)°/)[1]; return igual(certo(q), 180 - a + '°'); },
+  'quadril:2:3': q => { const D = +q.q.match(/Uma diagonal mede (\d+) cm/)[1]; return igual(certo(q), D / 2 + ' cm'); },
+  'quadril:2:4': q => { const N = +q.q.match(/Uma estrutura tem (\d+) varetas/)[1]; return igual(certo(q), N - 3); },
+  'quadril:3:1': q => { const A = +q.q.match(/área de (\d+) cm²/)[1]; return igual(certo(q), A / 2 + ' cm²'); },
+  'quadril:3:2': q => { const M = { 'dois lados e o ângulo entre eles com medidas iguais': 'Sim, pelo caso LAL', 'os três lados com medidas iguais': 'Sim, pelo caso LLL', 'dois ângulos e o lado entre eles com medidas iguais': 'Sim, pelo caso ALA', 'os três ângulos com medidas iguais': 'Não, ângulos iguais não bastam', 'dois lados e um ângulo que não está entre eles com medidas iguais': 'Não, esses dados não garantem' }; const t = q.q.match(/Dois triângulos têm (.*)\. Eles/)[1]; return igual(certo(q), M[t]); },
+  'quadril:3:3': q => { const m = q.q.match(/AB = x \+ (\d+) e CD = (\d+)x − (\d+)\./); return igual(certo(q), (+m[1] + +m[3]) / (m[2] - 1)); },
+  'quadril:3:4': q => { const m = q.q.match(/medem (\d+) cm e (\d+) cm/); return igualNum(pt(certo(q)), Math.hypot(m[1] / 2, m[2] / 2), 1e-9); },
   // ---------- vistas ----------
   'vistas:1:1': q => { const m = vMat(q.q); return igual(certo(q), m.flat().reduce((a, b) => a + b, 0)); },
   'vistas:1:2': q => { const m = vMat(q.q); return igual(certo(q), m.flat().filter(x => x > 0).length); },
@@ -382,6 +419,96 @@ const CONF = {
   'vistas:3:2': q => { const k = { 'o raio dobra e a altura continua a mesma': 4, 'o raio triplica e a altura continua a mesma': 9, 'a altura dobra e o raio continua o mesmo': 2, 'o raio dobra e a altura também dobra': 8 }; const f = Object.keys(k).find(x => q.q.includes(x)); return f ? igual(certo(q), `${k[f]} vezes`) : 'caso não reconhecido'; },
   'vistas:3:3': q => { const m = q.q.match(/volume de ([\d.,]+) cm³ e altura de (\d+) cm/); const r = Math.sqrt(pt(m[1]) / (3.14 * m[2])); return igualNum(pt(certo(q)), r, 1e-6); },
   'vistas:3:4': q => { const m = q.q.match(/colunas, da esquerda para a direita, são (\d), (\d), (\d)\. .* linhas, da frente para o fundo, são (\d), (\d), (\d)\./); const f = [+m[1], +m[2], +m[3]], l = [+m[4], +m[5], +m[6]]; let s = 0; for (const a of l) for (const b of f) s += Math.min(a, b); return igual(certo(q), s); },
+  // ---------- quad ----------
+  'quad:1:1': q => { const D = { 'quatro lados iguais e quatro ângulos retos': 'Quadrado', 'quatro ângulos retos e lados vizinhos de medidas diferentes': 'Retângulo', 'quatro lados iguais e ângulos que não são retos': 'Losango', 'dois pares de lados paralelos, lados vizinhos diferentes e ângulos que não são retos': 'Paralelogramo', 'apenas um par de lados paralelos': 'Trapézio' }; const m = q.q.match(/Um quadrilátero tem (.*)\. Qual é o nome/); return igual(certo(q), D[m[1]]); },
+  'quad:1:2': q => { const m = q.q.match(/tem um (.+)\?/); return ['quadrado', 'retângulo', 'losango', 'paralelogramo'].includes(m[1]) ? igual(certo(q), '2') : 'figura inesperada'; },
+  'quad:1:3': q => { const V = ['Todo quadrado é também um retângulo.', 'Todo quadrado é também um losango.', 'Todo losango é também um paralelogramo.', 'Todo retângulo é também um paralelogramo.', 'Num paralelogramo, os lados opostos são paralelos e têm a mesma medida.', 'A soma dos ângulos internos de qualquer quadrilátero é 360°.']; const F = ['Todo retângulo é também um quadrado.', 'Todo losango tem os quatro ângulos retos.', 'Todo paralelogramo tem os quatro lados iguais.', 'Todo losango é também um retângulo.', 'As diagonais de todo retângulo são perpendiculares.', 'Todo paralelogramo é um retângulo.']; if (!V.includes(certo(q))) return 'resposta marcada não é uma afirmação verdadeira'; const f = q.o.filter(x => V.includes(x)).length; return f === 1 && q.o.every(x => V.includes(x) || F.includes(x)) ? null : 'opções com mais de uma verdadeira ou texto estranho'; },
+  'quad:1:4': q => { let m, esp; if ((m = q.q.match(/Um quadrado tem lado de (\d+) cm/))) esp = 4 * m[1]; else if ((m = q.q.match(/Um retângulo tem (\d+) cm de comprimento e (\d+) cm de largura/))) esp = 2 * (+m[1] + +m[2]); else if ((m = q.q.match(/Um losango tem lado de (\d+) cm/))) esp = 4 * m[1]; else return 'enunciado inesperado'; return igualNum(pt(certo(q)), esp, 1e-9); },
+  'quad:2:1': q => { const x = +q.q.match(/ângulo mede (\d+)°/)[1]; return igualNum(pt(certo(q)), 180 - x, 1e-9); },
+  'quad:2:2': q => { const m = q.q.match(/medem (\d+)°, (\d+)° e (\d+)°/); return igualNum(pt(certo(q)), 360 - m[1] - m[2] - m[3], 1e-9); },
+  'quad:2:3': q => { const m = q.q.match(/medem (\d+) cm e (\d+) cm/); return igualNum(pt(certo(q)), Math.hypot(m[1] / 2, m[2] / 2), 1e-9); },
+  'quad:2:4': q => { const m = q.q.match(/mede (\d+) cm por (\d+) cm/); return igualNum(pt(certo(q)), Math.hypot(+m[1], +m[2]), 1e-9); },
+  'quad:3:1': q => { const m = q.q.match(/AB = (\d+)x \+ (\d+) e CD = (\d+)/); return igualNum(pt(certo(q)), (m[3] - m[2]) / m[1], 1e-9); },
+  'quad:3:2': q => igual(certo(q), /três lados iguais/.test(q.q) ? 'LLL' : /ângulo B igual ao ângulo D/.test(q.q) ? 'LAL' : '?'),
+  'quad:3:3': q => { const m = q.q.match(/lados de (\d+) cm, (\d+) cm e (\d+) cm/); return igualNum(pt(certo(q)), 2 * (+m[1] + +m[2]), 1e-9); },
+  'quad:3:4': q => { const m = q.q.match(/diagonais de (\d+) cm e (\d+) cm/); return igualNum(pt(certo(q)), m[1] * m[2] / 2, 1e-9); },
+  // ---------- paralelas ----------
+  'paralelas:1:1': q => { const m = q.q.match(/chamam os ângulos (\d) e (\d)\?/); return igual(certo(q), plClasse(+m[1], +m[2])); },
+  'paralelas:1:2': q => { const m = q.q.match(/ângulos (\d) e (\d) são (.+)\. O ângulo \1 mede (\d+)° \. ?|ângulos (\d) e (\d) são (.+)\. O ângulo (\d) mede (\d+)°\. Quanto mede o ângulo (\d)\?/); const r = q.q.match(/ângulos (\d) e (\d) são (.+?)\. O ângulo (\d) mede (\d+)°\. Quanto mede o ângulo (\d)\?/); const i = +r[1], j = +r[2], x = +r[5]; if (plClasse(i, j) !== r[3]) return 'classe do enunciado não confere com as posições'; const th = i % 2 ? x : 180 - x; return igualNum(pt(certo(q)), j % 2 ? th : 180 - th, 1e-9); },
+  'paralelas:1:3': q => { const V = ['Ângulos correspondentes entre paralelas são iguais.', 'Ângulos alternos internos entre paralelas são iguais.', 'Ângulos colaterais internos entre paralelas somam 180°.', 'Ângulos opostos pelo vértice são sempre iguais.']; return V.includes(certo(q)) && q.o.filter(x => V.includes(x)).length === 1 ? null : 'marcada não é a única verdadeira'; },
+  'paralelas:1:4': q => { const m = q.q.match(/Dois ângulos (.+) medem (\d+)° e (\d+)°/); const eq = ['correspondentes', 'alternos internos', 'alternos externos'].includes(m[1]); const par = eq ? m[2] === m[3] : +m[2] + +m[3] === 180; const esp = par ? (eq ? 'Sim, porque são iguais' : 'Sim, porque somam 180°') : (eq ? 'Não, porque deveriam ser iguais' : 'Não, porque deveriam somar 180°'); return igual(certo(q), esp); },
+  'paralelas:2:1': q => { const r = q.q.match(/mede \((.+?)\)° e o ângulo \d mede \((.+?)\)°/); const a = plExp(r[1]), b = plExp(r[2]); return igualNum(pt(certo(q)), (b[1] - a[1]) / (a[0] - b[0]), 1e-9); },
+  'paralelas:2:2': q => { const r = q.q.match(/mede \((.+?)\)° e o ângulo \d mede \((.+?)\)°/); const a = plExp(r[1]), b = plExp(r[2]); return igualNum(pt(certo(q)), (180 - a[1] - b[1]) / (a[0] + b[0]), 1e-9); },
+  'paralelas:2:3': q => { const m = q.q.match(/O ângulo (\d) mede (\d+)°\. Quanto mede o ângulo (\d)\?/); const i = +m[1], j = +m[3], th = i % 2 ? +m[2] : 180 - m[2]; return igualNum(pt(certo(q)), j % 2 ? th : 180 - th, 1e-9); },
+  'paralelas:2:4': q => { const m = q.q.match(/medem (\d+)° e (\d+)°/); return igualNum(pt(certo(q)), 180 - m[1] - m[2], 1e-9); },
+  'paralelas:3:1': q => { const m = q.q.match(/de (\d+)° e (\d+)°/); return igualNum(pt(certo(q)), +m[1] + +m[2], 1e-9); },
+  'paralelas:3:2': q => igual(certo(q), /soma dos ângulos internos/.test(q.q) ? 'Alternos internos' : 'As retas são paralelas'),
+  'paralelas:3:3': q => { const r = q.q.match(/A mede \((.+?)\)° e o ângulo D mede \((.+?)\)°/); const a = plExp(r[1]), b = plExp(r[2]); const x = (180 - a[1] - b[1]) / (a[0] + b[0]); return igualNum(pt(certo(q)), b[0] * x + b[1], 1e-9); },
+  'paralelas:3:4': q => { const r = q.q.match(/O ângulo (\d) mede \((.+?)\)° e o ângulo (\d) mede \((.+?)\)°\. Quanto mede o ângulo (\d)\?/); const a = plExp(r[2]), b = plExp(r[4]); const x = (b[1] - a[1]) / (a[0] - b[0]), th = a[0] * x + a[1]; const e = +r[5]; return igualNum(pt(certo(q)), e % 2 ? th : 180 - th, 1e-9); },
+  // ---------- circ ----------
+  'circ:1:1': q => { const x = +q.q.match(/mede (\d+)°/)[1]; return igualNum(pt(certo(q)), x, 1e-9); },
+  'circ:1:2': q => { const x = +q.q.match(/mede (\d+)°/)[1]; return igualNum(pt(certo(q)), 2 * x, 1e-9); },
+  'circ:1:3': q => { const a = +q.q.match(/arco de circunferência mede (\d+)°/)[1]; return igualNum(pt(certo(q)), a / 2, 1e-9); },
+  'circ:1:4': q => igual(certo(q), /diâmetro|semicircunferência/.test(q.q) ? '90°' : '?'),
+  'circ:2:1': q => { const r = q.q.match(/central mede \((.+?)\)° e o inscrito mede \((.+?)\)°/); const a = ciExp(r[1]), b = ciExp(r[2]); return igualNum(pt(certo(q)), (2 * b[1] - a[1]) / (a[0] - 2 * b[0]), 1e-9); },
+  'circ:2:2': q => { const X = +q.q.match(/AÔB de uma circunferência mede (\d+)°/)[1]; return igualNum(pt(certo(q)), (180 - X) / 2, 1e-9); },
+  'circ:2:3': q => { const r = q.q.match(/APB mede (\d+)° e o AQB mede \((.+?)\)°/); const b = ciExp(r[2]); return igualNum(pt(certo(q)), (r[1] - b[1]) / b[0], 1e-9); },
+  'circ:2:4': q => { const r = q.q.match(/inscrito mede (\d+)° e o arco que ele enxerga mede \((.+?)\)°/); const b = ciExp(r[2]); return igualNum(pt(certo(q)), (2 * r[1] - b[1]) / b[0], 1e-9); },
+  'circ:3:1': q => { const r = q.q.match(/medem (\d+)°, (\d+)° e (\d+)°\. Quanto mede o ângulo ([ABC])/); const arc = { C: +r[1], A: +r[2], B: +r[3] }[r[4]]; return igualNum(pt(certo(q)), arc / 2, 1e-9); },
+  'circ:3:2': q => { const B = +q.q.match(/ângulo B mede (\d+)°/)[1]; return igualNum(pt(certo(q)), 90 - B, 1e-9); },
+  'circ:3:3': q => { const r = q.q.match(/ângulo A mede \((.+?)\)° e o ângulo B mede \((.+?)\)°/); const a = ciExp(r[1]), b = ciExp(r[2]); return igualNum(pt(certo(q)), (90 - a[1] - b[1]) / (a[0] + b[0]), 1e-9); },
+  'circ:3:4': q => { const S = +q.q.match(/dois é (\d+)°/)[1]; return igualNum(pt(certo(q)), S / 3, 1e-9); },
+  // ---------- estim ----------
+  'estim:1:1': q => { const m = q.q.match(/Arredondando ([\d.]+) para a (\w+)/); const b = { dezena: 10, centena: 100, milhar: 1000 }[m[2]]; const n = pt(m[1]); return igualNum(pt(certo(q)), Math.floor((n + b / 2) / b) * b, 1e-9); },
+  'estim:1:2': q => { const m = q.q.match(/^([\d.]+) está entre quais (\w+)/); const b = /milhares/.test(q.q) ? 1000 : /centenas/.test(q.q) ? 100 : 10; const n = pt(m[1]); const lo = Math.floor(n / b) * b; return igual(certo(q), `${esN(lo)} e ${esN(lo + b)}`); },
+  'estim:1:3': q => { const m = q.q.match(/estimar ([\d.]+) \+ ([\d.]+), .* para a (\w+)/); const b = m[3] === 'centena' ? 100 : 1000; const r = x => Math.floor((x + b / 2) / b) * b; return igualNum(pt(certo(q)), r(pt(m[1])) + r(pt(m[2])), 1e-9); },
+  'estim:1:4': q => { const al = pt(q.q.match(/resulta em ([\d.]+)/)[1]); const n = pt(certo(q)); return igualNum(Math.floor((n + 50) / 100) * 100, al, 1e-9) || (q.o.filter(x => Math.floor((pt(x) + 50) / 100) * 100 === al).length === 1 ? null : 'mais de uma opção válida'); },
+  'estim:2:1': q => { const m = q.q.match(/estimar (\d+) × (\d+)/); const r = x => Math.floor((x + 5) / 10) * 10; return igualNum(pt(certo(q)), r(+m[1]) * r(+m[2]), 1e-9); },
+  'estim:2:2': q => { const m = q.q.match(/estimar ([\d.]+) ÷ (\d+)/); const A = Math.floor((pt(m[1]) + 50) / 100) * 100, B = Math.floor((+m[2] + 5) / 10) * 10; return igualNum(pt(certo(q)), A / B, 1e-9); },
+  'estim:2:3': q => { const m = q.q.match(/tem (\d) itens/); return igual(certo(q), `R$ ${m[1] * 10 / 100 < 1 ? '0,' + String(m[1] * 10).padStart(2, '0') : '?'}`); },
+  'estim:3:1': q => { const m = q.q.match(/o (maior|menor) número natural .* a (\w+) mais próxima, dá ([\d.]+)/); const b = { dezena: 10, centena: 100, milhar: 1000 }[m[2]]; const A = pt(m[3]); return igualNum(pt(certo(q)), m[1] === 'maior' ? A + b / 2 - 1 : A - b / 2, 1e-9); },
+  'estim:3:2': q => { const m = q.q.match(/estimar (\d+) × (\d+)/); const r = x => Math.floor((x + 5) / 10) * 10; const e = r(+m[1]) * r(+m[2]), x = m[1] * m[2]; return igual(certo(q), e > x ? 'Maior que o resultado exato' : 'Menor que o resultado exato'); },
+  'estim:3:3': q => { const m = pt(q.q.match(/arredondamento correto de ([\d.]+) para a centena/)[1]); return igualNum(pt(certo(q)), Math.floor((m + 50) / 100) * 100, 1e-9); },
+  // ---------- lergraf ----------
+  'lergraf:1:1': q => { const t = lgDados(q.q), m = q.q.match(/escolheram (.+)\?$/); return igualNum(pt(certo(q)), t[m[1]], 1e-9); },
+  'lergraf:1:2': q => { const t = lgDados(q.q), maior = /mais escolhida/.test(q.q), e = Object.entries(t).sort((a, b) => maior ? b[1] - a[1] : a[1] - b[1]); return igual(certo(q), e[0][0]); },
+  'lergraf:1:3': q => { const t = lgDados(q.q); return igualNum(pt(certo(q)), Object.values(t).reduce((a, b) => a + b, 0), 1e-9); },
+  'lergraf:2:1': q => { const t = lgDados(q.q), m = q.q.match(/escolheram (.+) e (.+)\?$/); return igualNum(pt(certo(q)), Math.abs(t[m[1]] - t[m[2]]), 1e-9); },
+  'lergraf:2:2': q => { const t = lgDados(q.q), m = q.q.match(/escolheram (.+)\?$/), T = Object.values(t).reduce((a, b) => a + b, 0); return igualNum(pt(certo(q)), t[m[1]] * 100 / T, 1e-9); },
+  'lergraf:2:3': q => { const t = lgDados(q.q), mx = /a maior/.test(q.q), e = Object.entries(t).sort((a, b) => mx ? b[1] - a[1] : a[1] - b[1]); return igual(certo(q), e[0][0]); },
+  'lergraf:3:1': q => { const t = lgDados(q.q), m = q.q.match(/escolheu (.+)\? Dê/), T = Object.values(t).reduce((a, b) => a + b, 0), v = t[m[1]], g = (a, b) => (b ? g(b, a % b) : a), d = g(v, T); return igual(certo(q), d === T / d * 0 + (T / d === 1 ? 1 : 0) && T / d === 1 ? String(v / d) : `${v / d}/${T / d}`); },
+  'lergraf:3:2': q => { const t = lgDados(q.q), s = Object.values(t).reduce((a, b) => a + b, 0); return igualNum(pt(certo(q)), s / 6, 1e-9); },
+  'lergraf:3:3': q => { const t = lgDados(q.q), n = Object.keys(t), v = Object.values(t); let b = 0, bi = 0; for (let i = 0; i < 5; i++) if (v[i + 1] - v[i] > b) { b = v[i + 1] - v[i]; bi = i; } return igual(certo(q), `${n[bi]} para ${n[bi + 1]}`); },
+  // ---------- racmul ----------
+  'racmul:1:1': q => { const m = q.q.match(/Quanto é (\d+)\/(\d+) × (\d+)\/(\d+)\?/); return igual(certo(q), rmF(m[1] * m[3], m[2] * m[4])); },
+  'racmul:1:2': q => { const m = q.q.match(/Quanto é (\d+)\/(\d+) de (\d+)\?/); return igualNum(pt(certo(q)), m[1] * m[3] / m[2], 1e-9); },
+  'racmul:1:3': q => { const m = q.q.match(/pedaços de 1\/(\d+) de pizza saem de (\d+) pizzas/); return igualNum(pt(certo(q)), m[1] * m[2], 1e-9); },
+  'racmul:2:1': q => { const m = q.q.match(/Quanto é (\d+)\/(\d+) ÷ (\d+)\/(\d+)\?/); return igual(certo(q), rmF(m[1] * m[4], m[2] * m[3])); },
+  'racmul:2:2': q => { const m = q.q.match(/Quanto é ([\d,]+) × ([\d,]+)\?/); const a = pt(m[1]), b = pt(m[2]); return igualNum(pt(certo(q)), Math.round(a * b * 100) / 100, 1e-9); },
+  'racmul:2:3': q => { const m = q.q.match(/Quanto é \(?(−?\d+)\/(\d+)\)? × \(?(−?\d+)\/(\d+)\)?\? Dê/); return igual(certo(q), rmF(m[1].replace('−', '-') * m[3].replace('−', '-'), m[2] * m[4])); },
+  'racmul:3:1': q => { const m = q.q.match(/com (\d+)\/(\d+) da capacidade\. Foram usados (\d+)\/(\d+)/); return igual(certo(q), rmF(m[1] * m[3], m[2] * m[4])); },
+  'racmul:3:2': q => { const m = q.q.match(/fita de (\d+)(?:\/(\d+))? m será cortada em pedaços de (\d+)\/(\d+) m/); const tn = +m[1], td = +(m[2] || 1), pn = +m[3], pd = +m[4]; return igualNum(pt(certo(q)), (tn * pd) / (td * pn), 1e-9); },
+  'racmul:3:3': q => { const m = q.q.match(/Quanto é \(?(−?\d+)\/(\d+)\)? ÷ \(?(−?\d+)\/(\d+)\)?\? Dê/); const A = +m[1].replace('−', '-'), C = +m[3].replace('−', '-'); return igual(certo(q), rmF(A * m[4], m[2] * C)); },
+  // ---------- grandezas ----------
+  'grandezas:1:1': q => { const m = q.q.match(/percorreu (\d+) km em (\d+) horas/); return igualNum(pt(certo(q)), m[1] / m[2], 1e-9); },
+  'grandezas:1:2': q => { const m = q.q.match(/tem ([\d.]+) habitantes em (\d+) km²/); return igualNum(pt(certo(q)), pt(m[1]) / m[2], 1e-9); },
+  'grandezas:1:3': q => { const m = q.q.match(/massa de (\d+) g e volume de (\d+) cm³/); return igualNum(pt(certo(q)), m[1] / m[2], 1e-9); },
+  'grandezas:2:1': q => { const m = q.q.match(/média de (\d+) km\/h\. Quantos quilômetros ele percorre em (\d+) horas/); return igualNum(pt(certo(q)), m[1] * m[2], 1e-9); },
+  'grandezas:2:2': q => { const m = q.q.match(/percorrer (\d+) km a (\d+) km\/h/); return igualNum(pt(certo(q)), m[1] / m[2], 1e-9); },
+  'grandezas:2:3': q => { const m = q.q.match(/densidade demográfica de (\d+) hab\/km² e área de (\d+) km²/); return igualNum(pt(certo(q)), m[1] * m[2], 1e-9); },
+  'grandezas:3:1': q => { const v = +q.q.match(/a (\d+) km\/h/)[1]; return igualNum(pt(certo(q)), v / 3.6, 1e-9); },
+  'grandezas:3:2': q => { const m = q.q.match(/A cidade A tem ([\d.]+) habitantes em (\d+) km²\. A cidade B tem ([\d.]+) habitantes em (\d+) km²/); return igual(certo(q), pt(m[1]) / m[2] > pt(m[3]) / m[4] ? 'Cidade A' : 'Cidade B'); },
+  'grandezas:3:3': q => { const m = q.q.match(/a (\d+) km\/h e volta pelo mesmo caminho a (\d+) km\/h/); return igualNum(pt(certo(q)), 2 * m[1] * m[2] / (+m[1] + +m[2]), 1e-9); },
+  // ---------- rigidez ----------
+  'rigidez:1:1': q => igual(certo(q), 'Triângulo'),
+  'rigidez:1:2': q => { const N = { quadrilátero: 4, pentágono: 5, hexágono: 6, heptágono: 7, octógono: 8 }; const n = N[q.q.match(/Um (\S+) de varetas/)[1]]; return igual(certo(q), n - 3); },
+  'rigidez:1:3': q => igual(certo(q), 'Para formar dois triângulos, que não se deformam'),
+  'rigidez:2:1': q => { const n = +q.q.match(/polígono de (\d+) lados/)[1]; return igual(certo(q), n - 2); },
+  'rigidez:2:2': q => { const N = { pentágono: 5, hexágono: 6, heptágono: 7, octógono: 8 }; const m = q.q.match(/Um (\S+) tem (\d+) travessas?/); return igual(certo(q), N[m[1]] - 3 - m[2]); },
+  'rigidez:2:3': q => { const N = { pentágono: 5, hexágono: 6, heptágono: 7, octógono: 8 }; const m = q.q.match(/Um (\S+) de varetas tem (\d+) travessas/); const rig = +m[2] >= N[m[1]] - 3; return igual(certo(q), rig ? 'Sim, porque tudo ficou dividido em triângulos' : 'Não, porque ainda sobra uma parte que não é triângulo'); },
+  'rigidez:3:1': q => { const m = q.q.match(/varetas de (\d+) cm, (\d+) cm e (\d+) cm/); const [a, b, c] = [+m[1], +m[2], +m[3]]; const ok = a + b > c && a + c > b && b + c > a; return igual(certo(q), ok ? 'Sim, porque cada lado é menor que a soma dos outros dois' : 'Não, porque um lado é maior ou igual à soma dos outros dois'); },
+  'rigidez:3:2': q => { const n = +q.q.match(/estrutura de (\d+) lados/)[1]; return igual(certo(q), 2 * n - 3); },
+  'rigidez:3:3': q => { const m = q.q.match(/mede (\d+) cm por (\d+) cm/); return igualNum(pt(certo(q)), Math.hypot(+m[1], +m[2]), 1e-9); },
   // ---------- juros ----------
   'juros:1:1': q => { const m = q.q.match(/custa (R\$ [\d.,]+) e está com (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 - m[2] / 100), 1e-6); },
   'juros:1:2': q => { const m = q.q.match(/de (R\$ [\d.,]+) sofreu aumento de (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 + m[2] / 100), 1e-6); },
