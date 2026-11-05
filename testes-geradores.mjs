@@ -190,6 +190,16 @@ function lgDados(txt) { const m = txt.match(/: (.+?)\. /) || txt.match(/: (.+?)\
 
 function rmF(n, d) { const sg = (n < 0) !== (d < 0) ? -1 : 1, a = Math.abs(n), b = Math.abs(d), g = (x, y) => (y ? g(y, x % y) : x), z = g(a, b) || 1, x = a / z, y = b / z; return (sg < 0 && x !== 0 ? '−' : '') + (y === 1 ? String(x) : `${x}/${y}`); }
 
+// ---- ajudantes do Ensino Médio (lote 1) ----
+const nsn = n => String(n).replace('-', '−');
+const frN = t => { const s = String(t).replace('−', '-'); if (s.includes('/')) { const [a, b] = s.split('/'); return +a / +b; } return pt(s); };
+const raizN = t => { const s = String(t).replace(/ (cm|m|km)$/, '').replace('−', '-'); let m = s.match(/^(\d*)√(\d+)\/(\d+)$/); if (m) return (m[1] === '' ? 1 : +m[1]) * Math.sqrt(+m[2]) / +m[3]; m = s.match(/^(\d*)√(\d+)$/); if (m) return (m[1] === '' ? 1 : +m[1]) * Math.sqrt(+m[2]); m = s.match(/^(\d+)\/(\d+)$/); if (m) return +m[1] / +m[2]; return pt(s); };
+const vF = str => { const t = String(str).replace(/−/g, '-').replace(/\s+/g, ''); let m = t.match(/^(-?\d*)x(?:([+-]\d+))?$/); if (m) return { a: m[1] === '' ? 1 : m[1] === '-' ? -1 : +m[1], b: m[2] ? +m[2] : 0 }; return { a: 0, b: +t }; };
+const vQ = str => { const t = String(str).replace(/−/g, '-').replace(/\s+/g, ''); const r = { a: 0, b: 0, c: 0 }; (t.match(/[+-]?[^+-]+/g) || []).forEach(u => { const co = x => (x === '' || x === '+' ? 1 : x === '-' ? -1 : +x); if (u.endsWith('x²')) r.a = co(u.slice(0, -2)); else if (u.endsWith('x')) r.b = co(u.slice(0, -1)); else r.c = +u; }); return r; };
+const raizesFat = txt => [...txt.matchAll(/\(x ([−+]) (\d+)\)/g)].map(m => (m[1] === '−' ? 1 : -1) * +m[2]);
+const ehPA = l => l.length > 2 && l.every((x, i) => i === 0 || x - l[i - 1] === l[1] - l[0]);
+const ehPG = l => l.length > 2 && l[0] !== 0 && l.every((x, i) => i === 0 || x * l[0] === l[i - 1] * l[1] * 1 && x / l[i - 1] === l[1] / l[0]);
+
 // Conferências de resposta. Chave "modulo:nivel:gerador" (gerador começa em 1; "*" vale para todos os níveis).
 // Cada função recebe a questão e devolve null se estiver certa, ou um texto explicando o erro.
 // Ela deve recalcular a resposta só a partir do enunciado, sem usar código do app.
@@ -509,6 +519,67 @@ const CONF = {
   'rigidez:3:1': q => { const m = q.q.match(/varetas de (\d+) cm, (\d+) cm e (\d+) cm/); const [a, b, c] = [+m[1], +m[2], +m[3]]; const ok = a + b > c && a + c > b && b + c > a; return igual(certo(q), ok ? 'Sim, porque cada lado é menor que a soma dos outros dois' : 'Não, porque um lado é maior ou igual à soma dos outros dois'); },
   'rigidez:3:2': q => { const n = +q.q.match(/estrutura de (\d+) lados/)[1]; return igual(certo(q), 2 * n - 3); },
   'rigidez:3:3': q => { const m = q.q.match(/mede (\d+) cm por (\d+) cm/); return igualNum(pt(certo(q)), Math.hypot(+m[1], +m[2]), 1e-9); },
+  // ---------- Ensino Médio, lote 1 ----------
+  'trigret:1:1': q => { const a = q.q.match(/reto em C, os catetos medem BC = (\d+) cm e AC = (\d+) cm/); const ang = q.q.match(/ângulo ([AB]),/)[1]; return igual(certo(q).startsWith(ang === 'A' ? 'BC' : 'AC'), true); },
+  'trigret:1:2': q => { const m = q.q.match(/BC = (\d+), AC = (\d+) e AB = (\d+)\. Qual é o (\w+) do ângulo ([AB])/); const [, a, b, c, fn, ang] = m; const op = ang === 'A' ? +a : +b, ad = ang === 'A' ? +b : +a; const v = fn === 'seno' ? op / +c : fn === 'cosseno' ? ad / +c : op / ad; return igualNum(frN(certo(q)), v, 1e-9); },
+  'trigret:1:3': q => { const m = q.q.match(/valor de (\w+) (\d+)°/); const T = { sen: { 30: 0.5, 45: Math.SQRT2 / 2, 60: Math.sqrt(3) / 2 }, cos: { 30: Math.sqrt(3) / 2, 45: Math.SQRT2 / 2, 60: 0.5 }, tg: { 30: Math.sqrt(3) / 3, 45: 1, 60: Math.sqrt(3) } }; return igualNum(raizN(certo(q)), T[m[1]][m[2]], 1e-9); },
+  'trigret:1:4': q => { const x = +q.q.match(/mede (\d+)°/)[1]; return igual(certo(q), `${90 - x}°`); },
+  'trigret:2:1': q => { const m = q.q.match(/hipotenusa mede (\d+) cm e um ângulo agudo mede (\d+)°.*cateto (\w+) a esse/); const r = +m[2] * Math.PI / 180; return igualNum(raizN(certo(q)), +m[1] * (m[3] === 'oposto' ? Math.sin(r) : Math.cos(r)), 1e-9); },
+  'trigret:2:2': q => { const m = q.q.match(/vale (\d+)\/(\d+) e a hipotenusa mede (\d+) cm/); return igualNum(pt(certo(q)), +m[3] * m[1] / m[2], 1e-9); },
+  'trigret:2:3': q => { const m = q.q.match(/tem (seno|cosseno) igual a (\d+)\/(\d+),/); const x = m[2] / m[3]; return igualNum(frN(certo(q)), Math.sqrt(1 - x * x), 1e-9); },
+  'trigret:2:4': q => { const m = q.q.match(/tem (seno|cosseno) igual a (\d+)\/(\d+),/); const x = m[2] / m[3], y = Math.sqrt(1 - x * x); return igualNum(frN(certo(q)), m[1] === 'seno' ? x / y : y / x, 1e-9); },
+  'trigret:3:1': q => { let m = q.q.match(/rampa de (\d+) m de comprimento/); if (m) return igual(certo(q), `${m[1] / 2} m`); m = q.q.match(/subir (\d+) m de altura/); return igual(certo(q), `${m[1] * 2} m`); },
+  'trigret:3:2': q => { const m = q.q.match(/sombra de (\d+) m .* formam (\d+)°/); return igualNum(raizN(certo(q)), +m[1] * Math.tan(m[2] * Math.PI / 180), 1e-9); },
+  'trigret:3:3': q => { const m = q.q.match(/poste de (\d+) m .* formando (\d+)°/); return igualNum(raizN(certo(q)), +m[1] / Math.sin(m[2] * Math.PI / 180), 1e-9); },
+  'trigret:3:4': q => { if (/igual ao cateto adjacente/.test(q.q)) return igual(certo(q), '45°'); const m = q.q.match(/cateto (oposto|adjacente) a um ângulo agudo α mede (\d+) cm e a hipotenusa mede (\d+) cm/); const x = m[2] / m[3]; const d = Math.round((m[1] === 'oposto' ? Math.asin(x) : Math.acos(x)) * 180 / Math.PI); return igual(certo(q), `${d}°`); },
+  'funcafim:1:1': q => { const l = vF(q.q.match(/f\(x\) = ([^,]+),/)[1]); return igualNum(pt(certo(q)), l.a); },
+  'funcafim:1:2': q => { const l = vF(q.q.match(/f\(x\) = (.+?)\?/)[1]); return igualNum(pt(certo(q)), -l.b / l.a); },
+  'funcafim:1:3': q => { const b = +q.q.match(/\(0, (−?\d+)\)/)[1].replace('−', '-'); const m = q.q.match(/y (aumenta|diminui) (\d+)/); const a = (m[1] === 'aumenta' ? 1 : -1) * +m[2]; const r = vF(certo(q).replace('f(x) = ', '')); return r.a === a && r.b === b ? null : `lei ${certo(q)}, esperado a=${a}, b=${b}`; },
+  'funcafim:1:4': q => { const l = vF(q.q.match(/f\(x\) = (.+?) é crescente/)[1]); return igual(certo(q), l.a > 0 ? 'Crescente' : 'Decrescente'); },
+  'funcafim:2:1': q => { const n = nums(q.q); const [x1, y1, x2, y2] = n; const a = (y2 - y1) / (x2 - x1), b = y1 - a * x1; const r = vF(certo(q).replace('f(x) = ', '')); return r.a === a && r.b === b ? null : `lei ${certo(q)}, esperado a=${a}, b=${b}`; },
+  'funcafim:2:2': q => { const l = vF(q.q.match(/sendo f\(x\) = (.+?)\?/)[1]); const r = -l.b / l.a; return igual(certo(q), `x ${l.a > 0 ? '>' : '<'} ${nsn(r)}`); },
+  'funcafim:2:3': q => { const m = q.q.match(/inequação (.+) < (−?\d+)\./); const l = vF(m[1]), c = +m[2].replace('−', '-'); const t = (c - l.b) / l.a; return igual(certo(q), `x ${l.a > 0 ? '<' : '>'} ${nsn(t)}`); },
+  'funcafim:2:4': q => { const l = vF(q.q.match(/f\(x\) = ([^,]+),/)[1]); const c = +q.q.match(/f\(x\) = (−?\d+)\?/)[1].replace('−', '-'); return igualNum(pt(certo(q)), (c - l.b) / l.a); },
+  'funcafim:3:1': q => { const [b1, a1, b2, a2] = nums(q.q); return igual(certo(q), `${(b2 - b1) / (a1 - a2)} km`); },
+  'funcafim:3:2': q => { const [F0, c, p] = nums(q.q); return igual(certo(q), `${F0 / (p - c)} camisetas`); },
+  'funcafim:3:3': q => { const [b, a, k] = nums(q.q); return igualNum(pt(certo(q)), a * k + b); },
+  'funcafim:3:4': q => { const [y0, v] = nums(q.q); return igual(certo(q), `${y0 / v} min`); },
+  'funcquad:1:1': q => { const l = vQ(q.q.match(/f\(x\) = (.+?) tem a concavidade/)[1]); return igual(certo(q), l.a > 0 ? 'Para cima' : 'Para baixo'); },
+  'funcquad:1:2': q => { const l = vQ(q.q.match(/f\(x\) = (.+?) corta/)[1]); return igual(certo(q), `(0, ${nsn(l.c)})`); },
+  'funcquad:1:3': q => { const l = vQ(q.q.match(/f\(x\) = (.+?)\?/)[1]); return igual(certo(q), `x = ${nsn(-l.b / (2 * l.a))}`); },
+  'funcquad:1:4': q => { const m = q.q.match(/f\(x\) = (−?\d*)\(x ([−+]) (\d+)\)² ([+−]) (\d+)\?/); const h = (m[2] === '−' ? 1 : -1) * +m[3], k = (m[4] === '+' ? 1 : -1) * +m[5]; return igual(certo(q), `(${nsn(h)}, ${nsn(k)})`); },
+  'funcquad:2:1': q => { const r = raizesFat(q.q); return igualNum(pt(certo(q)), (r[0] + r[1]) / 2); },
+  'funcquad:2:2': q => { const m = q.q.match(/valor (mínimo|máximo) da função f\(x\) = (.+?)\?/); const l = vQ(m[2]); if ((l.a > 0) !== (m[1] === 'mínimo')) return 'mínimo/máximo incoerente com a'; return igualNum(pt(certo(q)), l.c - l.b * l.b / (4 * l.a)); },
+  'funcquad:2:3': q => { const l = vQ(q.q.match(/função f\(x\) = (.+?) é crescente/)[1]); const xv = -l.b / (2 * l.a); return igual(certo(q), `x ${l.a < 0 ? '<' : '>'} ${nsn(xv)}`); },
+  'funcquad:2:4': q => { const r = raizesFat(q.q).sort((a, b) => a - b); return igual(certo(q), `${nsn(r[0])} e ${nsn(r[1])}`); },
+  'funcquad:3:1': q => { const P = nums(q.q)[0], m = P / 4; return /cada lado/.test(q.q) ? igual(certo(q), `${m} m`) : igual(certo(q), `${m * m} m²`); },
+  'funcquad:3:2': q => { const l = vQ(q.q.match(/R\(p\) = (.+?), em que/)[1].replace(/p/g, 'x')); const m = l.b / 2; return /Qual preço/.test(q.q) ? igualNum(pt(certo(q)), m) : igualNum(pt(certo(q)), m * m); },
+  'funcquad:3:3': q => { const l = vQ(q.q.match(/h\(t\) = (.+?)\. (Em|Qual)/)[1].replace(/t/g, 'x')); const tv = -l.b / (2 * l.a), hm = l.c - l.b * l.b / (4 * l.a); return /instante/.test(q.q) ? igual(certo(q), `${tv} s`) : igual(certo(q), `${hm} m`); },
+  'funcquad:3:4': q => { const r = raizesFat(q.q).sort((a, b) => a - b); const neg = /f\(x\) < 0/.test(q.q); return igual(certo(q), neg ? `${nsn(r[0])} < x < ${nsn(r[1])}` : `x < ${nsn(r[0])} ou x > ${nsn(r[1])}`); },
+  'pa:1:1': q => { const t = nums(q.q.split('é uma')[0]); return igualNum(pt(certo(q)), t[1] - t[0]); },
+  'pa:1:2': q => { const opts = q.o.map(o => nums(o)); const bons = opts.filter(ehPA); return bons.length === 1 && ehPA(opts[q.c]) ? null : `${bons.length} opções são PA`; },
+  'pa:1:3': q => { const t = nums(q.q.split('qual')[0]); return igualNum(pt(certo(q)), t[2] + (t[1] - t[0])); },
+  'pa:1:4': q => { const [x, y] = nums(q.q); return igualNum(pt(certo(q)), (x + y) / 2); },
+  'pa:2:1': q => { const [a1, r, n] = nums(q.q); return igualNum(pt(certo(q)), a1 + (n - 1) * r); },
+  'pa:2:2': q => { const t = nums(q.q); const a1 = t[0], r = t[1] - t[0], T = t[3]; return igual(certo(q), String((T - a1) / r + 1)); },
+  'pa:2:3': q => { const t = nums(q.q); const r = t[1] - t[0], a1 = t[0]; const l = vF(certo(q).replace('a(n) = ', '').replace(/n/g, 'x')); return l.a === r && l.b === a1 - r ? null : `lei ${certo(q)}, esperado ${r}n + ${a1 - r}`; },
+  'pa:2:4': q => { const [m, A, B] = nums(q.q); return igualNum(pt(certo(q)), (B - A) / (m + 1)); },
+  'pa:3:1': q => { const [a1, r, n] = nums(q.q); return igualNum(pt(certo(q)), n * (2 * a1 + (n - 1) * r) / 2); },
+  'pa:3:2': q => { const t = q.q.match(/\+ \.\.\. \+ (\d+)\?/); const N = +t[1]; return igualNum(pt(certo(q)), N * (N + 1) / 2); },
+  'pa:3:3': q => { const [n, a1, r] = nums(q.q); return igualNum(pt(certo(q)), n * (2 * a1 + (n - 1) * r) / 2); },
+  'pa:3:4': q => { const [a1, r, n] = nums(q.q); return igualNum(pt(certo(q)), a1 + (n - 1) * r); },
+  'pg:1:1': q => { const t = nums(q.q.split('é uma')[0]); return igualNum(frN(certo(q)), t[1] / t[0], 1e-9); },
+  'pg:1:2': q => { const t = nums(q.q.split('qual')[0]); return igualNum(pt(certo(q)), t[2] * t[2] / t[1]); },
+  'pg:1:3': q => { const [x, y] = nums(q.q); return igualNum(pt(certo(q)), Math.sqrt(x * y), 1e-9); },
+  'pg:1:4': q => { const opts = q.o.map(o => nums(o)); const bons = opts.filter(l => l.length > 2 && l[0] !== 0 && l.every((x, i) => i === 0 || Math.abs(x / l[i - 1] - l[1] / l[0]) < 1e-12)); return bons.length === 1 && bons[0] === opts[q.c] ? null : `${bons.length} opções são PG`; },
+  'pg:2:1': q => { const [a1, r, n] = nums(q.q); return igualNum(pt(certo(q)), a1 * Math.pow(r, n - 1)); },
+  'pg:2:2': q => { const [a1, r] = nums(q.q); return igualNum(pt(certo(q)), a1 * Math.pow(r, 5) - (a1 + 5 * r)); },
+  'pg:2:3': q => { const t = nums(q.q.split('em que')[0]); const T = pt(q.q.match(/número ([\d.]+)\?/)[1]); const r = t[1] / t[0]; return igual(certo(q), String(Math.round(Math.log(T / t[0]) / Math.log(r)) + 1)); },
+  'pg:2:4': q => { const t = nums(q.q.split('qual')[0]); const r = t[1] / t[0]; return igualNum(pt(certo(q)), t[2] * r, 1e-9); },
+  'pg:3:1': q => { const [a1, r, n] = nums(q.q); return igualNum(pt(certo(q)), a1 * (Math.pow(r, n) - 1) / (r - 1)); },
+  'pg:3:2': q => { const a1 = +q.q.match(/infinita (\d+) \+/)[1]; const m = q.q.match(/razão (\d+)\/(\d+)\?/); return igualNum(pt(certo(q)), a1 / (1 - m[1] / m[2]), 1e-9); },
+  'pg:3:3': q => { const [a1, n] = nums(q.q); return igualNum(pt(certo(q)), a1 * Math.pow(2, n)); },
+  'pg:3:4': q => { const [m0, h] = nums(q.q); return igual(certo(q), `${m0 / Math.pow(2, h)} g`); },
   // ---------- juros ----------
   'juros:1:1': q => { const m = q.q.match(/custa (R\$ [\d.,]+) e está com (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 - m[2] / 100), 1e-6); },
   'juros:1:2': q => { const m = q.q.match(/de (R\$ [\d.,]+) sofreu aumento de (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 + m[2] / 100), 1e-6); },

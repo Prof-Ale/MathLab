@@ -434,3 +434,15 @@ Geometria, 9º ano (EF09MA11). Circunferência com os pontos A, B e P: o ângulo
 
 ## Fechamento da auditoria BNCC (v3.11)
 Cinco módulos novos para as habilidades que estavam só em parte: Estimativas e arredondamento (EF06MA12), Ler tabelas e gráficos (EF06MA31, EF06MA32, EF07MA37), Multiplicar e dividir racionais (EF07MA11, EF07MA12), Razões entre grandezas diferentes (EF09MA07) e Rigidez dos triângulos (EF07MA25). Também foram incluídos no registro os códigos que já estavam cobertos no conteúdo: EF06MA15 (razão e proporção), EF07MA37 (gráficos) e EF08MA07 (sistemas).
+
+## Fase 3: Ensino Médio (v4.0)
+Começa a terceira fase do projeto (1ª fase Ensino Fundamental, 2ª fase Arena, 3ª fase Ensino Médio). Os módulos do Médio recebem o selo "1ª EM", "2ª EM" ou "3ª EM" nos cartões, na Home e no filtro por ano da Arena, e citam os códigos EM13MAT da BNCC.
+
+Lote 1, todos na 1ª série, cada um com 12 geradores em 3 níveis, resposta conferida por cálculo independente nos testes e elegíveis para a Arena:
+- `trigret` Trigonometria no triângulo retângulo (EM13MAT308): oposto, adjacente, hipotenusa, seno, cosseno e tangente, ângulos de 30°, 45° e 60°, rampa, sombra e cabo.
+- `funcafim` Função afim (EM13MAT302, EM13MAT401, EM13MAT501): taxa de variação, zero, sinal, inequação, duas retas com ponto de encontro, custo e equilíbrio.
+- `funcquad` Função quadrática (EM13MAT302, EM13MAT402, EM13MAT502, EM13MAT503): concavidade, vértice, raízes, valor máximo ou mínimo, cerca, receita e lançamento.
+- `pa` Progressão aritmética (EM13MAT507): razão, termo geral, soma e soma de Gauss.
+- `pg` Progressão geométrica (EM13MAT508 e EM13MAT304): razão, termo geral, soma finita e infinita, duplicação e meia-vida.
+
+Observação: o Ensino Fundamental não foi alterado.

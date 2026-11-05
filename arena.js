@@ -139,10 +139,10 @@ function telaConfig(){
   </section>
 
   <section class="ar-box" aria-labelledby="hO"><div class="ar-lin" style="justify-content:space-between"><h2 id="hO">3. O que entra (${E.sel.size} de ${mods.length} assuntos)</h2>
-    <label class="ar-fld ar-inl">Ano<select id="cAno" onchange="ArenaUI.ano(this.value)"><option value="todos">Todos</option>${anos.map(a=>`<option value="${a}" ${String(E.ano)===String(a)?'selected':''}>${a}º ano</option>`).join('')}</select></label></div>
+    <label class="ar-fld ar-inl">Ano<select id="cAno" onchange="ArenaUI.ano(this.value)"><option value="todos">Todos</option>${anos.map(a=>`<option value="${a}" ${String(E.ano)===String(a)?'selected':''}>${typeof rotuloAno==='function'?rotuloAno(a):a+'º ano'}</option>`).join('')}</select></label></div>
     ${porEixo.map(([e,l])=>{const n=EIXO_N[e]||1;return `<fieldset class="ar-eixo" style="--ax:var(--ax${n})"><legend>${esc(e)}</legend>
       <div class="ar-lin"><button class="ar-btn sec peq" type="button" onclick="ArenaUI.eixo('${esc(e)}',true)">Marcar todos</button><button class="ar-btn sec peq" type="button" onclick="ArenaUI.eixo('${esc(e)}',false)">Desmarcar</button></div>
-      <div class="ar-mods">${l.map(m=>`<label class="ar-mod"><input type="checkbox" ${E.sel.has(m.id)?'checked':''} onchange="ArenaUI.mod('${m.id}',this.checked)"><span><span aria-hidden="true">${m.ic}</span> ${esc(m.nome)} <small>${m.ano}º</small></span></label>`).join('')}</div></fieldset>`}).join('')}
+      <div class="ar-mods">${l.map(m=>`<label class="ar-mod"><input type="checkbox" ${E.sel.has(m.id)?'checked':''} onchange="ArenaUI.mod('${m.id}',this.checked)"><span><span aria-hidden="true">${m.ic}</span> ${esc(m.nome)} <small>${m.ano>=10?(m.ano-9)+'ª EM':m.ano+'º'}</small></span></label>`).join('')}</div></fieldset>`}).join('')}
     <p class="ar-dica">O assunto Sólidos geométricos fica de fora porque usa o 3D do GeoGebra, que precisa de internet e de interação individual.</p>
   </section>
 
