@@ -446,3 +446,27 @@ Lote 1, todos na 1ª série, cada um com 12 geradores em 3 níveis, resposta con
 - `pg` Progressão geométrica (EM13MAT508 e EM13MAT304): razão, termo geral, soma finita e infinita, duplicação e meia-vida.
 
 Observação: o Ensino Fundamental não foi alterado.
+
+## Lote 2 do Ensino Médio (v4.1)
+
+Cinco módulos novos na 1ª EM:
+- conj: Conjuntos e intervalos (Venn, intervalos reais, contagens). Não há habilidade EM13 própria, o objetivo cita o Currículo Paulista.
+- notcient: Notação científica (conversão, produto, divisão, ordem de grandeza). Regra de ordem de grandeza: mantissa a partir de 3,16 sobe a potência, e o enunciado diz isso.
+- funcexp: Função exponencial (EM13MAT304, EM13MAT101).
+- log: Logaritmos, pH e escala Richter (EM13MAT305).
+- matfin: Juros compostos e inflação (EM13MAT303, EM13MAT104).
+
+## Ângulos de triângulos e quadriláteros (v4.2)
+
+Módulo novo `angpol`, 7º ano (EF07MA24, EF07MA27), inspirado no applet do GeoGebra sugerido pelo professor.
+- Figura: triângulo ou quadrilátero. Os ângulos A, B e C são editáveis por controle deslizante. O último ângulo é calculado (180° ou 360° menos a soma), então a figura sempre fecha.
+- Modo 0, internos: arcos coloridos, ângulo reto com quadradinho, soma e classificação do triângulo.
+- Modo 1, externos: prolongamento dos lados, ângulo externo em cada vértice, soma 360° e a relação externo = soma dos dois internos dos outros vértices.
+- Modo 2, juntar: os ângulos reunidos em um ângulo raso (triângulo) ou numa volta (quadrilátero).
+- 12 geradores de questões em 3 níveis. Valores permitidos: triângulo com ângulos de 20° a 140°, quadrilátero convexo com ângulos de 30° a 150°.
+
+## Arrastar vértices e "Descubra o x" (v4.3)
+
+- Ângulos de triângulos e quadriláteros (`angpol`): agora os vértices podem ser arrastados com o dedo ou o mouse nos modos internos e externos. No triângulo há ímãs em 30°, 45°, 60°, 90°, 120° e 135°. No quadrilátero a figura se mantém convexa, com ângulos de 30° a 150°. Durante uma questão com valores escondidos o arraste fica desligado, para a figura não contradizer o enunciado. Os controles deslizantes continuam funcionando.
+- Módulo novo `angx`, Descubra o x nos ângulos (7º ano, EF07MA18 e EF07MA24): os ângulos aparecem escritos com x. O aluno mexe no x, uma barra de soma mostra quanto falta ou passou de 180° ou 360°, e o controle "Equação passo a passo" monta a equação (1 montar, 2 simplificar, 3 resolver). Inclui exercícios de ângulo externo do triângulo. 12 geradores de questões em 3 níveis, incluindo isósceles e paralelogramo com x.
+- Mudança no núcleo: `ajustar()` aceita uma altura própria do módulo (`alt`). Sem `alt`, tudo continua com 260 px como antes.

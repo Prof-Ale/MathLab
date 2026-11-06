@@ -200,6 +200,33 @@ const raizesFat = txt => [...txt.matchAll(/\(x ([−+]) (\d+)\)/g)].map(m => (m[
 const ehPA = l => l.length > 2 && l.every((x, i) => i === 0 || x - l[i - 1] === l[1] - l[0]);
 const ehPG = l => l.length > 2 && l[0] !== 0 && l.every((x, i) => i === 0 || x * l[0] === l[i - 1] * l[1] * 1 && x / l[i - 1] === l[1] / l[0]);
 
+// ---- ajudantes do Ensino Médio (lote 2) ----
+const pSupD = '⁰¹²³⁴⁵⁶⁷⁸⁹', pSubD = '₀₁₂₃₄₅₆₇₈₉';
+const supN = t => parseInt(String(t).replace(/⁻/g, '-').replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, c => pSupD.indexOf(c)), 10);
+const subN = t => parseInt([...String(t)].map(c => pSubD.indexOf(c)).join(''), 10);
+const subS = n => String(n).replace(/\d/g, d => pSubD[d]);
+const supS = n => String(n).replace(/-/g, '⁻').replace(/\d/g, d => pSupD[d]);
+const SCI_RE = /(\d+(?:,\d+)?) × 10([⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+)/g;
+const sciAll = t => [...String(t).matchAll(SCI_RE)].map(m => ({ m: pt(m[1]), e: supN(m[2]), v: pt(m[1]) * Math.pow(10, supN(m[2])) }));
+const rel = (got, esp, tol = 1e-9) => (Math.abs(got - esp) <= tol * Math.max(Math.abs(esp), 1e-300) ? null : `resposta ${got}, esperado ${esp}`);
+const sciOk = (txt, esp) => { const a = sciAll(txt)[0]; if (!a) return `sem notação científica em "${txt}"`; if (!(a.m >= 1 && a.m < 10)) return `mantissa fora de [1,10): ${txt}`; return rel(a.v, esp); };
+const ivsT = t => [...String(t).matchAll(/([\[(])(−?\d+), (−?\d+)([\])])/g)].map(m => ({ l: +m[2].replace('−', '-'), r: +m[3].replace('−', '-'), lc: m[1] === '[', rc: m[4] === ']' }));
+const noIv = (I, x) => (x > I.l || (x === I.l && I.lc)) && (x < I.r || (x === I.r && I.rc));
+const noLista = (L, x) => L.some(I => noIv(I, x));
+const amostra = f => { const o = []; for (let x = -20; x <= 30; x += .5) o.push(f(x) ? 1 : 0); return o.join(''); };
+const rosL = t => String(t).split(', ').map(x => +x.replace('−', '-')).filter(x => !isNaN(x));
+const rosC = q => { const m = q.match(/A = \{([^}]*)\} e B = \{([^}]*)\}/); const A = rosL(m[1]), B = rosL(m[2]); return { A, B, i: A.filter(x => B.includes(x)).length, u: new Set([...A, ...B]).size }; };
+const feLei = t => { const m = String(t).match(/f\(x\) = (?:(\d+) · )?(?:\(1\/(\d+)\)|(\d+))ˣ/); return { a: m[1] ? +m[1] : 1, b: m[2] ? +m[2] : +m[3], inv: !!m[2] }; };
+const logB = (N, b) => Math.round(Math.log(N) / Math.log(b));
+
+
+// ---- auxiliares do módulo angx ----
+const axp = t => { t = t.trim(); let m = t.match(/^(\d*)x(?: ([+−]) (\d+)°)?$/); if (m) return [m[1] === '' ? 1 : +m[1], m[2] ? (m[2] === '+' ? 1 : -1) * +m[3] : 0]; m = t.match(/^(\d+)°$/); if (m) return [0, +m[1]]; throw new Error('expressão não lida: ' + t); };
+const axl = s => s.split(/, | e /).map(axp);
+const axSoma = (e, T) => (T - e.reduce((s, t) => s + t[1], 0)) / e.reduce((s, t) => s + t[0], 0);
+const axLista = q => axl(q.q.match(/medem (.+?)\. (?:Qual|Quanto)/)[1]);
+const axFig = q => (/quadrilátero/.test(q.q) ? 360 : 180);
+const axF = (p, q) => { const a = p === 0 ? '' : (p === 1 ? '' : p) + 'x'; if (p === 0) return `${q}°`; return q === 0 ? a : `${a} ${q > 0 ? '+' : '−'} ${Math.abs(q)}°`; };
 // Conferências de resposta. Chave "modulo:nivel:gerador" (gerador começa em 1; "*" vale para todos os níveis).
 // Cada função recebe a questão e devolve null se estiver certa, ou um texto explicando o erro.
 // Ela deve recalcular a resposta só a partir do enunciado, sem usar código do app.
@@ -580,6 +607,93 @@ const CONF = {
   'pg:3:2': q => { const a1 = +q.q.match(/infinita (\d+) \+/)[1]; const m = q.q.match(/razão (\d+)\/(\d+)\?/); return igualNum(pt(certo(q)), a1 / (1 - m[1] / m[2]), 1e-9); },
   'pg:3:3': q => { const [a1, n] = nums(q.q); return igualNum(pt(certo(q)), a1 * Math.pow(2, n)); },
   'pg:3:4': q => { const [m0, h] = nums(q.q); return igual(certo(q), `${m0 / Math.pow(2, h)} g`); },
+  // ---------- Ensino Médio, lote 2 ----------
+  'conj:1:1': q => { const m = q.q.match(/\| (−?\d+) ≤ x ≤ (−?\d+)\}/); return igual(certo(q), +m[2].replace('−', '-') - +m[1].replace('−', '-') + 1); },
+  'conj:1:2': q => igual(certo(q), rosC(q.q).i),
+  'conj:1:3': q => igual(certo(q), rosC(q.q).u),
+  'conj:1:4': q => { const m = q.q.match(/\| (−?\d+) (≤|<) x (≤|<) (−?\d+)\}/); return igual(certo(q), `${m[2] === '≤' ? '[' : '('}${m[1]}, ${m[4]}${m[3] === '≤' ? ']' : ')'}`); },
+  'conj:2:1': q => { const [a, b, i] = nums(q.q); return igual(certo(q), a + b - i); },
+  'conj:2:2': q => { const c = rosC(q.q); return igual(certo(q), c.A.length - c.i); },
+  'conj:2:3': q => { const [A, B] = ivsT(q.q); const f = x => noIv(A, x) && noIv(B, x); const ok = amostra(f); const alt = q.o.map(o => amostra(x => noLista(ivsT(o), x))); const got = alt[q.c]; if (got !== ok) return `a opção marcada não é A ∩ B: ${certo(q)}`; return alt.filter(z => z === ok).length === 1 ? null : 'duas opções equivalentes'; },
+  'conj:2:4': q => { const [A, B] = ivsT(q.q); const f = x => noIv(A, x) || noIv(B, x); const ok = amostra(f); const alt = q.o.map(o => amostra(x => noLista(ivsT(o), x))); if (alt[q.c] !== ok) return `a opção marcada não é A ∪ B: ${certo(q)}`; return alt.filter(z => z === ok).length === 1 ? null : 'duas opções equivalentes'; },
+  'conj:3:1': q => { const [N, X, Y, Z] = nums(q.q); const u = X + Y - Z; return igual(certo(q), /nenhum/.test(q.q) ? N - u : u); },
+  'conj:3:2': q => { const [X, Y, Z] = nums(q.q); return igual(certo(q), /apenas de matemática/.test(q.q) ? X - Z : X + Y - 2 * Z); },
+  'conj:3:3': q => { const [I] = ivsT(q.q); let n = 0; for (let x = -20; x <= 30; x++) if (noIv(I, x)) n++; return igual(certo(q), n); },
+  'conj:3:4': q => { const [A, B] = ivsT(q.q); let n = 0; for (let x = -20; x <= 30; x++) if (noIv(A, x) && noIv(B, x)) n++; return igual(certo(q), n); },
+  'notcient:1:1': q => sciOk(certo(q), pt(q.q.match(/Escreva ([\d.,]+) em/)[1])),
+  'notcient:1:2': q => sciOk(certo(q), pt(q.q.match(/Escreva ([\d.,]+) em/)[1])),
+  'notcient:1:3': q => { const a = sciAll(q.q)[0]; return rel(pt(certo(q)), a.v); },
+  'notcient:1:4': q => { const bons = q.o.filter(o => { const a = sciAll(o)[0]; return a && a.m >= 1 && a.m < 10; }); return bons.length === 1 && bons[0] === certo(q) ? null : `${bons.length} opções em notação científica`; },
+  'notcient:2:1': q => { const [a, b] = sciAll(q.q); return sciOk(certo(q), a.v * b.v); },
+  'notcient:2:2': q => { const [a, b] = sciAll(q.q); return sciOk(certo(q), a.v / b.v); },
+  'notcient:2:3': q => { const a = sciAll(q.q)[0]; return igual(certo(q), `10${supS(a.m < Math.sqrt(10) ? a.e : a.e + 1)}`); },
+  'notcient:2:4': q => { const [a, b] = sciAll(q.q); return sciOk(certo(q), a.v + b.v); },
+  'notcient:3:1': q => { const a = sciAll(q.q)[0]; return rel(pt(certo(q)), 1e-3 / a.v); },
+  'notcient:3:2': q => { const [v, d] = sciAll(q.q); return sciOk(certo(q), d.v / v.v); },
+  'notcient:3:3': q => { const [a, b] = sciAll(q.q); return sciOk(certo(q), a.v * b.v); },
+  'notcient:3:4': q => { const [a, b] = sciAll(q.q); const mx = a.v > b.v ? a : b; const t = `${String(mx.m).replace('.', ',')} × 10${supS(mx.e)}`; return igual(certo(q), t); },
+  'funcexp:1:1': q => { const l = feLei(q.q), n = +q.q.match(/calcule f\((\d+)\)/)[1]; return rel(pt(certo(q)), l.a * Math.pow(l.b, n)); },
+  'funcexp:1:2': q => { const l = feLei(q.q); return igual(certo(q), l.b === 1 ? 'Constante' : l.inv ? 'Decrescente' : 'Crescente'); },
+  'funcexp:1:3': q => { const l = feLei(q.q); return igual(certo(q), `(0, ${l.a})`); },
+  'funcexp:1:4': q => { const m = q.q.match(/Quanto vale (\d+)([⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+)\?/); const b = +m[1], n = -supN(m[2]); return igual(certo(q), `1/${Math.pow(b, n)}`); },
+  'funcexp:2:1': q => { const m = q.q.match(/f\(0\) = (\d+) e f\(2\) = (\d+)/); return rel(pt(certo(q)), Math.sqrt(m[2] / m[1])); },
+  'funcexp:2:2': q => { const m = q.q.match(/equação (\d+)ˣ = (\S+?)\./); return rel(pt(certo(q)), logB(frN(m[2]), +m[1])); },
+  'funcexp:2:3': q => { const m = q.q.match(/equação (\d+)ˣ = (\d+)\./); return rel(frN(certo(q)), Math.log(+m[2]) / Math.log(+m[1])); },
+  'funcexp:2:4': q => { const m = q.q.match(/V\(t\) = ([\d.]+) · ([\d,]+)ᵗ.*após (\d+) anos/); return rel(pt(certo(q)), pt(m[1]) * Math.pow(pt(m[2]), +m[3]), 1e-9); },
+  'funcexp:3:1': q => { const m = q.q.match(/N\(t\) = (\d+) · (\d+)ᵗ.*chega a ([\d.]+) bactérias/); return igual(certo(q), `${logB(pt(m[3]) / +m[1], +m[2])} horas`); },
+  'funcexp:3:2': q => { const m = q.q.match(/tem (\d+) g e sua meia-vida é de (\d+) horas.*após (\d+) horas/); return igual(certo(q), `${+m[1] / Math.pow(2, +m[3] / +m[2])} g`); },
+  'funcexp:3:3': q => { const m = q.q.match(/hoje de ([\d.]+) habitantes e cresce (\d+)% ao ano.*em (\d+) anos/); return rel(pt(certo(q)), pt(m[1]) * Math.pow(1 + m[2] / 100, +m[3]), 1e-9); },
+  'funcexp:3:4': q => { const m = q.q.match(/x = (\d+), qual é maior: (\d+)ˣ ou (\d+)x\?/); const A = Math.pow(+m[2], +m[1]), B = +m[3] * +m[1]; return igual(certo(q), A > B ? `${m[2]}ˣ` : `${m[3]}x`); },
+  'log:1:1': q => { const m = q.q.match(/log([₀-₉]+) ([\d.]+)\?/); return igual(certo(q), logB(pt(m[2]), subN(m[1]))); },
+  'log:1:2': q => { const m = q.q.match(/Escreva (\d+)([⁰¹²³⁴⁵⁶⁷⁸⁹]+) = ([\d.]+) na/); const b = +m[1], x = supN(m[2]); return igual(certo(q), `log${subS(b)} ${m[3]} = ${x}`); },
+  'log:1:3': q => { const m = q.q.match(/log([₀-₉]+) (\S+?)\?/); return rel(pt(certo(q)), logB(frN(m[2]), subN(m[1]))); },
+  'log:1:4': q => { const m = q.q.match(/log ([\d.,]+)\?/); return rel(pt(certo(q)), Math.round(Math.log10(pt(m[1].replace(/\.(?=\d{3}\b)/g, ''))))); },
+  'log:2:1': q => { const m = q.q.match(/log([₀-₉]+) x = (\d+)/); return rel(pt(certo(q)), Math.pow(subN(m[1]), +m[2])); },
+  'log:2:2': q => { const m = q.q.match(/logaritmo de ([\d.]+) na base b vale (\d+)/); return rel(pt(certo(q)), Math.round(Math.pow(pt(m[1]), 1 / +m[2]))); },
+  'log:2:3': q => { const m = q.q.match(/log([₀-₉]+) ([\d.]+) ([+−]) log[₀-₉]+ ([\d.]+)/); const b = subN(m[1]), x = logB(pt(m[2]), b), y = logB(pt(m[4]), b); return rel(pt(certo(q)), m[3] === '+' ? x + y : x - y); },
+  'log:2:4': q => { const m = q.q.match(/log([₀-₉]+) \((\d+)([⁰¹²³⁴⁵⁶⁷⁸⁹]+)\)/); return rel(pt(certo(q)), logB(+m[2], subN(m[1])) * supN(m[3])); },
+  'log:3:1': q => { const k = supN(q.q.match(/igual a 10([⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+) mol/)[1]); return rel(pt(certo(q)), -k); },
+  'log:3:2': q => { const m = q.q.match(/pH (\d+) e outra tem pH (\d+)/); return rel(pt(certo(q)), Math.pow(10, m[2] - m[1])); },
+  'log:3:3': q => { const m = q.q.match(/sobra 1\/(\d+)/); return rel(pt(certo(q)), logB(+m[1], 2)); },
+  'log:3:4': q => { const m = q.q.match(/magnitude (\d+) é maior que a de um de magnitude (\d+)/); return rel(pt(certo(q)), Math.pow(10, m[1] - m[2])); },
+  'matfin:1:1': q => { const m = q.q.match(/capital de (R\$ [\d.,]+) é aplicado a juros compostos de (\d+)% ao mês durante (\d+) meses/); return rel(pt(certo(q)), pt(m[1]) * Math.pow(1 + m[2] / 100, +m[3]), 5e-7); },
+  'matfin:1:2': q => { const m = q.q.match(/capital de (R\$ [\d.,]+) rende (\d+)% ao mês durante (\d+) meses/); const C = pt(m[1]), i = m[2] / 100, n = +m[3]; return rel(pt(certo(q)), C * Math.pow(1 + i, n) - C * (1 + i * n), 5e-6); },
+  'matfin:1:3': q => { const m = q.q.match(/aplicar (R\$ [\d.,]+) a juros compostos de (\d+)% ao mês durante (\d+) meses/); const C = pt(m[1]); return rel(pt(certo(q)), C * Math.pow(1 + m[2] / 100, +m[3]) - C, 5e-6); },
+  'matfin:1:4': q => { const [a, b] = nums(q.q); return rel(pt(certo(q)), (100 + a) * (100 + b) / 100 - 100, 1e-9); },
+  'matfin:2:1': q => { const m = q.q.match(/Após (\d+) meses a juros compostos de (\d+)% ao mês, um capital virou (R\$ [\d.,]+)\./); return rel(pt(certo(q)), pt(m[3]) / Math.pow(1 + m[2] / 100, +m[1]), 5e-6); },
+  'matfin:2:2': q => { const m = q.q.match(/capital de (R\$ [\d.,]+) rende (\d+)% ao mês a juros compostos\. Em quantos meses o montante chega a (R\$ [\d.,]+)\?/); return igual(certo(q), `${Math.round(Math.log(pt(m[3]) / pt(m[1])) / Math.log(1 + m[2] / 100))} meses`); },
+  'matfin:2:3': q => { const m = q.q.match(/capital de (R\$ [\d.,]+) virou (R\$ [\d.,]+) em 2 meses/); return rel(pt(certo(q)), Math.round((Math.sqrt(pt(m[2]) / pt(m[1])) - 1) * 100), 1e-9); },
+  'matfin:2:4': q => { const m = q.q.match(/produto de (R\$ [\d.,]+) sobe (\d+)%/); return rel(pt(certo(q)), pt(m[1]) * (1 - m[2] * m[2] / 10000), 5e-6); },
+  'matfin:3:1': q => { const m = q.q.match(/inflação foi de (\d+)% ao ano durante (\d+) anos/); return rel(pt(certo(q)), (Math.pow(1 + m[1] / 100, +m[2]) - 1) * 100, 1e-6); },
+  'matfin:3:2': q => { const m = q.q.match(/TV custa (R\$ [\d.,]+) à vista ou uma parcela única de (R\$ [\d.,]+)/); return rel(pt(certo(q)), Math.round((Math.sqrt(pt(m[2]) / pt(m[1])) - 1) * 100), 1e-9); },
+  'matfin:3:3': q => { const m = q.q.match(/inflação de (\d+)% ao mês, quanto um salário de (R\$ [\d.,]+) precisa/); return rel(pt(certo(q)), pt(m[2]) * Math.pow(1 + m[1] / 100, 2), 5e-6); },
+  'matfin:3:4': q => igual(certo(q), '2º mês'),
+  // ---------- angpol ----------
+  'angpol:1:1': q => { const [a, b] = nums(q.q); return igual(certo(q), `${180 - a - b}°`); },
+  'angpol:1:2': q => { const [a, b, c] = nums(q.q); return igual(certo(q), `${360 - a - b - c}°`); },
+  'angpol:1:3': q => igual(certo(q), /externos/.test(q.q) || /quadrilátero/.test(q.q) ? '360°' : '180°'),
+  'angpol:1:4': q => { const [x] = nums(q.q); return igual(certo(q), `${180 - x}°`); },
+  'angpol:2:1': q => { const [a, b] = nums(q.q); return igual(certo(q), `${a + b}°`); },
+  'angpol:2:2': q => { const n = nums(q.q.replace(/360°/, '')); return igual(certo(q), `${360 - n.reduce((x, y) => x + y, 0)}°`); },
+  'angpol:2:3': q => { const n = nums(q.q.replace(/x \+ /g, '+')); const d = n.slice(0, 3); const x = (360 - d.reduce((a, b) => a + b, 0)) / 4; return igual(certo(q), `${x}°`); },
+  'angpol:2:4': q => { const [b] = nums(q.q); return igual(certo(q), `${180 - 2 * b}°`); },
+  'angpol:3:1': q => { const [p, r, t] = nums(q.q); const s = p + r + t; return igual(certo(q), `${180 * Math.max(p, r, t) / s}°`); },
+  'angpol:3:2': q => { const [e] = nums(q.q); return igual(certo(q), `${e / 2}°`); },
+  'angpol:3:3': q => { const [e1, e2, e3] = nums(q.q); return igual(certo(q), `${e1 + e2 + e3 - 180}°`); },
+  'angpol:3:4': q => { const m = nums(q.q); return igual(certo(q), `${m[0] - m[1]}°`); },
+  // ---------- angx ----------
+  'angx:1:1': q => igual(certo(q), `${axSoma(axLista(q), 180)}°`),
+  'angx:1:2': q => igual(certo(q), `${axSoma(axLista(q), 360)}°`),
+  'angx:1:3': q => igual(certo(q), `${axSoma(axLista(q), 180)}°`),
+  'angx:1:4': q => { const e = axLista(q), T = axFig(q), P = e.reduce((s, t) => s + t[0], 0), Q = e.reduce((s, t) => s + t[1], 0); return igual(certo(q), `${axF(P, Q)} = ${T}°`); },
+  'angx:2:1': q => igual(certo(q), `${axSoma(axLista(q), 180)}°`),
+  'angx:2:2': q => igual(certo(q), `${axSoma(axLista(q), 360)}°`),
+  'angx:2:3': q => { const e = axLista(q), x = axSoma(e, axFig(q)); return igual(certo(q), `${Math.max(...e.map(t => t[0] * x + t[1]))}°`); },
+  'angx:2:4': q => { const e = axLista(q), x = axSoma(e, axFig(q)), t = axp(q.q.match(/mede o ângulo (.+?)\?$/)[1]); return igual(certo(q), `${t[0] * x + t[1]}°`); },
+  'angx:3:1': q => { const m = q.q.match(/em A mede (.+?), o interno em B mede (.+?) e o externo em C mede (.+?)\. Qual/); const [a, b, c] = [axp(m[1]), axp(m[2]), axp(m[3])]; return igual(certo(q), `${(c[1] - a[1] - b[1]) / (a[0] + b[0] - c[0])}°`); },
+  'angx:3:2': q => { const m = q.q.match(/mede (\d+)° e os ângulos da base medem (.+?) e (.+?)\. Qual/); const a = axp(m[2]), b = axp(m[3]); return igual(certo(q), `${(b[1] - a[1]) / (a[0] - b[0])}°`); },
+  'angx:3:3': q => { const m = q.q.match(/consecutivos medem (.+?) e (.+?)\. Qual/); const a = axp(m[1]), b = axp(m[2]); return igual(certo(q), `${(180 - a[1] - b[1]) / (a[0] + b[0])}°`); },
+  'angx:3:4': q => { const m = q.q.match(/em A mede (.+?), o interno em B mede (.+?) e o externo em C mede (.+?)\. Quanto mede o ângulo (interno|externo) em C/); const [a, b, c] = [axp(m[1]), axp(m[2]), axp(m[3])]; const x = (c[1] - a[1] - b[1]) / (a[0] + b[0] - c[0]); const X = c[0] * x + c[1]; return igual(certo(q), `${m[4] === 'externo' ? X : 180 - X}°`); },
   // ---------- juros ----------
   'juros:1:1': q => { const m = q.q.match(/custa (R\$ [\d.,]+) e está com (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 - m[2] / 100), 1e-6); },
   'juros:1:2': q => { const m = q.q.match(/de (R\$ [\d.,]+) sofreu aumento de (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 + m[2] / 100), 1e-6); },
