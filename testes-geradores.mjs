@@ -252,6 +252,26 @@ const mtzMs = t => [...t.matchAll(/\[([^\]]+)\]/g)].map(m => m[1].split(';').map
 const mtzMul = (A, B) => A.map(r => B[0].map((_, j) => r.reduce((s, x, k) => s + x * B[k][j], 0)));
 const mtzFm = M => '[' + M.map(r => r.map(x => (x < 0 ? '−' + (-x) : String(x))).join(' ')).join('; ') + ']';
 const mtzSub = t => '₀₁₂₃₄₅₆₇₈₉';
+const pcG = (a, b) => (b ? pcG(b, a % b) : a);
+const pcFr = (n, d) => { const g = pcG(Math.abs(n), d) || 1; n /= g; d /= g; return d === 1 ? String(n) : `${n}/${d}`; };
+const edN = x => Number(String(x).replace(/\./g, '').replace(',', '.').replace('−', '-'));
+const edList = (t, a, b) => nums(t.split(a)[1].split(b)[0]);
+const edMean = d => d.reduce((x, y) => x + y, 0) / d.length;
+const edVar = d => { const m = edMean(d); return d.reduce((x, y) => x + (y - m) ** 2, 0) / d.length; };
+const gsN = x => Number(String(x).match(/^[\d.]+/)[0].replace(/\./g, ''));
+const gaPts = t => [...t.matchAll(/\((−?\d+), (−?\d+)\)/g)].map(m => [+m[1].replace('−', '-'), +m[2].replace('−', '-')]);
+const gaS = x => (x < 0 ? '−' : '') + String(Math.abs(x));
+const gaPt = (x, y) => `(${gaS(x)}, ${gaS(y)})`;
+const gaG = (a, b) => (b ? gaG(b, a % b) : Math.abs(a));
+const gaFr = (n, d) => { if (d < 0) { n = -n; d = -d; } const g = gaG(n, d) || 1; n /= g; d /= g; return d === 1 ? gaS(n) : `${gaS(n)}/${d}`; };
+const gaEq = (m, n) => { if (m === 0) return `y = ${gaS(n)}`; const mm = m === 1 ? 'x' : m === -1 ? '−x' : `${gaS(m)}x`; return `y = ${mm}${n === 0 ? '' : n > 0 ? ` + ${n}` : ` − ${-n}`}`; };
+const gaParse = t => { const u = t.replace(/−/g, '-'); let r = u.match(/^y = (-?)(\d*)x(?: ([+-]) (\d+))?$/); if (r) return { m: (r[1] ? -1 : 1) * (r[2] === '' ? 1 : +r[2]), n: r[3] ? (r[3] === '-' ? -1 : 1) * +r[4] : 0 }; r = u.match(/^y = (-?\d+)$/); return { m: 0, n: +r[1] }; };
+const gaN = x => Number(String(x).replace('−', '-').replace(',', '.'));
+const gcT = (a, w) => (a === 0 ? `${w}²` : `(${w} ${a > 0 ? '−' : '+'} ${Math.abs(a)})²`);
+const gcEq = (a, b, r2) => `${gcT(a, 'x')} + ${gcT(b, 'y')} = ${r2}`;
+const gcPar = t => { const m = t.match(/(?:\(x ([−+]) (\d+)\)²|x²) \+ (?:\(y ([−+]) (\d+)\)²|y²) = (\d+)/); const f = (sg, v) => (sg ? (sg === '−' ? +v : -v) : 0); return { a: f(m[1], m[2]), b: f(m[3], m[4]), r2: +m[5] }; };
+const gcGe = t => { let u = t.match(/x² \+ y²([^=]*) = 0/)[1]; const sg = x => (x === '−' ? -1 : 1); let cx = 0, cy = 0; u = u.replace(/ ([+−]) (\d+)x/, (_, s, v) => { cx = sg(s) * +v; return ''; }).replace(/ ([+−]) (\d+)y/, (_, s, v) => { cy = sg(s) * +v; return ''; }); let c = 0; const mm = u.match(/ ([+−]) (\d+)/); if (mm) c = sg(mm[1]) * +mm[2]; const a = -cx / 2, b = -cy / 2; return { a, b, r2: a * a + b * b - c }; };
+const gcPos = (d2, r2) => (d2 < r2 ? 'Interior' : d2 === r2 ? 'Pertence à circunferência' : 'Exterior');
 // Conferências de resposta. Chave "modulo:nivel:gerador" (gerador começa em 1; "*" vale para todos os níveis).
 // Cada função recebe a questão e devolve null se estiver certa, ou um texto explicando o erro.
 // Ela deve recalcular a resposta só a partir do enunciado, sem usar código do app.
@@ -781,6 +801,66 @@ const CONF = {
   'matriz:3:2': q => { const f = q.q.match(/aᵢⱼ = (.+)\.$/)[1], e = { 'i + j': (i, j) => i + j, '2i − j': (i, j) => 2 * i - j, 'i · j': (i, j) => i * j, 'i² + j': (i, j) => i * i + j, '3i − 2j': (i, j) => 3 * i - 2 * j, 'i − j': (i, j) => i - j }[f]; return igual(certo(q), mtzFm([[e(1, 1), e(1, 2)], [e(2, 1), e(2, 2)]])); },
   'matriz:3:3': q => { const [A, B] = mtzMs(q.q); return igual(certo(q), mtzFm(B.map((r, i) => r.map((x, j) => x - A[i][j])))); },
   'matriz:3:4': q => { const [A, B] = mtzMs(q.q); return igualNum(nums(certo(q))[0], mtzMul(B, A)[0][0]); },
+  'probcond:1:1': q => { const [r, b] = nums(q.q), v = /ser vermelha/.test(q.q) ? r : /ser azul/.test(q.q) ? b : -1; return igual(certo(q), pcFr(v, r + b)); },
+  'probcond:1:2': q => { const [r, b] = nums(q.q), n = r + b; return igual(certo(q), pcFr(r * r, n * n)); },
+  'probcond:1:3': q => { const [r, b] = nums(q.q), n = r + b; return igual(certo(q), pcFr(r * (r - 1), n * (n - 1))); },
+  'probcond:1:4': q => { const [a, b, c, d] = nums(q.q.replace(/\d+º/g, '')); return igual(certo(q), pcFr(a + b, a + b + c + d)); },
+  'probcond:2:1': q => { const [r, b] = nums(q.q); return igual(certo(q), pcFr(b, r + b - 1)); },
+  'probcond:2:2': q => { const [r, b] = nums(q.q), n = r + b; return igual(certo(q), pcFr(r * b, n * (n - 1))); },
+  'probcond:2:3': q => { const [a, b, c, d] = nums(q.q.replace(/\d+º/g, '')); return igual(certo(q), pcFr(a, a + c)); },
+  'probcond:2:4': q => { const t = q.q, p = /par/.test(t) || /ímpar/.test(t) ? 3 : /maior que 4/.test(t) || /menor que 3/.test(t) ? 2 : 1; return igual(certo(q), pcFr(p, 12)); },
+  'probcond:3:1': q => { const [r, b] = nums(q.q), n = r + b; return igual(certo(q), pcFr(n * (n - 1) - b * (b - 1), n * (n - 1))); },
+  'probcond:3:2': q => { const [r, b] = nums(q.q), n = r + b; return igual(certo(q), pcFr(r * (r - 1) + b * (b - 1), n * (n - 1))); },
+  'probcond:3:3': q => { const [a, b, c, d] = nums(q.q.replace(/\d+º/g, '')); return igual(certo(q), pcFr(a, a + b)); },
+  'probcond:3:4': q => { const [a, b, c, d] = nums(q.q.replace(/\d+º/g, '')); return igual(certo(q), a * d === b * c ? 'Sim' : 'Não'); },
+  'estatdisp:1:1': q => igualNum(edN(certo(q)), edMean(edList(q.q, 'são ', '. Qual'))),
+  'estatdisp:1:2': q => { const d = edList(q.q, 'são ', '. Qual'); return igualNum(edN(certo(q)), Math.max(...d) - Math.min(...d)); },
+  'estatdisp:1:3': q => igualNum(edN(certo(q)), edList(q.q, 'são ', '. Qual').sort((a, b) => a - b)[2]),
+  'estatdisp:1:4': q => { const d = edList(q.q, 'são ', '. Qual'), f = {}; d.forEach(x => f[x] = (f[x] || 0) + 1); return igualNum(edN(certo(q)), +Object.keys(f).sort((a, b) => f[b] - f[a])[0]); },
+  'estatdisp:2:1': q => igualNum(edN(certo(q)), edVar(edList(q.q, 'são ', '. Sabendo'))),
+  'estatdisp:2:2': q => igualNum(edN(certo(q)), Math.sqrt(edVar(edList(q.q, 'são ', '. Qual')))),
+  'estatdisp:2:3': q => igualNum(edN(certo(q)), nums(q.q)[1]),
+  'estatdisp:2:4': q => { const A = edList(q.q, 'conjunto A é ', ' e o conjunto B'), B = edList(q.q, 'conjunto B é ', '. Os dois'); return igual(certo(q), edVar(A) > edVar(B) ? 'Conjunto A' : 'Conjunto B'); },
+  'estatdisp:3:1': q => { const n = nums(q.q); const k = (n.length - 1) / 2, N = n.slice(0, k), P = n.slice(k + 1); return igualNum(edN(certo(q)), N.reduce((a, x, i) => a + x * P[i], 0) / P.reduce((a, b) => a + b, 0), 0.006); },
+  'estatdisp:3:2': q => { const n = nums(q.q); const [N, m] = n, d = n.slice(2); return igualNum(edN(certo(q)), m * N - d.reduce((a, b) => a + b, 0)); },
+  'estatdisp:3:3': q => { const n = nums(q.q); return igualNum(edN(certo(q)), n[1] * n[2]); },
+  'estatdisp:3:4': q => { const d = []; for (const m of q.q.matchAll(/(\d+) aparece (\d+) vez/g)) for (let i = 0; i < +m[2]; i++) d.push(+m[1]); return igualNum(edN(certo(q)), edVar(d)); },
+  'geoesp:1:1': q => { const n = nums(q.q); return igualNum(gsN(certo(q)), n[0] * n[1] * n[2]); },
+  'geoesp:1:2': q => { const n = nums(q.q); return igualNum(gsN(certo(q)), n[0] * n[0] * n[1]); },
+  'geoesp:1:3': q => igualNum(gsN(certo(q)), 6 * nums(q.q)[0] ** 2),
+  'geoesp:1:4': q => igualNum(gsN(certo(q)), 4 * nums(q.q)[0] ** 3 / 3),
+  'geoesp:2:1': q => { const n = nums(q.q); return igualNum(gsN(certo(q)), 2 * n[0] * (n[0] + n[1])); },
+  'geoesp:2:2': q => { const n = nums(q.q); return igualNum(gsN(certo(q)), Math.hypot(n[0], n[1])); },
+  'geoesp:2:3': q => { const n = nums(q.q); return igualNum(gsN(certo(q)), n[0] * n[0] * n[1] / 3); },
+  'geoesp:2:4': q => { const n = nums(q.q); return igualNum(gsN(certo(q)), n[0] * n[0] * n[1] / 3); },
+  'geoesp:3:1': q => { const n = nums(q.q); return igualNum(gsN(certo(q)), n[0] * n[0] + 2 * n[0] * n[2]); },
+  'geoesp:3:2': q => { const t = q.q.match(/raio da base de (\d+) dm e altura de (\d+) dm/); return igualNum(gsN(certo(q)), 3 * t[1] * t[1] * t[2]); },
+  'geoesp:3:3': q => { const k = /igual à altura/.test(q.q) ? 1 : +q.q.match(/(\d+) vezes/)[1]; return igualNum(Number(certo(q)), 3 * k); },
+  'geoesp:3:4': q => { const t = q.q.match(/altura (\d+) cm tem volume (\d+)π/); return igualNum(gsN(certo(q)), Math.sqrt(t[2] / t[1])); },
+  'ga_reta:1:1': q => { const [A, B] = gaPts(q.q); return igualNum(gaN(certo(q)), Math.hypot(B[0] - A[0], B[1] - A[1])); },
+  'ga_reta:1:2': q => { const [A, B] = gaPts(q.q); return igual(certo(q), gaPt((A[0] + B[0]) / 2, (A[1] + B[1]) / 2)); },
+  'ga_reta:1:3': q => { const [A, B] = gaPts(q.q); return igual(certo(q), gaFr(B[1] - A[1], B[0] - A[0])); },
+  'ga_reta:1:4': q => { const m = +q.q.match(/angular (−?\d+)/)[1].replace('−', '-') ; const n = gaPts(q.q)[0][1]; return igual(certo(q), gaEq(+String(m), n)); },
+  'ga_reta:2:1': q => { const [A, B] = gaPts(q.q), m = (B[1] - A[1]) / (B[0] - A[0]); return igual(certo(q), gaEq(m, A[1] - m * A[0])); },
+  'ga_reta:2:2': q => { const e = gaParse(q.q.match(/equação (y = .+?)\. Qual/)[1]), P = gaPts(q.q)[0]; return igual(certo(q), gaEq(e.m, P[1] - e.m * P[0])); },
+  'ga_reta:2:3': q => { const t = q.q.match(/angular (−?\d+)(?:\/(\d+))?\./), p = +t[1].replace('−', '-'), d = t[2] ? +t[2] : 1; return igual(certo(q), gaFr(-d, p)); },
+  'ga_reta:2:4': q => { const e = gaParse(q.q.match(/reta (y = .+?)\?/)[1]), P = gaPts(q.q)[0]; return igual(certo(q), e.m * P[0] + e.n === P[1] ? 'Sim' : 'Não'); },
+  'ga_reta:3:1': q => { const [a, b] = q.q.replace(/^.*retas /, '').replace(/\?$/, '').split(' e ').map(gaParse), x = (b.n - a.n) / (a.m - b.m); return igual(certo(q), gaPt(x, a.m * x + a.n)); },
+  'ga_reta:3:2': q => { const t = q.q.match(/P\((−?\d+), (−?\d+)\) à reta (\d+)x ([+−]) (\d+)y(?: ([+−]) (\d+))? = 0/), x = +t[1].replace('−', '-'), y = +t[2].replace('−', '-'), A = +t[3], B = (t[4] === '−' ? -1 : 1) * +t[5], c = t[6] ? (t[6] === '−' ? -1 : 1) * +t[7] : 0; return igualNum(gaN(certo(q)), Math.abs(A * x + B * y + c) / Math.hypot(A, B)); },
+  'ga_reta:3:3': q => { const P = gaPts(q.q); return igual(certo(q), gaPt((P[0][0] + P[1][0] + P[2][0]) / 3, (P[0][1] + P[1][1] + P[2][1]) / 3)); },
+  'ga_reta:3:4': q => { const P = gaPts(q.q); return igualNum(gaN(certo(q)), Math.abs(P[1][0] * P[2][1] - P[2][0] * P[1][1]) / 2); },
+  'ga_circ:1:1': q => { const C = gaPts(q.q)[0], r = +q.q.match(/raio (\d+)/)[1]; return igual(certo(q), gcEq(C[0], C[1], r * r)); },
+  'ga_circ:1:2': q => { const e = gcPar(q.q); return igual(certo(q), /centro/.test(q.q.split('. ')[1] || '') ? gaPt(e.a, e.b) : String(Math.sqrt(e.r2))); },
+  'ga_circ:1:3': q => { const e = gcPar(q.q), P = gaPts(q.q)[0]; return igual(certo(q), (P[0] - e.a) ** 2 + (P[1] - e.b) ** 2 === e.r2 ? 'Sim' : 'Não'); },
+  'ga_circ:1:4': q => { const [C, P] = gaPts(q.q); return igual(certo(q), String(Math.hypot(P[0] - C[0], P[1] - C[1]))); },
+  'ga_circ:2:1': q => { const e = gcGe(q.q); return igual(certo(q), gaPt(e.a, e.b)); },
+  'ga_circ:2:2': q => { const e = gcGe(q.q); return igual(certo(q), String(Math.sqrt(e.r2))); },
+  'ga_circ:2:3': q => { const e = gcPar(q.q), P = gaPts(q.q)[0]; return igual(certo(q), gcPos((P[0] - e.a) ** 2 + (P[1] - e.b) ** 2, e.r2)); },
+  'ga_circ:2:4': q => { const e = gcPar(q.q), k = +q.q.match(/y = (−?\d+) e/)[1].replace('−', '-'), d = Math.abs(k - e.b); return igual(certo(q), d * d < e.r2 ? 'Secante' : d * d === e.r2 ? 'Tangente' : 'Exterior'); },
+  'ga_circ:3:1': q => { const [A, B] = gaPts(q.q), a = (A[0] + B[0]) / 2, b = (A[1] + B[1]) / 2; return igual(certo(q), gcEq(a, b, ((B[0] - A[0]) / 2) ** 2 + ((B[1] - A[1]) / 2) ** 2)); },
+  'ga_circ:3:2': q => { const e = gcPar(q.q), r = Math.sqrt(e.r2); return igual(certo(q), `k = ${gaS(e.b + r)} ou k = ${gaS(e.b - r)}`); },
+  'ga_circ:3:3': q => { const e = gcPar(q.q), k = +q.q.match(/y = (−?\d+) corta/)[1].replace('−', '-'), d = Math.abs(k - e.b); return igualNum(Number(certo(q)), 2 * Math.sqrt(e.r2 - d * d)); },
+  'ga_circ:3:4': q => igual(certo(q), `${gcPar(q.q).r2}π`),
   // ---------- juros ----------
   'juros:1:1': q => { const m = q.q.match(/custa (R\$ [\d.,]+) e está com (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 - m[2] / 100), 1e-6); },
   'juros:1:2': q => { const m = q.q.match(/de (R\$ [\d.,]+) sofreu aumento de (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 + m[2] / 100), 1e-6); },

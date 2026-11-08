@@ -481,3 +481,27 @@ Cinco módulos novos na 1ª EM, cada um com 12 geradores em 3 níveis:
 - matriz: Matrizes e determinantes (soma, produto, transposta, determinante como área do paralelogramo). Não há habilidade EM13 própria, o objetivo cita o Currículo Paulista.
 
 Observação: o Ensino Fundamental e os módulos anteriores não foram alterados.
+
+## Lote 4 do Ensino Médio (v4.5)
+
+Cinco módulos novos na 1ª EM, cada um com 12 geradores em 3 níveis:
+- probcond: Probabilidade condicional (urna com e sem reposição em árvore, tabela de dupla entrada, eventos independentes). EM13MAT311.
+- estatdisp: Média, mediana e desvio padrão (pontos na reta, desvios em relação à média, variância, desvio padrão, média ponderada). EM13MAT316.
+- geoesp: Sólidos, área e volume (prisma, cilindro, cone, pirâmide quadrangular e esfera, com geratriz e apótema). EM13MAT309.
+- ga_reta: Geometria analítica, ponto e reta (distância, ponto médio, coeficiente angular, equação reduzida, paralelas e perpendiculares). Não há habilidade EM13 própria, o objetivo cita o Currículo Paulista.
+- ga_circ: Geometria analítica, circunferência (equação reduzida e geral, posição de ponto e de reta). Mesma observação do módulo anterior.
+
+Observação: confira os códigos EM13 no texto oficial da BNCC antes de publicar. O Ensino Fundamental e os módulos anteriores não foram alterados. Os módulos ga_reta, ga_circ e geoesp usam altura de desenho maior (campo alt).
+
+## Relatório pedagógico da Arena (v4.6)
+
+Arquivo novo: `arena-relatorio.js`, carregado pelo `arena.html` depois do `arena-host.js`. Nenhuma regra, pontuação ou integração com o Firebase foi alterada.
+
+O que faz:
+1. No pódio de cada partida (local ou por celulares), guarda um resumo neste aparelho (`localStorage`, chave `mathlab-arena-rel`, até 40 partidas).
+2. Botão "Relatório pedagógico desta partida": acerto por assunto, erros mais comuns com o que retomar, questões que mais desafiaram e sugestões para a próxima aula (usa pré-requisitos e próximos assuntos do MathLab).
+3. Na tela inicial da Arena, "Relatório pedagógico acumulado" com filtro por turma, planilha CSV e opção de apagar.
+4. Campo opcional de turma e campo de observações do professor. Impressão ou PDF pelo navegador.
+
+Privacidade: guarda só apelidos agregados e contagens de erro por tipo, sem listar quem errou. Os dados ficam só no aparelho.
+Limites: testado em partida local simulada no Chromium. O modo por celulares usa os mesmos dados, mas foi testado só por leitura do código. Safari e iOS não testados.
