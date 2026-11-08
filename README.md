@@ -470,3 +470,14 @@ Módulo novo `angpol`, 7º ano (EF07MA24, EF07MA27), inspirado no applet do GeoG
 - Ângulos de triângulos e quadriláteros (`angpol`): agora os vértices podem ser arrastados com o dedo ou o mouse nos modos internos e externos. No triângulo há ímãs em 30°, 45°, 60°, 90°, 120° e 135°. No quadrilátero a figura se mantém convexa, com ângulos de 30° a 150°. Durante uma questão com valores escondidos o arraste fica desligado, para a figura não contradizer o enunciado. Os controles deslizantes continuam funcionando.
 - Módulo novo `angx`, Descubra o x nos ângulos (7º ano, EF07MA18 e EF07MA24): os ângulos aparecem escritos com x. O aluno mexe no x, uma barra de soma mostra quanto falta ou passou de 180° ou 360°, e o controle "Equação passo a passo" monta a equação (1 montar, 2 simplificar, 3 resolver). Inclui exercícios de ângulo externo do triângulo. 12 geradores de questões em 3 níveis, incluindo isósceles e paralelogramo com x.
 - Mudança no núcleo: `ajustar()` aceita uma altura própria do módulo (`alt`). Sem `alt`, tudo continua com 260 px como antes.
+
+## Lote 3 do Ensino Médio (v4.4)
+
+Cinco módulos novos na 1ª EM, cada um com 12 geradores em 3 níveis:
+- ciclotrig: Ciclo trigonométrico (seno e cosseno no círculo, radianos, quadrantes e simetria). EM13MAT306.
+- functrig: Funções seno e cosseno (amplitude, período, imagem, mudança de A, B e D, problemas de maré e roda-gigante). EM13MAT306.
+- leistrig: Lei dos senos e dos cossenos (circunferência circunscrita, lados, ângulos, área, problemas de distância). EM13MAT308.
+- combinatoria: Análise combinatória (fatorial, permutação, arranjo, combinação, triângulo de Pascal, anagramas). EM13MAT310.
+- matriz: Matrizes e determinantes (soma, produto, transposta, determinante como área do paralelogramo). Não há habilidade EM13 própria, o objetivo cita o Currículo Paulista.
+
+Observação: o Ensino Fundamental e os módulos anteriores não foram alterados.

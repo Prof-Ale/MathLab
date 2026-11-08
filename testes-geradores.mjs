@@ -227,6 +227,31 @@ const axSoma = (e, T) => (T - e.reduce((s, t) => s + t[1], 0)) / e.reduce((s, t)
 const axLista = q => axl(q.q.match(/medem (.+?)\. (?:Qual|Quanto)/)[1]);
 const axFig = q => (/quadrilátero/.test(q.q) ? 360 : 180);
 const axF = (p, q) => { const a = p === 0 ? '' : (p === 1 ? '' : p) + 'x'; if (p === 0) return `${q}°`; return q === 0 ? a : `${a} ${q > 0 ? '+' : '−'} ${Math.abs(q)}°`; };
+
+// ---- auxiliares do Lote 3 ----
+const cicPi = t => { t = t.replace(/ rad| cm/g, '').trim(); let m = t.match(/^(\d*)π(?:\/(\d+))?$/); if (m) return (m[1] === '' ? 1 : +m[1]) / (m[2] ? +m[2] : 1); if (t === '0') return 0; throw new Error('π não lido: ' + t); };
+const cicNum = t => { t = t.replace(/−/g, '-').trim(); let sg = 1; if (t[0] === '-') { sg = -1; t = t.slice(1); } let m = t.match(/^(?:√(\d+)|(\d+))(?:\/(\d+))?$/); if (m) { const top = m[1] ? Math.sqrt(+m[1]) : +m[2]; return sg * top / (m[3] ? +m[3] : 1); } m = t.match(/^√(\d+)\/(\d+)$/); if (m) return sg * Math.sqrt(+m[1]) / +m[2]; throw new Error('número não lido: ' + t); };
+const cicTrig = (f, d) => (f === 'sen' ? Math.sin(d * Math.PI / 180) : Math.cos(d * Math.PI / 180));
+const cicQuad = d => { d = ((d % 360) + 360) % 360; return d < 90 ? 1 : d < 180 ? 2 : d < 270 ? 3 : 4; };
+const cicG2 = (a, b) => (b ? cicG2(b, a % b) : Math.abs(a));
+const cicFr = d => { if (d === 0) return '0'; const g = cicG2(d, 180), n = d / g, m = 180 / g; return m === 1 ? (n === 1 ? 'π' : `${n}π`) : (n === 1 ? `π/${m}` : `${n}π/${m}`); };
+
+const ftFl = t => parseFloat(String(t).replace(/−/g, '-').replace(',', '.'));
+const ftExp = t => { const m = t.match(/y = (?:(\d+)·)?(sen|cos)(?: x|\((\d+)x\))(?: ([+−]) (\d+))?/); return { A: m[1] ? +m[1] : 1, fn: m[2], B: m[3] ? +m[3] : 1, D: m[4] ? (m[4] === '+' ? 1 : -1) * +m[5] : 0 }; };
+const ftCtx = t => { const m = t.match(/h\(t\) = (\d+) \+ (?:(\d+)·)?sen\((\d+)t\)/); return { D: +m[1], A: m[2] ? +m[2] : 1, B: +m[3] }; };
+const ftSg = n => String(n).replace('-', '−');
+const lsnV = s => { const m = String(s).replace(/−/g,'-').match(/^(\d+)?(?:√(\d+))?/); return (m[1] ? +m[1] : 1) * (m[2] ? Math.sqrt(+m[2]) : 1); };
+const lsnD = x => x * 180 / Math.PI, lsnR = d => d * Math.PI / 180;
+const lsnCl = (x, y, z) => { const m = Math.max(x, y, z), d = m * m - (x * x + y * y + z * z - m * m); return d === 0 ? 'Retângulo' : d < 0 ? 'Acutângulo' : 'Obtusângulo'; };
+const lsnNum = (got, esp) => (Math.abs(lsnV(got) - esp) < 1e-6 ? null : `resposta ${got}, esperado ${esp}`);
+const cmbF = n => { let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; };
+const cmbC = (n, p) => Math.round(cmbF(n) / (cmbF(p) * cmbF(n - p)));
+const cmbN = s => Number(String(s).replace(/\./g, ''));
+const cmbAna = w => { const m = {}; for (const ch of w) m[ch] = (m[ch] || 0) + 1; let r = cmbF(w.length); Object.values(m).forEach(k => r /= cmbF(k)); return Math.round(r); };
+const mtzMs = t => [...t.matchAll(/\[([^\]]+)\]/g)].map(m => m[1].split(';').map(r => nums(r)));
+const mtzMul = (A, B) => A.map(r => B[0].map((_, j) => r.reduce((s, x, k) => s + x * B[k][j], 0)));
+const mtzFm = M => '[' + M.map(r => r.map(x => (x < 0 ? '−' + (-x) : String(x))).join(' ')).join('; ') + ']';
+const mtzSub = t => '₀₁₂₃₄₅₆₇₈₉';
 // Conferências de resposta. Chave "modulo:nivel:gerador" (gerador começa em 1; "*" vale para todos os níveis).
 // Cada função recebe a questão e devolve null se estiver certa, ou um texto explicando o erro.
 // Ela deve recalcular a resposta só a partir do enunciado, sem usar código do app.
@@ -694,6 +719,68 @@ const CONF = {
   'angx:3:2': q => { const m = q.q.match(/mede (\d+)° e os ângulos da base medem (.+?) e (.+?)\. Qual/); const a = axp(m[2]), b = axp(m[3]); return igual(certo(q), `${(b[1] - a[1]) / (a[0] - b[0])}°`); },
   'angx:3:3': q => { const m = q.q.match(/consecutivos medem (.+?) e (.+?)\. Qual/); const a = axp(m[1]), b = axp(m[2]); return igual(certo(q), `${(180 - a[1] - b[1]) / (a[0] + b[0])}°`); },
   'angx:3:4': q => { const m = q.q.match(/em A mede (.+?), o interno em B mede (.+?) e o externo em C mede (.+?)\. Quanto mede o ângulo (interno|externo) em C/); const [a, b, c] = [axp(m[1]), axp(m[2]), axp(m[3])]; const x = (c[1] - a[1] - b[1]) / (a[0] + b[0] - c[0]); const X = c[0] * x + c[1]; return igual(certo(q), `${m[4] === 'externo' ? X : 180 - X}°`); },
+  // ---------- ciclotrig ----------
+  'ciclotrig:1:1': q => { const a = nums(q.q)[0]; return igual(certo(q), `${cicFr(a)} rad`); },
+  'ciclotrig:1:2': q => { const f = q.q.match(/a (.+?) rad\?/)[1]; return igual(certo(q), `${cicPi(f) * 180}°`); },
+  'ciclotrig:1:3': q => { const m = q.q.match(/valor de (sen|cos) (\d+)°/); return igualNum(cicNum(certo(q)), cicTrig(m[1], +m[2]), 1e-9); },
+  'ciclotrig:1:4': q => { const a = nums(q.q)[0], n = ['', 'Primeiro', 'Segundo', 'Terceiro', 'Quarto'][cicQuad(a)]; return igual(certo(q), `${n} quadrante`); },
+  'ciclotrig:2:1': q => { const a = nums(q.q)[0], s = Math.sin(a * Math.PI / 180) > 0, c = Math.cos(a * Math.PI / 180) > 0; return igual(certo(q), `sen ${s ? '>' : '<'} 0 e cos ${c ? '>' : '<'} 0`); },
+  'ciclotrig:2:2': q => { const m = q.q.match(/valor de (sen|cos) (\d+)°/); return igualNum(cicNum(certo(q)), cicTrig(m[1], +m[2]), 1e-9); },
+  'ciclotrig:2:3': q => { const a = nums(q.q)[0]; return igual(certo(q), `${((a % 360) + 360) % 360}°`); },
+  'ciclotrig:2:4': q => { const f = q.q.match(/de (.+?) rad\?/)[1], d = cicPi(f) * 180; return igual(certo(q), `${cicFr(d % 360)} rad`); },
+  'ciclotrig:3:1': q => { const m = q.q.match(/Se (sen|cos) θ = (−?\d+\/\d+) e θ está no (\d)º quadrante, qual é o valor de (sen|cos) θ\?/); const v = cicNum(m[2]), qd = +m[3], r = Math.sqrt(1 - v * v); const sgn = m[4] === 'cos' ? ((qd === 1 || qd === 4) ? 1 : -1) : (qd <= 2 ? 1 : -1); return igualNum(cicNum(certo(q)), sgn * r, 1e-9); },
+  'ciclotrig:3:2': q => { const m = q.q.match(/satisfazem (sen|cos) x = (.+?)\?/); const v = cicNum(m[2]); let n = 0; for (let x = 0; x < 360; x++) if (Math.abs(cicTrig(m[1], x) - v) < 1e-9) n++; return igual(certo(q), String(n)); },
+  'ciclotrig:3:3': q => { const [r, a] = nums(q.q); return igualNum(cicPi(certo(q)), a * r / 180, 1e-9); },
+  'ciclotrig:3:4': q => { const t = nums(q.q)[0]; return igual(certo(q), `${Math.floor(t / 360)} voltas e ${t % 360}°`); },
+  // ---------- functrig ----------
+  'functrig:1:1': q => { const e = ftExp(q.q), mx = /máximo/.test(q.q.split(' de y')[0]); return igual(certo(q), ftSg(mx ? e.A + e.D : e.D - e.A)); },
+  'functrig:1:2': q => { const e = ftExp(q.q); return igual(certo(q), `${360 / e.B}°`); },
+  'functrig:1:3': q => { const e = ftExp(q.q); return igual(certo(q), `[${ftSg(e.D - e.A)}, ${ftSg(e.D + e.A)}]`); },
+  'functrig:1:4': q => { const e = ftExp(q.q); return igual(certo(q), String(e.fn === 'sen' ? 2 * e.B + 1 : 2 * e.B)); },
+  'functrig:2:1': q => { const e = ftCtx(q.q), mx = /maior altura/.test(q.q.split('Qual é a')[1] || q.q); return igual(certo(q), `${mx ? e.D + e.A : e.D - e.A} m`); },
+  'functrig:2:2': q => { const e = ftCtx(q.q); return igual(certo(q), `${360 / e.B} minutos`); },
+  'functrig:2:3': q => { const m = q.q.match(/f\(x\) = (?:(\d+)·)?(sen|cos) x(?: ([+−]) (\d+))?\. Quanto vale f\((\d+)°\)/); const A = m[1] ? +m[1] : 1, D = m[3] ? (m[3] === '+' ? 1 : -1) * +m[4] : 0, x = +m[5]; const v = A * cicTrig(m[2], x) + D; return igualNum(ftFl(certo(q)), v, 1e-9); },
+  'functrig:2:4': q => { const am = o => ftExp(o).A; const mx = /maior amplitude/.test(q.q), best = mx ? Math.max(...q.o.map(am)) : Math.min(...q.o.map(am)); return am(certo(q)) === best && q.o.filter(o => am(o) === best).length === 1 ? null : 'a resposta não tem a amplitude pedida'; },
+  'functrig:3:1': q => { const m = q.q.match(/máximo (−?\d+) e valor mínimo (−?\d+)\. Quanto vale (A|D)\?/); const M = ftFl(m[1]), n = ftFl(m[2]); return igual(certo(q), ftSg(m[3] === 'A' ? (M - n) / 2 : (M + n) / 2)); },
+  'functrig:3:2': q => { const P = nums(q.q.match(/período (\d+)°/)[1])[0]; return igual(certo(q), String(360 / P)); },
+  'functrig:3:3': q => { const e = ftCtx(q.q); return igual(certo(q), `${90 / e.B} horas`); },
+  'functrig:3:4': q => { const e = ftCtx(q.q), T = +q.q.match(/t = (\d+)\?/)[1]; const v = e.D + e.A * cicTrig('sen', e.B * T); return igualNum(ftFl(certo(q)), v, 1e-9); },
+  'leistrig:1:1': q => { const n = nums(q.q); return lsnNum(certo(q), n[0] * Math.sin(lsnR(n[2])) / Math.sin(lsnR(n[1]))); },
+  'leistrig:1:2': q => { const n = nums(q.q); return igual(certo(q), `${Math.round(Math.hypot(n[0], n[1]))} cm`); },
+  'leistrig:1:3': q => { const n = nums(q.q); return igual(certo(q), `${Math.round(Math.sqrt(n[0] ** 2 + n[1] ** 2 - n[0] * n[1]))} cm`); },
+  'leistrig:1:4': q => { const t = q.q, sen = /dois ângulos e um lado|um lado e o ângulo oposto/.test(t); return igual(certo(q), sen ? 'Lei dos senos' : 'Lei dos cossenos'); },
+  'leistrig:2:1': q => { const n = nums(q.q); return lsnNum(certo(q), n[0] / (2 * Math.sin(lsnR(n[1])))); },
+  'leistrig:2:2': q => { const n = nums(q.q); return igual(certo(q), `${Math.round(Math.sqrt(n[0] ** 2 + n[1] ** 2 + n[0] * n[1]))} cm`); },
+  'leistrig:2:3': q => { const t = q.q, a = +t.match(/lado a mede (\d+)/)[1], A = +t.match(/ângulo A mede (\d+)/)[1], b = lsnV(t.match(/lado b mede (\S+) cm/)[1]); return igual(certo(q), `${Math.round(lsnD(Math.asin(b * Math.sin(lsnR(A)) / a)))}°`); },
+  'leistrig:2:4': q => { const n = nums(q.q), ar = n[0] * n[1] * Math.sin(lsnR(n[2])) / 2; return igualNum(Number(String(certo(q)).replace(/[^\d,]/g, '').replace(',', '.')), ar); },
+  'leistrig:3:1': q => { const t = q.q, AB = +t.match(/a (\d+) m um/)[1], A = +t.match(/CAB = (\d+)/)[1], B = +t.match(/CBA = (\d+)/)[1]; return lsnNum(certo(q), AB * Math.sin(lsnR(B)) / Math.sin(lsnR(180 - A - B))); },
+  'leistrig:3:2': q => { const t = q.q, ang = +t.match(/ângulo de (\d+)°/)[1], b = +t.match(/a (\d+) km\/h e/)[1], c = +t.match(/outro a (\d+) km/)[1], h = +t.match(/depois de (\d+)/)[1], B = b * h, C = c * h; return igual(certo(q), `${Math.round(Math.sqrt(B * B + C * C - 2 * B * C * Math.cos(lsnR(ang))))} km`); },
+  'leistrig:3:3': q => { const n = nums(q.q), a = n[3], o = n.slice(0, 3); o.splice(o.indexOf(a), 1); return igual(certo(q), `${Math.round(lsnD(Math.acos((o[0] ** 2 + o[1] ** 2 - a * a) / (2 * o[0] * o[1]))))}°`); },
+  'leistrig:3:4': q => { const n = nums(q.q); return igual(certo(q), lsnCl(n[0], n[1], n[2])); },
+  'combinatoria:1:1': q => igualNum(cmbN(certo(q)), cmbF(nums(q.q)[0])),
+  'combinatoria:1:2': q => igualNum(cmbN(certo(q)), cmbF(nums(q.q)[0])),
+  'combinatoria:1:3': q => { const n = nums(q.q)[0]; return igualNum(cmbN(certo(q)), n * (n - 1) * (n - 2)); },
+  'combinatoria:1:4': q => igualNum(cmbN(certo(q)), cmbC(nums(q.q)[1], 2)),
+  'combinatoria:2:1': q => igualNum(cmbN(certo(q)), cmbC(nums(q.q)[0], 3)),
+  'combinatoria:2:2': q => { const k = nums(q.q)[0]; let r = 1; for (let i = 0; i < k; i++) r *= 10 - i; return igualNum(cmbN(certo(q)), r); },
+  'combinatoria:2:3': q => igualNum(cmbN(certo(q)), cmbF(q.q.match(/palavra (\S+) começam/)[1].length - 1)),
+  'combinatoria:2:4': q => igualNum(cmbN(certo(q)), cmbAna(q.q.match(/palavra (\S+)\?/)[1])),
+  'combinatoria:3:1': q => { const n = nums(q.q); return igualNum(cmbN(certo(q)), cmbC(n[1], 2) * cmbC(n[0], 2)); },
+  'combinatoria:3:2': q => { const n = nums(q.q); return igualNum(cmbN(certo(q)), cmbC(n[0] + n[1], 3) - cmbC(n[0], 3)); },
+  'combinatoria:3:3': q => { const k = nums(q.q)[0]; let n = 2; while (n * (n - 1) / 2 < k) n++; return igualNum(cmbN(certo(q)), n); },
+  'combinatoria:3:4': q => { const n = nums(q.q)[0]; return igualNum(cmbN(certo(q)), n * (n - 1)); },
+  'matriz:1:1': q => { const n = nums(q.q); return igual(certo(q), `${n[0]} × ${n[1]}`); },
+  'matriz:1:2': q => { const A = mtzMs(q.q)[0], t = q.q.match(/a([₀-₉])([₀-₉])/), i = mtzSub().indexOf(t[1]), j = mtzSub().indexOf(t[2]); return igualNum(nums(certo(q))[0], A[i - 1][j - 1]); },
+  'matriz:1:3': q => { const [A, B] = mtzMs(q.q); return igual(certo(q), mtzFm(A.map((r, i) => r.map((x, j) => x + B[i][j])))); },
+  'matriz:1:4': q => { const A = mtzMs(q.q)[0], k = +q.q.match(/calcule (\d+)·A/)[1]; return igual(certo(q), mtzFm(A.map(r => r.map(x => k * x)))); },
+  'matriz:2:1': q => { const [A, B] = mtzMs(q.q); return igual(certo(q), mtzFm(mtzMul(A, B))); },
+  'matriz:2:2': q => { const [A, B] = mtzMs(q.q), t = q.q.match(/c([₀-₉])([₀-₉])/), i = mtzSub().indexOf(t[1]), j = mtzSub().indexOf(t[2]); return igualNum(nums(certo(q))[0], mtzMul(A, B)[i - 1][j - 1]); },
+  'matriz:2:3': q => { const A = mtzMs(q.q)[0]; return igual(certo(q), mtzFm(A[0].map((_, j) => A.map(r => r[j])))); },
+  'matriz:2:4': q => { const A = mtzMs(q.q)[0]; return igualNum(nums(certo(q))[0], A[0][0] * A[1][1] - A[0][1] * A[1][0]); },
+  'matriz:3:1': q => { const t = q.q.match(/\[x (\d+); (\d+) (\d+)\]/), d = nums(q.q.split('igual a')[1])[0], a = +t[1], b = +t[2], c = +t[3]; return igualNum(nums(certo(q))[0], (d + a * b) / c); },
+  'matriz:3:2': q => { const f = q.q.match(/aᵢⱼ = (.+)\.$/)[1], e = { 'i + j': (i, j) => i + j, '2i − j': (i, j) => 2 * i - j, 'i · j': (i, j) => i * j, 'i² + j': (i, j) => i * i + j, '3i − 2j': (i, j) => 3 * i - 2 * j, 'i − j': (i, j) => i - j }[f]; return igual(certo(q), mtzFm([[e(1, 1), e(1, 2)], [e(2, 1), e(2, 2)]])); },
+  'matriz:3:3': q => { const [A, B] = mtzMs(q.q); return igual(certo(q), mtzFm(B.map((r, i) => r.map((x, j) => x - A[i][j])))); },
+  'matriz:3:4': q => { const [A, B] = mtzMs(q.q); return igualNum(nums(certo(q))[0], mtzMul(B, A)[0][0]); },
   // ---------- juros ----------
   'juros:1:1': q => { const m = q.q.match(/custa (R\$ [\d.,]+) e está com (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 - m[2] / 100), 1e-6); },
   'juros:1:2': q => { const m = q.q.match(/de (R\$ [\d.,]+) sofreu aumento de (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 + m[2] / 100), 1e-6); },

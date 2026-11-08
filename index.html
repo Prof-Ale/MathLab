@@ -8756,6 +8756,419 @@ MODS.push({id:'angx',ano:7,ic:'🔎',nome:'Descubra o x nos ângulos',sub:'Mexa 
   c.textAlign='left';c.textBaseline='alphabetic'},
  rod:8,gens:AX_GENS});
 
+/* ===== Ciclo trigonométrico (módulo novo, arquivo separado) ===== */
+const CIC_S=o=>Object.assign({md:0,ang:30,oc:0},o);
+const CIC_OCU=v=>v.oc===1&&!locked;
+const CIC_G=(a,b)=>b?CIC_G(b,a%b):Math.abs(a);
+const CIC_FR=d=>{if(d===0)return'0';const g=CIC_G(d,180),n=d/g,m=180/g;return m===1?(n===1?'π':`${n}π`):(n===1?`π/${m}`:`${n}π/${m}`)};
+const CIC_NORM=d=>((d%360)+360)%360;
+const CIC_REF=d=>{d=CIC_NORM(d);return d<=90?d:d<=180?180-d:d<=270?d-180:360-d};
+const CIC_Q=d=>{d=CIC_NORM(d);return d%90===0?0:d<90?1:d<180?2:d<270?3:4};
+const CIC_SN=(f,d)=>{d=CIC_NORM(d);const q=CIC_Q(d);if(f==='sen')return d===0||d===180?1:d<180?1:-1;return 1};
+const CIC_RAD=d=>d*Math.PI/180;
+const CIC_VAL=(f,d)=>{const v=f==='sen'?Math.sin(CIC_RAD(d)):Math.cos(CIC_RAD(d));return Math.abs(v)<1e-12?0:v};
+const CIC_BASE={0:'0',30:'1/2',45:'√2/2',60:'√3/2',90:'1'};
+const CIC_EX=(f,d)=>{d=CIC_NORM(d);const r=CIC_REF(d),v=CIC_VAL(f,d),b=f==='sen'?CIC_BASE[r]:CIC_BASE[90-r];return v<-1e-9?'−'+b:b};
+const CIC_NOT=[30,45,60,90,120,135,150,180,210,225,240,270,300,315,330,360];
+const CIC_NA=[30,45,60,120,135,150,210,225,240,300,315,330];
+const CIC_FX=x=>String(Math.round(x*100)/100).replace('.',',').replace('-','−');
+const CIC_FQ=['','primeiro','segundo','terceiro','quarto'];
+const CIC_GENS={
+1:[
+ ()=>{const a=pick(CIC_NOT),ok=CIC_FR(a)+' rad';
+  return mk({q:`Quantos radianos correspondem a ${a}°?`,ok,
+   bad:[[CIC_FR(a/2===Math.round(a/2)?a/2:a+15)+' rad','usou 360° no lugar de 180°','π rad equivalem a 180°. Então ${a}° = ${a}/180 de π.'],[CIC_FR(Math.min(2*a,720))+' rad','multiplicou por 2','π rad equivalem a 180°, e não a 90°.'],[CIC_FR(a+30)+' rad','confundiu com outro ângulo','Divida o ângulo por 180 e multiplique por π.'],[CIC_FR(Math.max(15,a-30))+' rad','confundiu com outro ângulo','Divida o ângulo por 180 e multiplique por π.']].map(x=>[x[0],x[1],x[2].replace('${a}',a)]),
+   fill:()=>CIC_FR(pick([15,75,105,165,195]))+' rad',h:['π rad equivalem a 180°.','Divida o ângulo por 180 e multiplique por π, simplificando a fração.'],e:`${a}° = ${a}/180 de π = ${CIC_FR(a)} rad.`,s:CIC_S({md:1,ang:a,oc:1})})},
+ ()=>{const a=pick(CIC_NOT.filter(x=>x<360)),f=CIC_FR(a);
+  return mk({q:`Quantos graus correspondem a ${f} rad?`,ok:`${a}°`,
+   bad:[[`${a*2}°`,'usou 360° no lugar de 180°','π rad equivalem a 180°. Troque π por 180°.'],[`${Math.round(a/2)}°`,'dividiu por 2 sem necessidade','π rad equivalem a 180°. Troque π por 180°.'],[`${a+30}°`,'errou a conta','Troque π por 180° e simplifique.'],[`${Math.max(15,a-30)}°`,'errou a conta','Troque π por 180° e simplifique.']],
+   fill:()=>`${rnd(2,35)*10}°`,h:['π rad equivalem a 180°.','Substitua π por 180° e faça a conta.'],e:`${f} rad: troque π por 180°. Dá ${a}°.`,s:CIC_S({md:1,ang:a,oc:1})})},
+ ()=>{const f=pick(['sen','cos']),a=pick([30,45,60]),ok=CIC_EX(f,a),op=['0','1/2','√2/2','√3/2','1'].filter(x=>x!==ok);
+  return mk({q:`Qual é o valor de ${f} ${a}°?`,ok,
+   bad:op.slice(0,4).map(x=>[x,'confundiu com outro ângulo ou com outra função','Lembre: sen 30° = 1/2, sen 45° = √2/2, sen 60° = √3/2. O cosseno usa os mesmos valores na ordem inversa.']),
+   fill:()=>pick(['1/3','√3/3','2/3']),h:['Os valores do 1º quadrante são 1/2, √2/2 e √3/2.','Cosseno e seno trocam de lugar: cos 60° = sen 30°.'],e:`${f} ${a}° = ${ok}.`,s:CIC_S({md:0,ang:a,oc:1})})},
+ ()=>{let a;do{a=rnd(5,355)}while(a%90===0||a%5!==0);const ok=`${CIC_FQ[CIC_Q(a)]} quadrante`,b=a+90*pick([1,2,3]);
+  return mk({q:`Em qual quadrante está o ângulo de ${a}°?`,ok:ok[0].toUpperCase()+ok.slice(1),
+   bad:[1,2,3,4].filter(q=>q!==CIC_Q(a)).map(q=>{const t=`${CIC_FQ[q]} quadrante`;return[t[0].toUpperCase()+t.slice(1),'confundiu os intervalos dos quadrantes','O 1º quadrante vai de 0° a 90°, o 2º de 90° a 180°, o 3º de 180° a 270° e o 4º de 270° a 360°.']}),
+   fill:()=>'Eixo x',h:['Cada quadrante tem 90°.','Compare o ângulo com 90°, 180° e 270°.'],e:`${a}° está entre ${(CIC_Q(a)-1)*90}° e ${CIC_Q(a)*90}°, no ${CIC_FQ[CIC_Q(a)]} quadrante.`,s:CIC_S({md:2,ang:CIC_NORM(b)%90===0?b+10:CIC_NORM(b),oc:1})})}
+],
+2:[
+ ()=>{let a;do{a=rnd(10,350)}while(a%90===0);const s=CIC_VAL('sen',a)>0,c=CIC_VAL('cos',a)>0,t=(s,c)=>`sen ${s?'>':'<'} 0 e cos ${c?'>':'<'} 0`;
+  return mk({q:`Quais são os sinais de sen ${a}° e de cos ${a}°?`,ok:t(s,c),
+   bad:[[t(!s,c),'errou o sinal do seno','O seno é positivo nos quadrantes 1 e 2 (acima do eixo x).'],[t(s,!c),'errou o sinal do cosseno','O cosseno é positivo nos quadrantes 1 e 4 (à direita do eixo y).'],[t(!s,!c),'errou os dois sinais','Veja em qual quadrante o ângulo está e olhe para cima ou para baixo (seno) e para a direita ou esquerda (cosseno).']],
+   fill:()=>'sen = 0 e cos = 0',h:['O seno é a altura do ponto. O cosseno é a posição horizontal.','Descubra o quadrante.'],e:`${a}° está no ${CIC_FQ[CIC_Q(a)]} quadrante. Seno ${s?'positivo':'negativo'} e cosseno ${c?'positivo':'negativo'}.`,s:CIC_S({md:2,ang:a,oc:1})})},
+ ()=>{const f=pick(['sen','cos']),a=pick(CIC_NA),ok=CIC_EX(f,a),b=CIC_BASE[CIC_REF(a)],oo=CIC_EX(f==='sen'?'cos':'sen',a);
+  const o=[[b[0]==='−'?b:('−'+b),'sinal trocado'],[ok[0]==='−'?ok.slice(1):'−'+ok,'sinal trocado'],[oo,'trocou seno por cosseno']].filter(x=>x[0]!==ok&&x[0]!=='−0');
+  return mk({q:`Qual é o valor de ${f} ${a}°?`,ok,
+   bad:o.map(x=>[x[0],x[1],'Ache o ângulo de referência no 1º quadrante e depois escolha o sinal pelo quadrante.']),
+   fill:()=>pick(['1/3','−√3/3','2/3']),h:['Ache o ângulo de referência: quanto falta para o eixo x mais próximo.','O módulo é o do ângulo de referência. O sinal vem do quadrante.'],e:`${a}° tem ângulo de referência ${CIC_REF(a)}°, no ${CIC_FQ[CIC_Q(a)]} quadrante. Então ${f} ${a}° = ${ok}.`,s:CIC_S({md:2,ang:a,oc:1})})},
+ ()=>{const r=pick(CIC_NA),k=pick([-2,-1,1,2,3,4]),a=r+360*k,r2=CIC_NORM(a);
+  return mk({q:`Qual é a menor determinação positiva de ${a}°?`,ok:`${r2}°`,
+   bad:[[`${r2+360}°`,'parou antes de terminar as voltas','Tire todas as voltas completas de 360° até sobrar um ângulo entre 0° e 360°.'],[`${360-r2}°`,'usou o complemento da volta','O ângulo congruente é o resto da divisão por 360°.'],[`${CIC_NORM(r2+180)}°`,'errou a conta','Divida por 360° e fique com o resto.'],[`${Math.abs(a)%360===r2?(r2+90)%360:Math.abs(a)%360}°`,'ignorou o sinal','Para ângulo negativo, some voltas de 360° até ficar positivo.']],
+   fill:()=>`${rnd(1,35)*10}°`,h:['Some ou tire voltas de 360°.','O resultado fica entre 0° e 360°.'],e:`${a}° dá ${Math.abs(k)} volta${Math.abs(k)>1?'s':''} de 360°. O ângulo congruente é ${r2}°.`,s:CIC_S({md:2,ang:r2,oc:1})})},
+ ()=>{const r=pick(CIC_NA),k=pick([1,2,3]),a=r+360*k,f=CIC_FR(a);
+  return mk({q:`Qual é a menor determinação positiva de ${f} rad?`,ok:CIC_FR(r)+' rad',
+   bad:[[CIC_FR(r+360)+' rad','parou antes de terminar as voltas','Cada volta completa são 2π rad. Tire todas.'],[CIC_FR(360-r)+' rad','usou o complemento da volta','O congruente é o que sobra depois de tirar voltas de 2π.'],[CIC_FR(CIC_NORM(r+180))+' rad','errou a conta','Cada volta completa são 2π rad.'],[CIC_FR(Math.max(30,r-30))+' rad','errou a conta','Cada volta completa são 2π rad.']],
+   fill:()=>CIC_FR(pick([15,75,105,165]))+' rad',h:['Uma volta completa é 2π rad.','Tire 2π até ficar menor que 2π.'],e:`${f} rad: tirando ${k} volta${k>1?'s':''} de 2π, sobram ${CIC_FR(r)} rad.`,s:CIC_S({md:1,ang:r,oc:1})})}
+],
+3:[
+ ()=>{const [p,q,h]=pick([[3,4,5],[5,12,13],[8,15,17],[7,24,25]]),sn=Math.random()<.5,quad=pick([2,3,4]);
+  const sa=sn?(quad<=2?1:-1):0;let desc,okv,ang;
+  if(sn){const sg=quad<=2?'+':'−';desc=`sen θ = ${sg==='−'?'−':''}${p}/${h}`;const cs=(quad===1||quad===4)?1:-1;okv=`${cs<0?'−':''}${q}/${h}`;
+    return mk({q:`Se ${desc} e θ está no ${quad}º quadrante, qual é o valor de cos θ?`,ok:okv,
+     bad:[[`${cs<0?'':'−'}${q}/${h}`,'errou o sinal do cosseno','O cosseno é positivo no 1º e no 4º quadrantes e negativo no 2º e no 3º.'],[`${cs<0?'−':''}${p}/${h}`,'repetiu o seno','Use sen² + cos² = 1 para achar o outro valor.'],[`${cs<0?'−':''}${p}/${q}`,'dividiu os catetos','Use sen² + cos² = 1: cos² = 1 − sen².'],[`${cs<0?'−':''}${h}/${q}`,'inverteu a fração','O cosseno de qualquer ângulo está entre −1 e 1.']],
+     fill:()=>`${pick(['1/2','−1/2','2/3'])}`,h:['Use sen² θ + cos² θ = 1.','Depois escolha o sinal pelo quadrante.'],e:`cos² θ = 1 − (${p}/${h})² = (${q}/${h})². No ${quad}º quadrante, cos θ = ${okv}.`,s:CIC_S({md:2,ang:[0,30,150,210,330][quad],oc:1})})}
+  const cs=(quad===1||quad===4)?1:-1,sg2=(quad<=2)?1:-1;okv=`${sg2<0?'−':''}${p}/${h}`;
+  return mk({q:`Se cos θ = ${cs<0?'−':''}${q}/${h} e θ está no ${quad}º quadrante, qual é o valor de sen θ?`,ok:okv,
+   bad:[[`${sg2<0?'':'−'}${p}/${h}`,'errou o sinal do seno','O seno é positivo no 1º e no 2º quadrantes e negativo no 3º e no 4º.'],[`${sg2<0?'−':''}${q}/${h}`,'repetiu o cosseno','Use sen² + cos² = 1 para achar o outro valor.'],[`${sg2<0?'−':''}${p}/${q}`,'dividiu os catetos','Use sen² + cos² = 1: sen² = 1 − cos².'],[`${sg2<0?'−':''}${h}/${p}`,'inverteu a fração','O seno de qualquer ângulo está entre −1 e 1.']],
+   fill:()=>`${pick(['1/2','−1/2','2/3'])}`,h:['Use sen² θ + cos² θ = 1.','Depois escolha o sinal pelo quadrante.'],e:`sen² θ = 1 − (${q}/${h})² = (${p}/${h})². No ${quad}º quadrante, sen θ = ${okv}.`,s:CIC_S({md:2,ang:[0,30,150,210,330][quad],oc:1})})},
+ ()=>{const f=pick(['sen','cos']),v=pick(f==='sen'?['1/2','√2/2','√3/2','−1/2','−√2/2','−√3/2','0','1','−1']:['1/2','√2/2','√3/2','−1/2','−√2/2','−√3/2','0','1','−1']),ok=(v==='1'||v==='−1')?'1':'2';
+  return mk({q:`Quantos ângulos x, com 0° ≤ x < 360°, satisfazem ${f} x = ${v}?`,ok,
+   bad:['0','1','2','3','4'].filter(t=>t!==ok).slice(0,4).map(t=>[t,'contou só um quadrante ou valores a mais','Para valores entre −1 e 1 (sem os extremos) há dois ângulos na volta. Nos extremos 1 e −1, só um.']),
+   fill:()=>'5',h:['Marque no ciclo todos os pontos com essa altura (seno) ou essa posição horizontal (cosseno).','Os extremos 1 e −1 aparecem uma única vez.'],e:ok==='1'?`${f} x = ${v} acontece em um só ponto do ciclo.`:`${f} x = ${v} acontece em dois pontos do ciclo.`,s:CIC_S({md:2,ang:pick([30,45,60]),oc:0})})},
+ ()=>{const a=pick(CIC_NOT.filter(x=>x<360&&x!==90)),r=rnd(2,12),num=a*r,g=CIC_G(num,180),n=num/g,m=180/g,ok=m===1?(n===1?'π cm':`${n}π cm`):`${n===1?'':n}π${m===1?'':'/'+m} cm`;
+  const fm=(nn,mm)=>mm===1?(nn===1?'π cm':`${nn}π cm`):`${nn===1?'':nn}π/${mm} cm`;
+  return mk({q:`Em uma circunferência de raio ${r} cm, qual é o comprimento de um arco de ${a}°?`,ok:fm(n,m),
+   bad:[[fm(2*n,m),'usou o diâmetro no lugar do raio','Comprimento = ângulo em rad vezes o raio.'],[`${r} cm`,'ignorou o ângulo','O comprimento depende do ângulo: arco = θ (em rad) · r.'],[fm(n+1,m),'errou a conta','Ângulo em rad = graus · π / 180. Depois multiplique pelo raio.'],[fm(n,m*2),'dividiu por 2 sem necessidade','Ângulo em rad = graus · π / 180. Depois multiplique pelo raio.']],
+   fill:()=>`${rnd(2,20)}π cm`,h:['Converta o ângulo para radianos.','Comprimento = θ (rad) · raio.'],e:`${a}° = ${CIC_FR(a)} rad. Arco = ${CIC_FR(a)} · ${r} = ${fm(n,m)}.`,s:CIC_S({md:1,ang:a,oc:1})})},
+ ()=>{const k=rnd(2,5),r=pick([15,30,45,60,75,90,120,135,150,210,225,240,300,315]),t=360*k+r;
+  return mk({q:`Uma roda gira ${t}° sempre no mesmo sentido. Quantas voltas completas ela dá e em que posição, em graus, ela termina?`,ok:`${k} voltas e ${r}°`,
+   bad:[[`${k+1} voltas e ${r}°`,'contou uma volta a mais','Divida por 360°: o quociente são as voltas completas e o resto é a posição.'],[`${k} voltas e ${360-r}°`,'usou o complemento','O resto da divisão por 360° é a posição final.'],[`${k-1} voltas e ${r+360}°`,'não terminou de tirar as voltas','Tire todas as voltas completas: o resto deve ser menor que 360°.'],[`${k} voltas e ${(r+180)%360}°`,'errou a conta','O resto da divisão por 360° é a posição final.']].filter(x=>x[0]!==`${k} voltas e ${r}°`),
+   fill:()=>`${rnd(1,6)} voltas e ${rnd(1,35)*10}°`,h:['Divida o total por 360°.','O quociente são as voltas, e o resto, a posição.'],e:`${t} ÷ 360 dá ${k} e sobram ${r}. São ${k} voltas completas e ${r}°.`,s:CIC_S({md:2,ang:r,oc:1})})}
+]};
+MODS.push({id:'ciclotrig',ano:10,ic:'🎡',nome:'Ciclo trigonométrico',sub:'Radianos, quadrantes, seno, cosseno e tangente no círculo de raio 1',liveInfo:true,
+ ctl:[{k:'md',l:'Modo (0 seno e cosseno · 1 radianos · 2 quadrantes e simetria)',min:0,max:2,v:0},{k:'ang',l:'Ângulo θ (graus)',min:0,max:360,v:30,u:'°'}],
+ reset:{md:0,ang:30,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.md=cl(v.md,0,2);v.ang=cl(v.ang,0,360);v.oc=cl(v.oc,0,1)},
+ info(v){if(CIC_OCU(v))return `Ciclo trigonométrico, raio 1`;const a=v.ang,r=CIC_RAD(a);return `θ = ${a}° · sen ${CIC_FX(CIC_VAL('sen',a))} · cos ${CIC_FX(CIC_VAL('cos',a))}`},
+ desc(v){return v.md===1?'Círculo de raio 1 com um arco do ângulo escolhido, mostrado em graus e em radianos.':v.md===2?'Círculo com o ponto do ângulo escolhido e seus simétricos nos outros quadrantes.':'Círculo de raio 1 com o ponto do ângulo escolhido, o seno como altura e o cosseno como posição horizontal.'},
+ draw(c,v,W,H,k){const ocu=CIC_OCU(v),a=v.ang,r=CIC_RAD(a),R=80,cx=W/2,cy=H/2-14,P=[cx+R*Math.cos(r),cy-R*Math.sin(r)];
+  const txt=(s,x,y,col,fn,al)=>{c.fillStyle=col;c.font=fn;c.textAlign=al||'center';c.fillText(s,x,y)};
+  const fit=(s,x,y,col,px,maxw,bold=1)=>{let z=px;const fn=m=>`${bold?'bold ':''}${m}px sans-serif`;c.font=fn(z);while(c.measureText(s).width>maxw&&z>9){z--;c.font=fn(z)}txt(s,x,y,col,fn(z))};
+  fit('Ciclo trigonométrico',W/2,16,k.t,15,W-16);
+  c.strokeStyle=k.m;c.lineWidth=1.2;c.beginPath();c.moveTo(cx-R-14,cy);c.lineTo(cx+R+14,cy);c.moveTo(cx,cy-R-12);c.lineTo(cx,cy+R+12);c.stroke();
+  c.strokeStyle=k.t;c.lineWidth=2;c.beginPath();c.arc(cx,cy,R,0,7);c.stroke();
+  [['0°',cx+R+4,cy+12,'left'],['90°',cx+4,cy-R-3,'left'],['180°',cx-R-4,cy+12,'right'],['270°',cx+4,cy+R+13,'left']].forEach(t=>txt(t[0],t[1],t[2],k.m,'10px sans-serif',t[3]));
+  [[1,'I'],[2,'II'],[3,'III'],[4,'IV']].forEach(q=>txt(q[1],cx+(q[0]===1||q[0]===4?1:-1)*(R*.42),cy+(q[0]<3?-1:1)*(R*.42)+4,'rgba(255,255,255,.18)','bold 18px sans-serif'));
+  if(v.md===2){const ref=CIC_REF(a),pts=[ref,180-ref,180+ref,360-ref];
+    pts.forEach((d,i)=>{const rr=CIC_RAD(d),X=cx+R*Math.cos(rr),Y=cy-R*Math.sin(rr),eq=CIC_NORM(d)===CIC_NORM(a);c.strokeStyle='rgba(255,255,255,.25)';c.setLineDash([3,3]);c.beginPath();c.moveTo(cx,cy);c.lineTo(X,Y);c.stroke();c.setLineDash([]);
+      c.fillStyle=eq?k.a:'#4dabf7';c.beginPath();c.arc(X,Y,eq?6:4.5,0,7);c.fill();if(!ocu||eq===false)txt(`${CIC_NORM(d)}°`,X+(Math.cos(rr)>=0?1:-1)*20,Y+(Math.sin(rr)>=0?-8:14),eq?k.a:'#4dabf7','11px sans-serif')})}
+  else{
+    c.fillStyle='rgba(230,159,0,.18)';c.strokeStyle='#ff9f43';c.lineWidth=v.md===1?4:2;c.beginPath();if(v.md===0)c.moveTo(cx,cy);c.arc(cx,cy,v.md===1?R:24,0,-r,true);if(v.md===0)c.closePath();c.fill();c.stroke();
+    c.strokeStyle=k.a;c.lineWidth=2;c.beginPath();c.moveTo(cx,cy);c.lineTo(P[0],P[1]);c.stroke();c.fillStyle=k.a;c.beginPath();c.arc(P[0],P[1],5.5,0,7);c.fill();
+    if(v.md===0){c.lineWidth=3;c.strokeStyle='#ff6b9d';c.beginPath();c.moveTo(P[0],cy);c.lineTo(P[0],P[1]);c.stroke();c.strokeStyle='#4dabf7';c.beginPath();c.moveTo(cx,cy);c.lineTo(P[0],cy);c.stroke();
+      if(!ocu){const sv=CIC_VAL('sen',a),cv=CIC_VAL('cos',a);txt(`sen ${CIC_FX(sv)}`,P[0]+(cv>=0?24:-24),(cy+P[1])/2+4,'#ff6b9d','bold 11px sans-serif');txt(`cos ${CIC_FX(cv)}`,(cx+P[0])/2,cy+(sv>=0?16:-8),'#4dabf7','bold 11px sans-serif')}}}
+  const f1=ocu?(v.md===1?'θ em graus e em radianos':v.md===2?'quadrante e ângulo de referência':'seno é a altura, cosseno é a posição horizontal'):v.md===1?`θ = ${a}° = ${CIC_FR(a)} rad`:v.md===2?`θ = ${a}° → referência ${CIC_REF(a)}° · ${CIC_Q(a)?CIC_Q(a)+'º quadrante':'sobre um eixo'}`:`θ = ${a}° · sen ${CIC_FX(CIC_VAL('sen',a))} · cos ${CIC_FX(CIC_VAL('cos',a))}`;
+  fit(f1,W/2,H-30,k.a,15,W-16);
+  fit(ocu?'raio 1: o ponto do ciclo é (cos θ, sen θ)':v.md===1?`arco de raio 1 mede ${CIC_FX(r)} (valor de θ em radianos)`:v.md===2?`sen ${CIC_Q(a)===1||CIC_Q(a)===2?'positivo':CIC_Q(a)?'negativo':'—'} · cos ${CIC_Q(a)===1||CIC_Q(a)===4?'positivo':CIC_Q(a)?'negativo':'—'}`:`o ponto do ciclo é (cos θ, sen θ) = (${CIC_FX(CIC_VAL('cos',a))}; ${CIC_FX(CIC_VAL('sen',a))})`,W/2,H-10,k.m,12,W-16,0);
+  c.textAlign='left'},
+ rod:8,gens:CIC_GENS});
+
+/* ===== Funções seno e cosseno (módulo novo, arquivo separado) ===== */
+const FTR_S=o=>Object.assign({md:0,A:2,B:1,D:0,oc:0},o);
+const FTR_OCU=v=>v.oc===1&&!locked;
+const FTR_FN=md=>md===1?'cos':'sen';
+const FTR_F=(fn,A,B,D)=>`y = ${A===1?'':A+'·'}${fn}${B===1?' x':`(${B}x)`}${D===0?'':D>0?` + ${D}`:` − ${-D}`}`;
+const FTR_C=(D,A,B)=>`h(t) = ${D} + ${A===1?'':A+'·'}sen(${B}t)`;
+const FTR_Y=(fn,A,B,D,x)=>{const r=B*x*Math.PI/180;return A*(fn==='sen'?Math.sin(r):Math.cos(r))+D};
+const FTR_N=x=>EMN(Math.round(x*1000)/1000);
+const FTR_SV=(fn,a)=>{const r=a*Math.PI/180,v=fn==='sen'?Math.sin(r):Math.cos(r);return Math.abs(v)<1e-9?0:Math.round(v*2)/2};
+const FTR_GENS={
+1:[
+ ()=>{const A=rnd(1,5),D=rnd(-2,3),mx=Math.random()<.5,fn=pick(['sen','cos']),ok=mx?A+D:D-A;
+  return mk({q:`Qual é o valor ${mx?'máximo':'mínimo'} de ${FTR_F(fn,A,1,D)}?`,ok:String(ok).replace('-','−'),
+   bad:[[String(A).replace('-','−'),'deu só a amplitude','A amplitude é a distância da linha central até o topo. Some (ou subtraia) o deslocamento D.'],[String(mx?D-A:A+D).replace('-','−'),`deu o valor ${mx?'mínimo':'máximo'}`,'Confira se a pergunta pede o máximo ou o mínimo.'],[String(D).replace('-','−'),'deu a linha central','A linha central é y = D. O máximo fica A acima dela e o mínimo, A abaixo.'],[String(mx?A+D+1:D-A-1).replace('-','−'),'errou a conta','O máximo é D + A e o mínimo é D − A.']].filter(x=>x[0]!==String(ok).replace('-','−')),
+   fill:()=>String(rnd(-6,9)).replace('-','−'),h:['O seno e o cosseno variam entre −1 e 1.','Multiplique por A e some D.'],e:`${fn} varia de −1 a 1. Então o máximo é ${A}·1 + ${D} = ${A+D} e o mínimo é ${A}·(−1) + ${D} = ${D-A}.`,s:FTR_S({md:fn==='cos'?1:0,A,B:1,D,oc:1})})},
+ ()=>{const A=rnd(1,4),B=pick([2,3,4]),fn=pick(['sen','cos']);
+  return mk({q:`Qual é o período de ${FTR_F(fn,A,B,0)}?`,ok:`${360/B}°`,
+   bad:[[`${360*B}°`,'multiplicou em vez de dividir','Quando B aumenta, a onda comprime: o período é 360° dividido por B.'],['360°','achou que o período não muda','O período é 360° dividido por B.'],[`${B}°`,'confundiu B com o período','B é quantas ondas cabem em 360°. O período é 360° dividido por B.'],[`${180*B}°`,'errou a conta','O período é 360° dividido por B.']].filter(x=>x[0]!==`${360/B}°`),
+   fill:()=>`${rnd(2,9)*30}°`,h:['A função se repete a cada 360° quando B = 1.','Com B, o período é 360° ÷ B.'],e:`Período = 360° ÷ ${B} = ${360/B}°.`,s:FTR_S({md:fn==='cos'?1:0,A,B,D:0,oc:1})})},
+ ()=>{const A=rnd(1,4),D=rnd(-2,3),fn=pick(['sen','cos']);
+  const t=(a,b)=>`[${String(a).replace('-','−')}, ${String(b).replace('-','−')}]`;
+  return mk({q:`Qual é a imagem de ${FTR_F(fn,A,1,D)}?`,ok:t(D-A,D+A),
+   bad:[[t(-A,A),'esqueceu o deslocamento D','O deslocamento D sobe ou desce toda a onda: a imagem vai de D − A até D + A.'],[t(D,D+A),'tomou D como mínimo','D é a linha central. O mínimo fica A abaixo dela.'],[t(D-A,D+2*A),'errou a conta do máximo','O máximo é D + A.'],[t(D-A-1,D+A+1),'somou uma unidade a mais','Sem acrescentar nada: de D − A até D + A.']].filter(x=>x[0]!==t(D-A,D+A)),
+   fill:()=>t(-rnd(1,5),rnd(1,6)),h:['O seno e o cosseno vão de −1 a 1.','Multiplique por A e some D nas duas pontas.'],e:`Mínimo ${D} − ${A} = ${D-A}, máximo ${D} + ${A} = ${D+A}. A imagem é ${t(D-A,D+A)}.`,s:FTR_S({md:fn==='cos'?1:0,A,B:1,D,oc:1})})},
+ ()=>{const A=rnd(1,3),B=pick([1,2,3]),fn=pick(['sen','cos']),ok=fn==='sen'?2*B+1:2*B;
+  return mk({q:`Quantas vezes o gráfico de ${FTR_F(fn,A,B,0)} corta o eixo x para x de 0° a 360°, contando as pontas?`,ok:String(ok),
+   bad:[String(ok+1),String(ok-1),String(B),String(ok+2)].filter(x=>x!==String(ok)&&Number(x)>0).map(x=>[x,'contou errado','Marque onde a onda passa por y = 0 em cada ciclo de 360° ÷ B.']),
+   fill:()=>String(rnd(1,9)),h:['Em cada ciclo, a onda cruza o eixo x duas vezes.','Conte as pontas se elas estiverem sobre o eixo.'],e:fn==='sen'?`Com B = ${B}, há ${B} ciclo${B>1?'s':''}. O seno passa por zero em x = 0°, a cada ${90*2/B}°, até 360°: ${ok} pontos.`:`Com B = ${B}, o cosseno cruza o eixo ${ok} vezes em 0° a 360°.`,s:FTR_S({md:fn==='cos'?1:0,A,B,D:0,oc:1})})}
+],
+2:[
+ ()=>{const A=rnd(1,4),D=A+rnd(1,3),B=pick([15,30,45]),mx=Math.random()<.5,ok=mx?D+A:D-A;
+  return mk({q:`A altura da maré em um porto, em metros, é dada por ${FTR_C(D,A,B)}, com t em horas e o ângulo em graus. Qual é a ${mx?'maior':'menor'} altura da maré?`,ok:`${ok} m`,
+   bad:[[`${mx?D-A:D+A} m`,`deu a ${mx?'menor':'maior'} altura`,'O seno varia entre −1 e 1. Veja se a pergunta pede a maior ou a menor.'],[`${A} m`,'deu a amplitude','A amplitude é só o quanto a maré sobe acima do nível médio.'],[`${D} m`,'deu o nível médio','O nível médio é D. A maré sobe e desce A metros em torno dele.'],[`${ok+B/15} m`,'misturou o ângulo com a altura','O número dentro do seno só controla o tempo, e não a altura.']].filter(x=>x[0]!==`${ok} m`),
+   fill:()=>`${rnd(1,12)} m`,h:['O seno varia de −1 a 1.','Maior altura = D + A, menor = D − A.'],e:`Maior altura: ${D} + ${A} = ${D+A} m. Menor altura: ${D} − ${A} = ${D-A} m.`,s:FTR_S({md:0,A:Math.min(A,5),B:1,D:Math.min(D,3),oc:1})})},
+ ()=>{const A=rnd(2,6),D=rnd(8,14),B=pick([10,12,15,20,30,36,40,45,60]);
+  return mk({q:`A altura de um assento de roda-gigante, em metros, é ${FTR_C(D,A,B)}, com t em minutos e o ângulo em graus. Quanto tempo dura uma volta completa?`,ok:`${360/B} minutos`,
+   bad:[[`${B} minutos`,'usou B como o tempo','B é a velocidade angular, em graus por minuto. O tempo da volta é 360 ÷ B.'],[`${180/B} minutos`,'usou meia volta','Uma volta completa tem 360°, não 180°.'],[`${360*B} minutos`,'multiplicou em vez de dividir','Quanto maior B, mais rápida a roda e menor o período.'],[`${360/B+1} minutos`,'errou a conta','O período é 360 ÷ B.']].filter(x=>x[0]!==`${360/B} minutos`),
+   fill:()=>`${rnd(2,40)} minutos`,h:['A roda completa uma volta quando o ângulo chega a 360°.','Período = 360 ÷ B.'],e:`${B}t = 360 quando t = ${360/B}. Cada volta dura ${360/B} minutos.`,s:FTR_S({md:0,A:Math.min(A,5),B:1,D:Math.min(D,3),oc:1})})},
+ ()=>{const A=rnd(1,5),D=rnd(-2,3),fn=pick(['sen','cos']),x=pick(fn==='sen'?[0,30,90,150,180,210,270,330]:[0,60,90,120,180,240,270,300]),v=FTR_SV(fn,x),ok=A*v+D;
+  return mk({q:`Considere ${FTR_F(fn,A,1,D).replace('y = ','f(x) = ')}. Quanto vale f(${x}°)?`,ok:FTR_N(ok),
+   bad:[[FTR_N(A*v-D),'trocou o sinal de D','D entra somando, com o sinal que está na função.'],[FTR_N(A+D),'usou o valor máximo do seno','O seno de '+x+'° não é 1 (a menos que o ângulo seja 90°).'],[FTR_N(v+D),'esqueceu de multiplicar por A','Multiplique o valor do seno por A antes de somar D.'],[FTR_N(A*v+D+1),'errou a conta','Calcule ' + fn + ' ' + x + '°, multiplique por ' + A + ' e some ' + D + '.']].filter(x=>x[0]!==FTR_N(ok)),
+   fill:()=>FTR_N(rnd(-8,10)/2),h:[`Calcule ${fn} ${x}°.`,`Multiplique por ${A} e some ${D}.`],e:`${fn} ${x}° = ${FTR_N(v)}. Então f = ${A}·${FTR_N(v)} + ${D} = ${FTR_N(ok)}.`,s:FTR_S({md:fn==='cos'?1:0,A,B:1,D,oc:1})})},
+ ()=>{const as=shuf([1,2,3,4,5]).slice(0,4),L=as.map(A=>({A,fn:pick(['sen','cos']),B:pick([1,1,2,3]),D:rnd(-2,3)})),mx=Math.random()<.5,ta=mx?Math.max(...as):Math.min(...as),idx=L.findIndex(z=>z.A===ta),t=z=>FTR_F(z.fn,z.A,z.B,z.D);
+  return mk({q:`Qual destas funções tem a ${mx?'maior':'menor'} amplitude?`,ok:t(L[idx]),
+   bad:L.filter((z,i)=>i!==idx).map(z=>[t(z),'olhou o período ou o deslocamento','A amplitude é o número que multiplica o seno ou o cosseno. O período e o deslocamento não mudam a amplitude.']),
+   fill:()=>FTR_F('sen',rnd(1,5),1,0),h:['A amplitude é o número que multiplica o seno ou o cosseno, em módulo.','Ignore o número dentro dos parênteses e o que é somado no fim.'],e:`As amplitudes são ${L.map(z=>z.A).join(', ')}. A ${mx?'maior':'menor'} é ${ta}, em ${t(L[idx])}.`,s:FTR_S({md:L[idx].fn==='cos'?1:0,A:ta,B:1,D:0,oc:1})})}
+],
+3:[
+ ()=>{const A=rnd(1,5),D=rnd(-2,3),M=D+A,m=D-A,pA=Math.random()<.5,ok=pA?A:D;
+  return mk({q:`Uma função y = A·sen x + D tem valor máximo ${String(M).replace('-','−')} e valor mínimo ${String(m).replace('-','−')}. Quanto vale ${pA?'A':'D'}?`,ok:String(ok).replace('-','−'),
+   bad:[[String(pA?D:A).replace('-','−'),pA?'deu o valor de D':'deu o valor de A',pA?'A = (máximo − mínimo) ÷ 2. D = (máximo + mínimo) ÷ 2.':'A = (máximo − mínimo) ÷ 2. D = (máximo + mínimo) ÷ 2.'],[String(M-m).replace('-','−'),'deu a diferença inteira','A diferença entre máximo e mínimo é 2A. Divida por 2.'],[String(M).replace('-','−'),'deu o máximo','O máximo é A + D. Ainda falta separar A e D.'],[String(ok+1).replace('-','−'),'errou a conta','A = (máx − mín) ÷ 2 e D = (máx + mín) ÷ 2.']].filter(x=>x[0]!==String(ok).replace('-','−')),
+   fill:()=>String(rnd(-4,6)).replace('-','−'),h:['O máximo é D + A e o mínimo é D − A.','Some e subtraia as duas equações.'],e:`A = (${M} − ${m}) ÷ 2 = ${A}. D = (${M} + ${m}) ÷ 2 = ${D}.`,s:FTR_S({md:0,A,B:1,D,oc:1})})},
+ ()=>{const B=pick([2,3,4,5,6]),P=360/B;
+  return mk({q:`A função y = sen(Bx) tem período ${P}°. Qual é o valor de B?`,ok:String(B),
+   bad:[String(B+1),String(B-1),String(Math.round(P/30)),String(P)].filter(x=>x!==String(B)&&Number(x)>0).map(x=>[x,'errou a relação entre B e o período','O período é 360° ÷ B. Então B = 360° ÷ período.']),
+   fill:()=>String(rnd(1,12)),h:['Período = 360° ÷ B.','Isole B.'],e:`B = 360° ÷ ${P}° = ${B}.`,s:FTR_S({md:0,A:2,B,D:0,oc:1})})},
+ ()=>{const A=rnd(1,3),D=rnd(A+1,A+3),B=pick([15,30,45]),ok=90/B;
+  return mk({q:`A altura da maré, em metros, é ${FTR_C(D,A,B)}, com t em horas e o ângulo em graus. Depois de t = 0, em que instante a maré atinge a altura máxima pela primeira vez?`,ok:`${FTR_N(ok)} horas`,
+   bad:[[`${FTR_N(180/B)} horas`,'achou o primeiro cruzamento no nível médio','A altura máxima acontece quando o seno vale 1, ou seja, quando o ângulo é 90°.'],[`${FTR_N(270/B)} horas`,'achou a altura mínima','O seno vale −1 no ângulo de 270°. O máximo está em 90°.'],[`${FTR_N(360/B)} horas`,'achou o fim da primeira volta','Uma volta completa é 360°. O máximo vem antes, em 90°.'],[`${FTR_N(B/90)} horas`,'inverteu a divisão','Resolva B·t = 90, ou seja, t = 90 ÷ B.']].filter(x=>x[0]!==`${FTR_N(ok)} horas`),
+   fill:()=>`${rnd(1,9)} horas`,h:['O seno vale 1 quando o ângulo é 90°.','Resolva B·t = 90.'],e:`${B}·t = 90, então t = ${FTR_N(ok)} horas.`,s:FTR_S({md:0,A:Math.min(A,5),B:1,D:Math.min(D,3),oc:1})})},
+ ()=>{const A=rnd(1,4),D=rnd(A+1,A+4),B=pick([15,30]),T=B===30?pick([1,3,5,7,9,11]):pick([2,6,10,14,18,22]),ang=B*T,v=FTR_SV('sen',ang),ok=D+A*v;
+  return mk({q:`A altura da maré, em metros, é ${FTR_C(D,A,B)}, com t em horas e o ângulo em graus. Qual é a altura em t = ${T}?`,ok:`${FTR_N(ok)} m`,
+   bad:[[`${FTR_N(D+A)} m`,'usou o seno como 1','Calcule o ângulo B·t e depois o seno dele.'],[`${FTR_N(D-A*v)} m`,'errou o sinal do seno',`O seno de ${ang}° vale ${FTR_N(v)}.`],[`${FTR_N(D)} m`,'achou que o seno vale 0','Calcule o ângulo B·t e depois o seno dele.'],[`${FTR_N(A*v)} m`,'esqueceu o nível médio','Some D ao final.']].filter(x=>x[0]!==`${FTR_N(ok)} m`),
+   fill:()=>`${rnd(1,12)} m`,h:[`Calcule ${B}·${T} = ${ang}°.`,'Ache o seno desse ângulo, multiplique por A e some D.'],e:`${B}·${T} = ${ang}°, sen ${ang}° = ${FTR_N(v)}. Altura = ${D} + ${A}·${FTR_N(v)} = ${FTR_N(ok)} m.`,s:FTR_S({md:0,A:Math.min(A,5),B:1,D:Math.min(D,3),oc:1})})}
+]};
+MODS.push({id:'functrig',ano:10,ic:'🌊',nome:'Funções seno e cosseno',sub:'Amplitude, período e deslocamento: da onda no gráfico à maré e à roda-gigante',liveInfo:true,
+ ctl:[{k:'md',l:'Função (0 seno · 1 cosseno)',min:0,max:1,v:0},{k:'A',l:'Amplitude A',min:1,max:5,v:2},{k:'B',l:'Frequência B (ondas em 360°)',min:1,max:4,v:1},{k:'D',l:'Deslocamento D (sobe e desce)',min:-3,max:3,v:0}],
+ reset:{md:0,A:2,B:1,D:0,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.md=cl(v.md,0,1);v.A=cl(v.A,1,5);v.B=cl(v.B,1,4);v.D=cl(v.D,-3,3);v.oc=cl(v.oc,0,1)},
+ info(v){if(FTR_OCU(v))return 'Gráfico de seno ou cosseno entre 0° e 360°';return `${FTR_F(FTR_FN(v.md),v.A,v.B,v.D)} · amplitude ${v.A} · período ${360/v.B}° · imagem [${String(v.D-v.A).replace('-','−')}, ${String(v.D+v.A).replace('-','−')}]`},
+ desc(v){return `Gráfico da função ${FTR_F(FTR_FN(v.md),v.A,v.B,v.D)} de 0° a 360°, com a linha central, o máximo e o mínimo.`},
+ draw(c,v,W,H,k){const ocu=FTR_OCU(v),fn=FTR_FN(v.md),{A,B,D}=v,ym=Math.max(3,Math.abs(D)+A)+.6;
+  const txt=(s,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(s,x,y)};
+  const fit=(s,x,y,col,px,maxw,bold=1)=>{let z=px;const f=m=>`${bold?'bold ':''}${m}px sans-serif`;c.font=f(z);while(c.measureText(s).width>maxw&&z>9){z--;c.font=f(z)}txt(s,x,y,col,f(z))};
+  fit('Seno e cosseno',W/2,16,k.t,15,W-16);
+  const L=34,R=W-14,T=30,Bt=H-62,X=x=>L+x/360*(R-L),Y=y=>(T+Bt)/2-y/ym*((Bt-T)/2);
+  c.lineWidth=1;for(let y=-Math.floor(ym);y<=Math.floor(ym);y++){c.strokeStyle=y===0?k.m:'rgba(255,255,255,.1)';c.beginPath();c.moveTo(L,Y(y));c.lineTo(R,Y(y));c.stroke();if(!ocu&&(y%1===0))txt(String(y).replace('-','−'),L-4,Y(y)+4,k.m,'10px sans-serif','right')}
+  [0,90,180,270,360].forEach(a=>{c.strokeStyle='rgba(255,255,255,.1)';c.beginPath();c.moveTo(X(a),T);c.lineTo(X(a),Bt);c.stroke();txt(`${a}°`,X(a),Bt+13,k.m,'10px sans-serif');txt(['0','π/2','π','3π/2','2π'][a/90],X(a),Bt+25,'rgba(255,255,255,.4)','10px sans-serif')});
+  c.strokeStyle=k.m;c.lineWidth=1.4;c.beginPath();c.moveTo(L,Y(0));c.lineTo(R,Y(0));c.moveTo(X(0),T);c.lineTo(X(0),Bt);c.stroke();
+  if(!ocu){c.setLineDash([5,4]);c.lineWidth=1.3;[[D,'#ffffff88'],[D+A,'#69db7c'],[D-A,'#ff6b9d']].forEach(([y,col])=>{c.strokeStyle=col;c.beginPath();c.moveTo(L,Y(y));c.lineTo(R,Y(y));c.stroke()});c.setLineDash([]);
+    txt(`máx ${String(D+A).replace('-','−')}`,R-2,Y(D+A)-4,'#69db7c','bold 10px sans-serif','right');txt(`mín ${String(D-A).replace('-','−')}`,R-2,Y(D-A)+12,'#ff6b9d','bold 10px sans-serif','right');
+    const P=360/B;c.strokeStyle=k.a;c.lineWidth=2;c.beginPath();c.moveTo(X(0),Y(D+A)-12);c.lineTo(X(P),Y(D+A)-12);c.moveTo(X(0),Y(D+A)-16);c.lineTo(X(0),Y(D+A)-8);c.moveTo(X(P),Y(D+A)-16);c.lineTo(X(P),Y(D+A)-8);c.stroke();txt(`período ${P}°`,X(P/2),Y(D+A)-17,k.a,'bold 10px sans-serif')}
+  c.strokeStyle='#ffd43b';c.lineWidth=3;c.beginPath();for(let x=0;x<=360;x+=2){const y=D+A*(fn==='sen'?Math.sin(B*x*Math.PI/180):Math.cos(B*x*Math.PI/180));x?c.lineTo(X(x),Y(y)):c.moveTo(X(x),Y(y))}c.stroke();
+  fit(ocu?`gráfico de ${fn==='sen'?'seno':'cosseno'} de 0° a 360°`:FTR_F(fn,A,B,D),W/2,H-30,k.a,15,W-16);
+  fit(ocu?'amplitude, período e deslocamento mudam a onda':`amplitude ${A} · período ${360/B}° · imagem [${String(D-A).replace('-','−')}, ${String(D+A).replace('-','−')}]`,W/2,H-10,k.m,12,W-16,0);
+  c.textAlign='left'},
+ rod:8,gens:FTR_GENS});
+
+/* ===== Lei dos senos e lei dos cossenos (módulo novo, arquivo separado) ===== */
+const LSN_S=o=>Object.assign({md:0,b:8,c:10,A:60,oc:0},o);
+const LSN_OCU=v=>v.oc===1&&!locked;
+const LSN_R=d=>d*Math.PI/180;
+const LSN_FX=x=>String(Math.round(x*100)/100).replace('.',',').replace('-','−');
+const LSN_TRI=(b,c,A)=>{const a=Math.sqrt(b*b+c*c-2*b*c*Math.cos(LSN_R(A))),cB=(a*a+c*c-b*b)/(2*a*c),B=Math.acos(Math.max(-1,Math.min(1,cB)))*180/Math.PI;return{a,B,C:180-A-B}};
+const LSN_RAD=(k,r)=>r===1?String(k):`${k===1?'':k}√${r}`;
+const LSN_ANG=(A,B)=>{const C=180-A-B,sB=Math.sin(LSN_R(B)),sC=Math.sin(LSN_R(C)),m=Math.max(sB,sC);return{A,b:Math.max(2,Math.round(sB/m*16)),c:Math.max(2,Math.round(sC/m*16))}};
+const LSN_T60=[[3,8,7],[5,8,7],[7,15,13],[8,15,13]];
+const LSN_T120=[[3,5,7],[5,16,19],[7,8,13],[6,10,14]];
+const LSN_P90=[[3,4,5],[6,8,10],[5,12,13],[9,12,15],[8,15,17]];
+const LSN_CL=(x,y,z)=>{const m=Math.max(x,y,z),[p,q]=[x,y,z].filter((t,i,a)=>!(t===m&&a.indexOf(t)===i)),d=m*m-(p*p+q*q);return d===0?'Retângulo':d<0?'Acutângulo':'Obtusângulo'};
+const LSN_GENS={
+1:[
+ ()=>{const cs=pick([[30,90,a=>`${2*a}`,[2,20]],[30,60,a=>`${a}√3`,[2,20]],[45,90,a=>`${a}√2`,[2,20]],[60,90,a=>`${2*a/3}√3`,[3,18]],[45,60,a=>`${a/2}√6`,[2,20]]]),[A,B,f,[lo,hi]]=cs;let a;do{a=rnd(lo,hi)}while((A===60&&a%3!==0)||(A===45&&B===60&&a%2!==0));
+  const ok=`${f(a)} cm`,pool=[`${a}√2 cm`,`${a}√3 cm`,`${2*a} cm`,`${a} cm`,`${3*a} cm`].filter(x=>x!==ok);
+  return mk({q:`Em um triângulo, o lado a mede ${a} cm e é oposto ao ângulo A = ${A}°. O ângulo B mede ${B}°. Qual é a medida do lado b, oposto a B?`,ok,
+   bad:shuf(pool).slice(0,4).map(x=>[x,'trocou a razão entre os senos','Use a / sen A = b / sen B e isole b: b = a · sen B / sen A.']),
+   fill:()=>`${rnd(3,40)} cm`,h:['Lei dos senos: a / sen A = b / sen B.','Troque os senos pelos valores exatos e isole b.'],e:`b = ${a} · sen ${B}° / sen ${A}° = ${ok}.`,s:LSN_S({md:0,...LSN_ANG(A,B),oc:1})})},
+ ()=>{const[b,c,a]=pick(LSN_P90);
+  return mk({q:`Em um triângulo, os lados b e c medem ${b} cm e ${c} cm, e o ângulo entre eles mede 90°. Quanto mede o lado a?`,ok:`${a} cm`,
+   bad:[[`${b+c} cm`,'somou os dois lados','Com ângulo de 90°, cos A = 0, e a lei dos cossenos vira a² = b² + c².'],[`${c-b} cm`,'subtraiu os lados','Com ângulo de 90°, a² = b² + c². Tire a raiz da soma dos quadrados.'],[`${b*c} cm`,'multiplicou os lados','Com ângulo de 90°, a² = b² + c².'],[`${a+1} cm`,'errou a raiz','a² = b² + c². Faça a conta dos quadrados com calma.']],
+   fill:()=>`${rnd(4,30)} cm`,h:['cos 90° = 0.','a² = b² + c².'],e:`a² = ${b}² + ${c}² = ${b*b+c*c}, então a = ${a} cm.`,s:LSN_S({md:1,b,c,A:90,oc:1})})},
+ ()=>{const[b,c,a]=pick(LSN_T60);
+  return mk({q:`Em um triângulo, os lados b e c medem ${b} cm e ${c} cm, e o ângulo entre eles mede 60°. Quanto mede o lado a?`,ok:`${a} cm`,
+   bad:[[`${b+c} cm`,'somou os dois lados','Use a² = b² + c² − 2bc·cos A, com cos 60° = 1/2.'],[`${c-b} cm`,'subtraiu os lados','Use a² = b² + c² − 2bc·cos A, com cos 60° = 1/2.'],[`${a+2} cm`,'errou a conta','Calcule b² + c² − bc com cuidado (2·cos 60° = 1).'],[`${a-2} cm`,'errou a conta','Calcule b² + c² − bc com cuidado (2·cos 60° = 1).']],
+   fill:()=>`${rnd(4,30)} cm`,h:['cos 60° = 1/2, então 2bc·cos A = bc.','a² = b² + c² − bc.'],e:`a² = ${b}² + ${c}² − ${b}·${c} = ${a*a}, então a = ${a} cm.`,s:LSN_S({md:1,b,c,A:60,oc:1})})},
+ ()=>{const T=[['Conhecendo dois lados e o ângulo entre eles, qual lei permite achar o terceiro lado?','Lei dos cossenos'],['Conhecendo dois ângulos e um lado, qual lei permite achar outro lado?','Lei dos senos'],['Conhecendo os três lados, qual lei permite achar um ângulo?','Lei dos cossenos'],['Conhecendo um lado e o ângulo oposto a ele, além de outro ângulo, qual lei permite achar o lado oposto a esse outro ângulo?','Lei dos senos']],[q,ok]=pick(T);
+  return mk({q,ok,bad:['Lei dos senos','Lei dos cossenos','Teorema de Pitágoras','Teorema de Tales'].filter(x=>x!==ok).map(x=>[x,'escolheu a lei que não se encaixa nos dados','A lei dos senos relaciona lados e ângulos opostos (pares lado e ângulo). A lei dos cossenos usa dois lados e o ângulo entre eles, ou os três lados.']),
+   fill:()=>'Teorema de Euclides',h:['A lei dos senos pede pares: um lado e seu ângulo oposto.','A lei dos cossenos pede dois lados e o ângulo entre eles, ou os três lados.'],e:`Aqui serve a ${ok.toLowerCase()}.`,s:LSN_S({md:ok==='Lei dos senos'?0:1,oc:0})})}
+],
+2:[
+ ()=>{const cs=pick([[30,a=>a,[2,20]],[90,a=>a/2,[2,20]],[45,a=>`${a/2}√2`,[2,20]],[60,a=>`${a/3}√3`,[3,18]],[150,a=>a,[2,20]]]),[A,f,[lo,hi]]=cs;let a;do{a=rnd(lo,hi)}while(((A===90||A===45)&&a%2!==0)||(A===60&&a%3!==0));
+  const ok=`${f(a)} cm`,d={30:`${2*a} cm`,150:`${2*a} cm`,90:`${a} cm`,45:`${a}√2 cm`,60:`${2*a/3}√3 cm`}[A];
+  return mk({q:`Em um triângulo, o lado a mede ${a} cm e o ângulo A, oposto a ele, mede ${A}°. Qual é o raio da circunferência circunscrita ao triângulo?`,ok,
+   bad:[[d,'deu o diâmetro','Na lei dos senos, a / sen A = 2R. O valor da razão é o diâmetro. Divida por 2.'],[`${a} cm`.replace(`${a} cm`,ok===`${a} cm`?`${a+1} cm`:`${a} cm`),'ignorou o ângulo','O raio depende do ângulo: R = a / (2 · sen A).'],[`${a*2+1} cm`,'errou a conta','R = a / (2 · sen A).'],[`${a/2+1} cm`,'errou a conta','R = a / (2 · sen A).']].filter(x=>x[0]!==ok),
+   fill:()=>`${rnd(2,30)} cm`,h:['Lei dos senos: a / sen A = 2R.','Isole R.'],e:`R = ${a} / (2 · sen ${A}°) = ${ok}.`,s:LSN_S({md:0,...LSN_ANG(A,Math.min(60,Math.floor((180-A)/2))),A,oc:1})})},
+ ()=>{const[b,c,a]=pick(LSN_T120);
+  return mk({q:`Dois lados de um triângulo medem ${b} cm e ${c} cm e formam entre si um ângulo de 120°. Quanto mede o terceiro lado?`,ok:`${a} cm`,
+   bad:[[`${b+c} cm`,'somou os dois lados','Use a² = b² + c² − 2bc·cos A, com cos 120° = −1/2.'],[`${Math.round(Math.sqrt(b*b+c*c-b*c)*100)/100} cm`.replace('.',','),'usou o sinal do cosseno como se fosse 60°','Em 120°, o cosseno é negativo: −2bc·cos 120° = +bc.'],[`${a+1} cm`,'errou a conta','a² = b² + c² + bc.'],[`${a-1} cm`,'errou a conta','a² = b² + c² + bc.']],
+   fill:()=>`${rnd(4,30)} cm`,h:['cos 120° = −1/2.','a² = b² + c² + bc.'],e:`a² = ${b}² + ${c}² + ${b}·${c} = ${a*a}, então a = ${a} cm.`,s:LSN_S({md:1,b,c,A:120,oc:1})})},
+ ()=>{const cs=pick([[30,30,'a'],[30,60,'r3'],[45,45,'a'],[60,60,'a']]),[A,B,t]=cs,a=rnd(2,12)*2,ok=t==='r3'?`${a}√3 cm`:`${a} cm`;
+  const bq=t==='r3'?`${a}√3`:`${a}`;
+  return mk({q:`Em um triângulo acutângulo, o lado a mede ${a} cm e o ângulo A mede ${A}°. O lado b mede ${bq} cm. Quanto mede o ângulo B?`,ok:`${B}°`,
+   bad:[30,45,60,90].filter(x=>x!==B).map(x=>[`${x}°`,'errou o seno que corresponde à razão','Use sen B = b · sen A / a e procure o ângulo agudo com esse seno.']),
+   fill:()=>`${rnd(2,17)*10}°`,h:['Lei dos senos: sen B = b · sen A / a.','Ache o ângulo agudo que tem esse seno.'],e:`sen B = ${t==='r3'?'√3':'1'} · sen ${A}° ${t==='r3'?'= √3/2':`= sen ${A}°`}. O ângulo agudo é ${B}°.`,s:LSN_S({md:0,...LSN_ANG(A,B),oc:1})})},
+ ()=>{const b=rnd(3,12),c=rnd(3,12),A=pick([30,90,150]),ar=A===90?b*c/2:b*c/4;
+  return mk({q:`Em um triângulo, dois lados medem ${b} cm e ${c} cm e formam um ângulo de ${A}°. Qual é a área do triângulo?`,ok:`${EMN(ar)} cm²`,
+   bad:[[`${EMN(b*c/2)} cm²`,'esqueceu o seno do ângulo','Área = (1/2) · b · c · sen A.'],[`${EMN(b*c)} cm²`,'só multiplicou os lados','Área = (1/2) · b · c · sen A.'],[`${EMN(b*c/4+1)} cm²`,'errou a conta','Área = (1/2) · b · c · sen A.'],[`${EMN(b*c/8)} cm²`,'usou o seno duas vezes','Área = (1/2) · b · c · sen A, uma vez só.']].filter(x=>x[0]!==`${EMN(ar)} cm²`),
+   fill:()=>`${EMN(rnd(2,40)/2)} cm²`,h:['Área = (1/2) · b · c · sen A.',`sen ${A}° = ${A===90?'1':'1/2'}.`],e:`Área = (1/2) · ${b} · ${c} · ${A===90?'1':'1/2'} = ${EMN(ar)} cm².`,s:LSN_S({md:0,b,c,A,oc:1})})}
+],
+3:[
+ ()=>{const cs=pick([[30,30,'3',(m)=>`${m/3}√3 m`,3],[45,45,'2',(m)=>`${m/2}√2 m`,2],[60,60,'1',(m)=>`${m} m`,1],[30,90,'3',(m)=>`${2*m/3}√3 m`,3]]),[A,B,,f,mu]=cs;let AB;do{AB=rnd(2,20)*mu}while(AB>60);
+  const ok=f(AB),C=180-A-B;
+  return mk({q:`Dois pontos A e B, na margem de um rio, estão a ${AB} m um do outro. De A e de B vê-se uma árvore C na outra margem, sob os ângulos CAB = ${A}° e CBA = ${B}°. Qual é a distância de A até C?`,ok:ok,
+   bad:[[`${AB} m`,'achou que AC é igual a AB','AC é oposto ao ângulo B, e AB é oposto ao ângulo C. Use AC / sen B = AB / sen C.'],[`${AB*2} m`,'dobrou a distância','Use AC / sen B = AB / sen C, e não AC = 2·AB.'],[`${AB+B} m`,'misturou metros com graus','As unidades diferentes não se somam. Use a lei dos senos.'],[`${Math.round(AB*Math.sin(LSN_R(A))/Math.sin(LSN_R(C))*100)/100} m`.replace('.',','),'usou o ângulo errado no seno','AC é oposto ao ângulo em B. Troque A por B na razão.']].filter(x=>x[0]!==ok),
+   fill:()=>`${rnd(5,60)} m`,h:['O terceiro ângulo (em C) é 180° − A − B.','AC / sen B = AB / sen C.'],e:`C = ${C}°. AC = ${AB} · sen ${B}° / sen ${C}° = ${ok}.`,s:LSN_S({md:0,...LSN_ANG(A,B),oc:1})})},
+ ()=>{const ang=pick([60,120]),[b,c,a]=pick(ang===60?LSN_T60:LSN_T120),t=pick([1,2,3]);
+  return mk({q:`Dois navios partem do mesmo porto ao mesmo tempo, em rotas que formam entre si um ângulo de ${ang}°. Um navega a ${b} km/h e o outro a ${c} km/h. Qual é a distância entre eles depois de ${t} ${t>1?'horas':'hora'}?`,ok:`${a*t} km`,
+   bad:[[`${(b+c)*t} km`,'somou as distâncias','Os navios não andam na mesma reta. Use a lei dos cossenos nas distâncias percorridas.'],[`${Math.abs(c-b)*t} km`,'subtraiu as distâncias','Os navios não andam na mesma reta. Use a lei dos cossenos nas distâncias percorridas.'],[`${a*t+t} km`,'errou a conta','Distâncias percorridas: '+b*t+' km e '+c*t+' km. Aplique a lei dos cossenos.'],[`${a} km`,'esqueceu o tempo','A distância é medida depois de '+t+' hora(s). Multiplique as velocidades pelo tempo primeiro.']].filter(x=>x[0]!==`${a*t} km`),
+   fill:()=>`${rnd(5,80)} km`,h:['Calcule quanto cada navio andou.','Use a² = b² + c² − 2bc·cos do ângulo entre as rotas.'],e:`Distâncias: ${b*t} e ${c*t} km. a² = ${b*t}² + ${c*t}² ${ang===60?'−':'+'} ${b*t}·${c*t}, então a = ${a*t} km.`,s:LSN_S({md:1,b:Math.min(24,b*t),c:Math.min(24,c*t),A:ang,oc:1})})},
+ ()=>{const ang=pick([60,120,90]),[b,c,a]=pick(ang===60?LSN_T60:ang===120?LSN_T120:LSN_P90),ok=`${ang}°`;
+  const L=shuf([b,c,a]);
+  return mk({q:`Um triângulo tem lados ${L[0]} cm, ${L[1]} cm e ${L[2]} cm. Quanto mede o ângulo oposto ao lado de ${a} cm?`,ok,
+   bad:[[`${180-ang}°`,'trocou o sinal do cosseno','O cosseno pode ser negativo: se cos A < 0, o ângulo é obtuso.'],[`${ang===90?60:ang===60?30:45}°`,'errou o valor do cosseno','cos A = (b² + c² − a²) / (2bc).'],[`${ang===90?45:ang===60?90:150}°`,'errou o valor do cosseno','cos A = (b² + c² − a²) / (2bc).'],[`${ang===90?30:ang===60?45:135}°`,'errou o valor do cosseno','cos A = (b² + c² − a²) / (2bc).']].filter(x=>x[0]!==ok),
+   fill:()=>`${rnd(2,17)*10}°`,h:['Lei dos cossenos: a² = b² + c² − 2bc·cos A.','Isole cos A e procure o ângulo.'],e:`cos A = (${b}² + ${c}² − ${a}²) / (2·${b}·${c}) = ${(b*b+c*c-a*a)}/${2*b*c}, que é o cosseno de ${ang}°.`,s:LSN_S({md:1,b:Math.min(24,b),c:Math.min(24,c),A:ang,oc:1})})},
+ ()=>{let x,y,z;do{x=rnd(3,15);y=rnd(3,15);z=rnd(3,15)}while(x+y<=z||x+z<=y||y+z<=x||new Set([x,y,z]).size<2);
+  if(Math.random()<.3){const[p,q,r]=pick(LSN_P90),k=rnd(1,2);x=p*k;y=q*k;z=r*k}
+  const ok=LSN_CL(x,y,z),A=Math.round(Math.acos((x*x+y*y-z*z)/(2*x*y))*180/Math.PI);
+  return mk({q:`Um triângulo tem lados ${x} cm, ${y} cm e ${z} cm. Ele é acutângulo, retângulo ou obtusângulo?`,ok,
+   bad:['Acutângulo','Retângulo','Obtusângulo'].filter(t=>t!==ok).map(t=>[t,'comparou errado o maior lado','Compare o quadrado do maior lado com a soma dos quadrados dos outros dois: igual é retângulo, menor é acutângulo e maior é obtusângulo.']),
+   fill:()=>'Equilátero',h:['Veja o quadrado do maior lado.','Compare com a soma dos quadrados dos outros dois.'],e:`O maior lado é ${Math.max(x,y,z)}. Seu quadrado é ${Math.max(x,y,z)**2} e a soma dos quadrados dos outros é ${x*x+y*y+z*z-Math.max(x,y,z)**2}. O triângulo é ${ok.toLowerCase()}.`,s:LSN_S({md:1,b:Math.min(24,x),c:Math.min(24,y),A:Math.max(20,Math.min(160,A)),oc:1})})}
+]};
+MODS.push({id:'leistrig',ano:10,ic:'📐',nome:'Lei dos senos e dos cossenos',sub:'Triângulos quaisquer: circunferência circunscrita, lados, ângulos e área',liveInfo:true,
+ ctl:[{k:'md',l:'Lei (0 senos · 1 cossenos)',min:0,max:1,v:0},{k:'b',l:'Lado b',min:2,max:24,v:8},{k:'c',l:'Lado c',min:2,max:24,v:10},{k:'A',l:'Ângulo A, entre b e c',min:20,max:160,v:60,u:'°'}],
+ reset:{md:0,b:8,c:10,A:60,oc:0},
+ fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.md=cl(v.md,0,1);v.b=cl(v.b,2,24);v.c=cl(v.c,2,24);v.A=cl(v.A,20,160);v.oc=cl(v.oc,0,1)},
+ info(v){if(LSN_OCU(v))return 'Triângulo com lados a, b, c e ângulos A, B, C';const t=LSN_TRI(v.b,v.c,v.A);return `a = ${LSN_FX(t.a)} · b = ${v.b} · c = ${v.c} · A = ${v.A}° · B = ${LSN_FX(t.B)}° · C = ${LSN_FX(t.C)}°`},
+ desc(v){return v.md===0?'Triângulo com a circunferência que passa pelos três vértices. A razão entre cada lado e o seno do ângulo oposto é o diâmetro.':'Triângulo com dois lados e o ângulo entre eles, e o terceiro lado dado pela lei dos cossenos.'},
+ draw(c,v,W,H,k){const ocu=LSN_OCU(v),{b,c:cc,A}=v,t=LSN_TRI(b,cc,A),a=t.a;
+  const txt=(s,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(s,x,y)};
+  const fit=(s,x,y,col,px,maxw,bold=1)=>{let z=px;const f=m=>`${bold?'bold ':''}${m}px sans-serif`;c.font=f(z);while(c.measureText(s).width>maxw&&z>9){z--;c.font=f(z)}txt(s,x,y,col,f(z))};
+  fit(v.md===0?'Lei dos senos':'Lei dos cossenos',W/2,16,k.t,15,W-16);
+  const Pm=[[0,0],[cc,0],[b*Math.cos(LSN_R(A)),b*Math.sin(LSN_R(A))]],xs=Pm.map(p=>p[0]),ys=Pm.map(p=>p[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  const L=44,R=W-44,T=44,B=H-84,sc=Math.min((R-L)/(x1-x0),(B-T)/(y1-y0)),ox=(L+R)/2-(x0+x1)/2*sc,oy=(T+B)/2+(y0+y1)/2*sc,P=Pm.map(p=>[ox+p[0]*sc,oy-p[1]*sc]);
+  if(v.md===0){const[ax,ay]=P[0],[bx,by]=P[1],[qx,qy]=P[2],d=2*(ax*(by-qy)+bx*(qy-ay)+qx*(ay-by)),ux=((ax*ax+ay*ay)*(by-qy)+(bx*bx+by*by)*(qy-ay)+(qx*qx+qy*qy)*(ay-by))/d,uy=((ax*ax+ay*ay)*(qx-bx)+(bx*bx+by*by)*(ax-qx)+(qx*qx+qy*qy)*(bx-ax))/d,rr=Math.hypot(ax-ux,ay-uy);
+    c.save();c.beginPath();c.rect(2,26,W-4,H-100);c.clip();c.strokeStyle='rgba(255,212,59,.45)';c.lineWidth=1.6;c.setLineDash([5,4]);c.beginPath();c.arc(ux,uy,rr,0,7);c.stroke();c.setLineDash([]);c.restore()}
+  c.fillStyle='rgba(77,171,247,.1)';c.strokeStyle=k.t;c.lineWidth=2.2;c.beginPath();P.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fill();c.stroke();
+  const ang=[A,t.B,t.C],nm=['A','B','C'],col=['#4dabf7','#69db7c','#ff6b9d'],ct=[(P[0][0]+P[1][0]+P[2][0])/3,(P[0][1]+P[1][1]+P[2][1])/3];
+  P.forEach((p,i)=>{const od=Math.atan2(p[1]-ct[1],p[0]-ct[0]);txt(nm[i],p[0]+13*Math.cos(od),p[1]+13*Math.sin(od)+4,col[i],'bold 13px sans-serif');
+    if(!ocu){const pv=P[(i+2)%3],nx=P[(i+1)%3],d1=Math.atan2(pv[1]-p[1],pv[0]-p[0]),d2=Math.atan2(nx[1]-p[1],nx[0]-p[0]);let dl=d2-d1;while(dl>Math.PI)dl-=2*Math.PI;while(dl<-Math.PI)dl+=2*Math.PI;c.fillStyle=col[i]+'55';c.strokeStyle=col[i];c.lineWidth=1.6;c.beginPath();c.moveTo(p[0],p[1]);c.arc(p[0],p[1],15,d1,d1+dl,dl<0);c.closePath();c.fill();c.stroke();txt(`${LSN_FX(ang[i])}°`,p[0]-30*Math.cos(od)*0+(Math.cos(d1+dl/2))*34,p[1]+(Math.sin(d1+dl/2))*34+4,col[i],'bold 11px sans-serif')}});
+  const sd=[[P[1],P[2],'a',a],[P[0],P[2],'b',b],[P[0],P[1],'c',cc]];
+  sd.forEach(([p,q,n,val])=>{const mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2,od=Math.atan2(my-ct[1],mx-ct[0]);txt(ocu?n:`${n} = ${LSN_FX(val)}`,mx+16*Math.cos(od),my+16*Math.sin(od)+4,k.t,'bold 11px sans-serif')});
+  const sA=Math.sin(LSN_R(A)),sB=Math.sin(LSN_R(t.B)),sC=Math.sin(LSN_R(t.C)),cA=Math.cos(LSN_R(A));
+  if(v.md===0){fit(ocu?'a / sen A = b / sen B = c / sen C = 2R':`${LSN_FX(a)} / ${LSN_FX(sA)} = ${LSN_FX(b)} / ${LSN_FX(sB)} = ${LSN_FX(cc)} / ${LSN_FX(sC)}`,W/2,H-46,k.a,13,W-16);
+    fit(ocu?'a razão é o diâmetro da circunferência circunscrita':`cada razão vale ${LSN_FX(a/sA)}, o diâmetro da circunferência (raio R = ${LSN_FX(a/sA/2)})`,W/2,H-24,k.m,12,W-16,0);
+    fit(ocu?'':`área = ½ · b · c · sen A = ${LSN_FX(b*cc*sA/2)}`,W/2,H-6,k.m,11,W-16,0)}
+  else{fit(ocu?'a² = b² + c² − 2·b·c·cos A':`a² = ${b}² + ${cc}² − 2·${b}·${cc}·${cA<0?'('+LSN_FX(cA)+')':LSN_FX(cA)} = ${LSN_FX(a*a)}`,W/2,H-46,k.a,13,W-16);
+    fit(ocu?'com A = 90°, vira o teorema de Pitágoras':`a = ${LSN_FX(a)}${A===90?' (cos 90° = 0, é o teorema de Pitágoras)':A>90?' (cos A < 0: o ângulo é obtuso)':''}`,W/2,H-24,k.m,12,W-16,0);
+    fit(ocu?'':`b² + c² = ${b*b+cc*cc}  ·  2·b·c·cos A = ${LSN_FX(2*b*cc*cA)}`,W/2,H-6,k.m,11,W-16,0)}
+  c.textAlign='left'},
+ rod:8,gens:LSN_GENS});
+
+/* ===== Análise combinatória (módulo novo, arquivo separado) ===== */
+const CMB_S=o=>Object.assign({md:0,n:5,p:3,oc:0},o);
+const CMB_OCU=v=>v.oc===1&&!locked;
+const CMB_F=n=>{let r=1;for(let i=2;i<=n;i++)r*=i;return r};
+const CMB_A=(n,p)=>CMB_F(n)/CMB_F(n-p);
+const CMB_C=(n,p)=>CMB_A(n,p)/CMB_F(p);
+const CMB_BAD=(ok,arr,msg)=>{let l=[...new Set(arr.filter(x=>x>0&&x!==ok&&Number.isFinite(x)))];for(const x of [ok+1,ok*2,ok+10,ok+2])if(l.length<4&&x!==ok&&!l.includes(x))l.push(x);return l.slice(0,4).map(x=>[EMN(x),'errou a contagem',msg])};
+const CMB_PAL=[['AMOR',1],['LIVRO',1],['CAMPO',1],['PRATO',1],['SOMBRA',1],['FILHO',1],['CASA',0],['ARARA',0],['BANANA',0],['OVO',0],['MATEMATICA',0],['MISSISSIPI',0],['PARALELA',0]];
+const CMB_ANA=w=>{const m={};for(const ch of w)m[ch]=(m[ch]||0)+1;let r=CMB_F(w.length);Object.values(m).forEach(k=>r/=CMB_F(k));return Math.round(r)};
+const CMB_GENS={
+1:[
+ ()=>{const n=rnd(3,8),ok=CMB_F(n);return mk({q:`Quanto vale ${n}! (fatorial de ${n})?`,ok:EMN(ok),bad:CMB_BAD(ok,[n*n,n*2,CMB_F(n-1),CMB_F(n)+n,ok*n],'n! é o produto n · (n−1) · … · 2 · 1.'),fill:()=>EMN(rnd(2,900)),h:['n! multiplica n por todos os naturais menores até 1.'],e:`${Array.from({length:n},(_,i)=>n-i).join(' · ')} = ${EMN(ok)}.`,s:CMB_S({md:0,n,oc:1})})},
+ ()=>{const n=rnd(3,7),ok=CMB_F(n);return mk({q:`De quantas maneiras ${n} pessoas podem formar uma fila?`,ok:EMN(ok),bad:CMB_BAD(ok,[n*n,n*2,CMB_F(n-1),n+n-1,ok*2],'A primeira posição tem n escolhas, a segunda n−1, e assim por diante: n!.'),fill:()=>EMN(rnd(2,900)),h:['Para o primeiro lugar da fila há n pessoas possíveis. Para o segundo, sobra uma a menos.'],e:`${n}! = ${EMN(ok)} filas diferentes.`,s:CMB_S({md:0,n,oc:1})})},
+ ()=>{const n=rnd(4,9),ok=n*(n-1)*(n-2);return mk({q:`Em uma corrida com ${n} atletas, de quantas maneiras podem ser distribuídas as medalhas de ouro, prata e bronze?`,ok:EMN(ok),bad:CMB_BAD(ok,[n*3,CMB_C(n,3),CMB_F(n),n**3,n*(n-1)],'A ordem importa e ninguém ganha duas medalhas: n · (n−1) · (n−2).'),fill:()=>EMN(rnd(20,900)),h:['Há n candidatos ao ouro. Depois sobram n−1 para a prata.'],e:`${n} · ${n-1} · ${n-2} = ${EMN(ok)}.`,s:CMB_S({md:1,n,p:3,oc:1})})},
+ ()=>{const n=rnd(5,10),ok=CMB_C(n,2);return mk({q:`De quantas maneiras é possível escolher 2 alunos entre ${n} para formar uma dupla?`,ok:EMN(ok),bad:CMB_BAD(ok,[n*(n-1),n*2,n+n-1,CMB_F(n),ok+n],'Na dupla a ordem não importa: Maria e João é a mesma dupla que João e Maria. Divida o arranjo por 2!.'),fill:()=>EMN(rnd(5,90)),h:['Se a ordem importasse, seriam n · (n−1).','Cada dupla foi contada duas vezes.'],e:`${n} · ${n-1} / 2 = ${EMN(ok)}.`,s:CMB_S({md:2,n,p:2,oc:1})})}
+],
+2:[
+ ()=>{const n=rnd(5,9),ok=CMB_C(n,3);return mk({q:`Em um grupo de ${n} pessoas, de quantas maneiras podemos escolher 3 delas para formar uma comissão?`,ok:EMN(ok),bad:CMB_BAD(ok,[CMB_A(n,3),n*3,CMB_F(n),ok*2,ok+n],'Na comissão a ordem não importa. C(n,3) = n · (n−1) · (n−2) / 3!.'),fill:()=>EMN(rnd(10,300)),h:['Primeiro conte como se a ordem importasse.','Depois divida por 3! = 6.'],e:`C(${n},3) = ${n}·${n-1}·${n-2} / 6 = ${EMN(ok)}.`,s:CMB_S({md:2,n,p:3,oc:1})})},
+ ()=>{const k=rnd(3,4),ok=k===3?720:5040;return mk({q:`Quantas senhas de ${k} dígitos distintos podem ser formadas com os algarismos de 0 a 9?`,ok:EMN(ok),bad:CMB_BAD(ok,[10**k,k===3?1000:10000,ok/k,CMB_C(10,k),ok*2],'Os dígitos não podem se repetir: 10 · 9 · 8'+(k===4?' · 7':'')+'.'),fill:()=>EMN(rnd(100,9999)),h:['O primeiro dígito tem 10 opções. O segundo, 9.'],e:`${k===3?'10 · 9 · 8':'10 · 9 · 8 · 7'} = ${EMN(ok)}.`,s:CMB_S({md:1,n:10,p:k,oc:1})})},
+ ()=>{const[w]=pick(CMB_PAL.filter(x=>x[1]===1)),i=rnd(0,w.length-1),ch=w[i],ok=CMB_F(w.length-1);return mk({q:`Quantos anagramas da palavra ${w} começam com a letra ${ch}? (Todas as letras são diferentes.)`,ok:EMN(ok),bad:CMB_BAD(ok,[CMB_F(w.length),w.length,ok*2,CMB_F(w.length-2),ok+w.length],'Fixada a primeira letra, as outras se permutam: (n−1)!.'),fill:()=>EMN(rnd(6,500)),h:['A primeira letra já está decidida.','Permute as letras que sobram.'],e:`Sobram ${w.length-1} letras: ${w.length-1}! = ${EMN(ok)}.`,s:CMB_S({md:0,n:w.length-1,oc:1})})},
+ ()=>{const[w]=pick(CMB_PAL.filter(x=>x[1]===0)),ok=CMB_ANA(w);return mk({q:`Quantos anagramas distintos tem a palavra ${w}?`,ok:EMN(ok),bad:CMB_BAD(ok,[CMB_F(w.length),Math.round(ok/2),ok*2,w.length**2,ok+w.length],'Letras repetidas geram anagramas iguais: divida n! pelo fatorial de cada repetição.'),fill:()=>EMN(rnd(6,5000)),h:['Comece por n!, como se todas as letras fossem diferentes.','Depois divida pelo fatorial de quantas vezes cada letra se repete.'],e:`${w.length}! dividido pelos fatoriais das repetições dá ${EMN(ok)}.`,s:CMB_S({md:0,n:Math.min(10,w.length),oc:1})})}
+],
+3:[
+ ()=>{const h=rnd(3,6),m=rnd(3,5),ok=CMB_C(m,2)*CMB_C(h,2);return mk({q:`Um grupo tem ${h} homens e ${m} mulheres. De quantas maneiras podemos formar uma comissão de 4 pessoas com exatamente 2 mulheres?`,ok:EMN(ok),bad:CMB_BAD(ok,[CMB_C(h+m,4),CMB_C(m,2)+CMB_C(h,2),CMB_A(m,2)*CMB_A(h,2),CMB_C(h+m,2),ok*2],'Escolha as 2 mulheres e, separadamente, os 2 homens, e multiplique.'),fill:()=>EMN(rnd(10,200)),h:['Divida em dois grupos: mulheres e homens.','Em cada grupo a ordem não importa.'],e:`C(${m},2) · C(${h},2) = ${CMB_C(m,2)} · ${CMB_C(h,2)} = ${EMN(ok)}.`,s:CMB_S({md:2,n:Math.min(10,m),p:2,oc:1})})},
+ ()=>{const h=rnd(3,6),m=rnd(2,4),ok=CMB_C(h+m,3)-CMB_C(h,3);return mk({q:`Um grupo tem ${h} homens e ${m} mulheres. De quantas maneiras podemos formar uma comissão de 3 pessoas com pelo menos uma mulher?`,ok:EMN(ok),bad:CMB_BAD(ok,[CMB_C(h+m,3),CMB_C(h,3),CMB_C(h+m,3)+CMB_C(h,3),m*CMB_C(h+m-1,2),CMB_C(m,1)*CMB_C(h,2)],'Mais fácil: todas as comissões menos as que só têm homens.'),fill:()=>EMN(rnd(10,200)),h:['Conte todas as comissões possíveis.','Tire as que não têm nenhuma mulher.'],e:`C(${h+m},3) − C(${h},3) = ${CMB_C(h+m,3)} − ${CMB_C(h,3)} = ${EMN(ok)}.`,s:CMB_S({md:2,n:Math.min(10,h+m),p:3,oc:1})})},
+ ()=>{const n=rnd(5,12),k=n*(n-1)/2;return mk({q:`Em uma reunião, todos se cumprimentaram com um aperto de mão, uma única vez por par de pessoas. Foram ${k} apertos de mão. Quantas pessoas havia na reunião?`,ok:String(n),bad:[...new Set([n-1,n+1,k/2|0,k-1,n+2,n-2])].filter(x=>x!==n&&x>1).slice(0,4).map(x=>[String(x),'errou a equação','O número de apertos é C(n,2) = n(n−1)/2. Resolva n(n−1) = '+2*k+'.']),fill:()=>String(rnd(3,20)),h:['Cada par de pessoas dá um aperto: C(n,2).','Resolva n(n−1)/2 = '+k+'.'],e:`n(n−1) = ${2*k}, logo n = ${n}.`,s:CMB_S({md:2,n:Math.min(10,n),p:2,oc:1})})},
+ ()=>{const n=rnd(6,12),ok=n*(n-1);return mk({q:`Em um campeonato com ${n} times, todos jogam contra todos em dois turnos (turno e returno). Quantos jogos serão disputados?`,ok:String(ok),bad:[...new Set([ok/2,ok+n,n*n,n*2,ok-n])].filter(x=>x!==ok&&x>0).slice(0,4).map(x=>[String(x),'errou a contagem','Cada par joga duas vezes: 2 · C(n,2) = n(n−1).']),fill:()=>String(rnd(10,150)),h:['Em um turno, cada par joga uma vez: C(n,2).','No returno, repete.'],e:`2 · C(${n},2) = ${n} · ${n-1} = ${ok} jogos.`,s:CMB_S({md:2,n:Math.min(10,n),p:2,oc:1})})}
+]};
+MODS.push({id:'combinatoria',ano:10,ic:'🎲',nome:'Análise combinatória',sub:'Fatorial, permutação, arranjo e combinação: quando a ordem importa e quando não',liveInfo:true,
+ ctl:[{k:'md',l:'Tipo (0 permutação · 1 arranjo · 2 combinação)',min:0,max:2,v:0},{k:'n',l:'Total de elementos n',min:1,max:10,v:5},{k:'p',l:'Escolhidos p',min:0,max:10,v:3}],
+ reset:{md:0,n:5,p:3,oc:0},
+ fix(v){const cl=(x,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(x)||0)));v.md=cl(v.md,0,2);v.n=cl(v.n,1,10);v.p=cl(v.p,0,v.n);v.oc=cl(v.oc,0,1)},
+ info(v){if(CMB_OCU(v))return 'Contagem de possibilidades';const{n,p,md}=v;return md===0?`${n}! = ${EMN(CMB_F(n))}`:md===1?`A(${n},${p}) = ${EMN(CMB_A(n,p))}`:`C(${n},${p}) = ${EMN(CMB_C(n,p))}`},
+ desc(v){return v.md===0?'Ordenar todos os n elementos: cada posição tem uma escolha a menos.':v.md===1?'Escolher p elementos entre n, e a ordem importa.':'Escolher p elementos entre n, e a ordem não importa. As linhas do triângulo de Pascal mostram os valores.'},
+ draw(c,v,W,H,k){const ocu=CMB_OCU(v),{md,n,p}=v,txt=(s,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(s,x,y)};
+  const fit=(s,x,y,col,px,mw,b=1)=>{let z=px;const f=m=>`${b?'bold ':''}${m}px sans-serif`;c.font=f(z);while(c.measureText(s).width>mw&&z>9){z--;c.font=f(z)}txt(s,x,y,col,f(z))};
+  fit(md===0?'Permutação':md===1?'Arranjo':'Combinação',W/2,16,k.t,15,W-16);
+  if(md<2){const q=md===0?n:p,bw=Math.min(46,(W-24)/Math.max(1,q)-4),bx=(W-q*(bw+4)+4)/2,by=50;
+    for(let i=0;i<q;i++){const x=bx+i*(bw+4);c.fillStyle='rgba(77,171,247,.16)';c.strokeStyle=k.t;c.lineWidth=1.6;c.beginPath();c.roundRect?c.roundRect(x,by,bw,50,8):c.rect(x,by,bw,50);c.fill();c.stroke();txt(String(n-i),x+bw/2,by+31,k.a,'bold 18px sans-serif');txt(`${i+1}º`,x+bw/2,by+66,k.m,'10px sans-serif')}
+    if(q===0)txt('nenhuma posição: 1 maneira',W/2,by+30,k.m,'13px sans-serif');
+    const prod=Array.from({length:q},(_,i)=>n-i).join(' × ')||'1';
+    fit(ocu?'multiplicamos as escolhas de cada posição':`${prod} = ${EMN(md===0?CMB_F(n):CMB_A(n,p))}`,W/2,by+100,k.a,16,W-16);
+    fit(md===0?'cada posição tem uma escolha a menos':'a ordem importa: 1º, 2º e 3º são lugares diferentes',W/2,by+126,k.m,12,W-16,0);
+    fit(ocu?'':md===0?`${n}! = ${EMN(CMB_F(n))}`:`A(${n},${p}) = ${n}! / ${n-p}! = ${EMN(CMB_A(n,p))}`,W/2,by+152,k.t,13,W-16);
+    fit(ocu?'':md===1?`se a ordem não importasse: ${EMN(CMB_A(n,p))} / ${p}! = ${EMN(CMB_C(n,p))}`:'',W/2,by+176,k.m,11,W-16,0)}
+  else{const rows=n+1,top=34,bot=H-62,rh=Math.min(24,(bot-top)/rows),cw=Math.min(40,(W-12)/rows);
+    for(let i=0;i<rows;i++)for(let j=0;j<=i;j++){const x=W/2+(j-i/2)*cw,y=top+i*rh+rh*.7,hl=i===n,sel=hl&&j===p;
+      if(sel){c.fillStyle='rgba(255,212,59,.35)';c.beginPath();c.arc(x,y-4,Math.min(cw,rh*1.4)/2,0,7);c.fill()}
+      const val=CMB_C(i,j),s=(ocu&&sel)?'?':String(val);fit(s,x,y,sel?k.a:hl?k.t:k.m,hl?12:10,cw-2,hl?1:0)}
+    fit(ocu?'a linha n do triângulo guarda os valores de C(n, p)':`C(${n},${p}) = A(${n},${p}) / ${p}! = ${EMN(CMB_A(n,p))} / ${EMN(CMB_F(p))} = ${EMN(CMB_C(n,p))}`,W/2,H-34,k.a,13,W-16);
+    fit('a ordem não importa: cada grupo foi contado p! vezes no arranjo',W/2,H-12,k.m,11,W-16,0)}
+  c.textAlign='left'},
+ rod:8,gens:CMB_GENS});
+
+/* ===== Matrizes e determinantes (módulo novo, arquivo separado) ===== */
+const MTZ_PRE=[[[[2,1],[0,3]],[[1,2],[3,4]]],[[[1,2],[3,4]],[[0,1],[1,0]]],[[[2,0],[0,2]],[[1,3],[2,1]]],[[[3,1],[2,4]],[[1,-1],[2,0]]],[[[1,2],[2,4]],[[3,0],[1,2]]]];
+const MTZ_S=o=>Object.assign({md:0,k:0,kk:0,i:1,j:1,A:MTZ_PRE[0][0],B:MTZ_PRE[0][1],oc:0},o);
+const MTZ_OCU=v=>v.oc===1&&!locked;
+const MTZ_SUB=n=>String(n).split('').map(d=>'₀₁₂₃₄₅₆₇₈₉'[+d]).join('');
+const MTZ_FM=M=>'['+M.map(r=>r.map(x=>EMN(x)).join(' ')).join('; ')+']';
+const MTZ_ADD=(A,B)=>A.map((r,i)=>r.map((x,j)=>x+B[i][j]));
+const MTZ_MUL=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((s,x,k)=>s+x*B[k][j],0)));
+const MTZ_T=A=>A[0].map((_,j)=>A.map(r=>r[j]));
+const MTZ_DET=A=>A[0][0]*A[1][1]-A[0][1]*A[1][0];
+const MTZ_RM=(r,c,lo,hi)=>Array.from({length:r},()=>Array.from({length:c},()=>rnd(lo,hi)));
+const MTZ_BM=(M,extra,msg)=>{const ok=MTZ_FM(M),c=extra.map(MTZ_FM);const pert=(a,b,d)=>MTZ_FM(M.map((r,i)=>r.map((x,j)=>i===a&&j===b?x+d:x)));const R=M.length,C=M[0].length;c.push(pert(0,0,1),pert(R-1,C-1,-1),pert(R-1,0,2),pert(0,C-1,-2),pert(0,0,-1));return[...new Set(c)].filter(x=>x!==ok).slice(0,4).map(x=>[x,'errou a operação com as matrizes',msg])};
+const MTZ_BN=(ok,arr,msg)=>{let l=[...new Set(arr.filter(x=>x!==ok&&Number.isFinite(x)))];for(const d of[1,-1,2,-2,3])if(l.length<4&&!l.includes(ok+d))l.push(ok+d);return l.slice(0,4).map(x=>[EMN(x),'errou a conta',msg])};
+const MTZ_GENS={
+1:[
+ ()=>{let m,n;do{m=rnd(1,4);n=rnd(1,4)}while(m===n&&Math.random()<.7);const ok=`${m} × ${n}`,c=[`${n} × ${m}`,`${m} × ${m}`,`${n} × ${n}`,`${m*n} × 1`,`${m+n} × 1`];return mk({q:`Uma matriz tem ${m} ${m>1?'linhas':'linha'} e ${n} ${n>1?'colunas':'coluna'}. Qual é a ordem dessa matriz?`,ok,bad:[...new Set(c)].filter(x=>x!==ok).slice(0,4).map(x=>[x,'trocou linhas com colunas','A ordem é escrita como linhas × colunas, nessa sequência.']),fill:()=>`${rnd(1,5)} × ${rnd(1,5)}`,h:['A ordem diz primeiro o número de linhas.','Depois, o número de colunas.'],e:`${m} linhas e ${n} colunas: ordem ${ok}.`,s:MTZ_S({md:3})})},
+ ()=>{const m=rnd(2,3),n=rnd(2,3),A=MTZ_RM(m,n,-5,9),i=rnd(1,m),j=rnd(1,n),ok=A[i-1][j-1],alt=[];if(j<=m&&i<=n)alt.push(A[j-1][i-1]);alt.push(A[i-1][j%n],A[i%m][j-1],A[0][0]);return mk({q:`Na matriz A = ${MTZ_FM(A)} (linhas separadas por ponto e vírgula), qual é o elemento a${MTZ_SUB(i)}${MTZ_SUB(j)}?`,ok:EMN(ok),bad:MTZ_BN(ok,alt,'No elemento aᵢⱼ, i é a linha e j é a coluna.'),fill:()=>EMN(rnd(-5,9)),h:['O primeiro índice é a linha.','O segundo índice é a coluna.'],e:`Linha ${i}, coluna ${j}: ${EMN(ok)}.`,s:MTZ_S({md:3,A,i,j,oc:0})})},
+ ()=>{const A=MTZ_RM(2,2,-3,8),B=MTZ_RM(2,2,-3,8),C=MTZ_ADD(A,B);return mk({q:`Sendo A = ${MTZ_FM(A)} e B = ${MTZ_FM(B)}, calcule A + B.`,ok:MTZ_FM(C),bad:MTZ_BM(C,[MTZ_MUL(A,B),MTZ_ADD(A,MTZ_T(B))],'Some elemento com elemento, na mesma posição.'),fill:()=>MTZ_FM(MTZ_RM(2,2,0,9)),h:['Matrizes somam-se posição a posição.'],e:`A + B = ${MTZ_FM(C)}.`,s:MTZ_S({md:0,A,B,oc:1})})},
+ ()=>{const k=rnd(2,4),A=MTZ_RM(2,rnd(2,3),-3,6),C=A.map(r=>r.map(x=>k*x));return mk({q:`Sendo A = ${MTZ_FM(A)}, calcule ${k}·A.`,ok:MTZ_FM(C),bad:MTZ_BM(C,[A.map((r,i)=>r.map((x,j)=>i===0&&j===0?k*x:x)),A.map(r=>r.map(x=>x+k))],'Multiplique todos os elementos da matriz pelo número.'),fill:()=>MTZ_FM(MTZ_RM(2,2,0,9)),h:['O número multiplica cada elemento.'],e:`${k}·A = ${MTZ_FM(C)}.`,s:MTZ_S({md:3,A,oc:0})})}
+],
+2:[
+ ()=>{const A=MTZ_RM(2,2,-2,5),B=MTZ_RM(2,2,-2,5),C=MTZ_MUL(A,B);return mk({q:`Sendo A = ${MTZ_FM(A)} e B = ${MTZ_FM(B)}, calcule A · B.`,ok:MTZ_FM(C),bad:MTZ_BM(C,[MTZ_MUL(B,A),A.map((r,i)=>r.map((x,j)=>x*B[i][j]))],'Cada elemento do produto é a linha de A vezes a coluna de B, somando os produtos.'),fill:()=>MTZ_FM(MTZ_RM(2,2,0,9)),h:['Elemento cᵢⱼ: linha i de A com coluna j de B.','Multiplique em pares e some.'],e:`A · B = ${MTZ_FM(C)}.`,s:MTZ_S({md:1,A,B,oc:1})})},
+ ()=>{const A=MTZ_RM(2,2,-2,5),B=MTZ_RM(2,2,-2,5),C=MTZ_MUL(A,B),i=rnd(1,2),j=rnd(1,2),ok=C[i-1][j-1],T=MTZ_MUL(B,A);return mk({q:`Sendo A = ${MTZ_FM(A)} e B = ${MTZ_FM(B)}, qual é o elemento c${MTZ_SUB(i)}${MTZ_SUB(j)} da matriz C = A · B?`,ok:EMN(ok),bad:MTZ_BN(ok,[T[i-1][j-1],A[i-1][j-1]*B[i-1][j-1],A[i-1][0]+B[0][j-1]],'Linha '+i+' de A com coluna '+j+' de B: multiplique em pares e some.'),fill:()=>EMN(rnd(-6,20)),h:[`Use a linha ${i} de A e a coluna ${j} de B.`],e:`c${MTZ_SUB(i)}${MTZ_SUB(j)} = ${A[i-1][0]}·${B[0][j-1]} + ${A[i-1][1]}·${B[1][j-1]} = ${EMN(ok)}.`,s:MTZ_S({md:1,A,B,i,j,oc:1})})},
+ ()=>{const A=MTZ_RM(2,3,1,9),T=MTZ_T(A);return mk({q:`Qual é a transposta da matriz A = ${MTZ_FM(A)}?`,ok:MTZ_FM(T),bad:MTZ_BM(T,[A.map(r=>r.slice().reverse()),A.slice().reverse().map(r=>r.slice()).map(r=>r)],'Na transposta, as linhas viram colunas: a 1ª linha de A é a 1ª coluna de Aᵗ.').filter(x=>x[0]!==MTZ_FM(A)),fill:()=>MTZ_FM(MTZ_RM(3,2,1,9)),h:['Troque linhas por colunas.'],e:`Aᵗ = ${MTZ_FM(T)}.`,s:MTZ_S({md:3,A,oc:0})})},
+ ()=>{const A=MTZ_RM(2,2,-4,7),d=MTZ_DET(A);return mk({q:`Qual é o determinante da matriz A = ${MTZ_FM(A)}?`,ok:EMN(d),bad:MTZ_BN(d,[A[0][0]*A[1][1]+A[0][1]*A[1][0],A[0][1]*A[1][0]-A[0][0]*A[1][1],A[0][0]+A[1][1]],'det = a₁₁·a₂₂ − a₁₂·a₂₁: diagonal principal menos diagonal secundária.'),fill:()=>EMN(rnd(-20,30)),h:['Diagonal principal menos diagonal secundária.'],e:`${A[0][0]}·${A[1][1]} − ${A[0][1]}·${A[1][0]} = ${EMN(d)}.`,s:MTZ_S({md:2,A,oc:1})})}
+],
+3:[
+ ()=>{let a,b,c,x;do{c=pick([2,3,4]);a=rnd(2,7);b=rnd(2,7);x=rnd(-4,8)}while(0);const d=x*c-a*b;return mk({q:`Para que valor de x a matriz A = [x ${a}; ${b} ${c}] tem determinante igual a ${EMN(d)}?`,ok:EMN(x),bad:MTZ_BN(x,[(d-a*b)/c,(d+a*b)/c===x?x+1:(d-a*b)/c,d/c,x+a,x*2],'x·'+c+' − '+a+'·'+b+' = '+EMN(d)+'. Isole x.'),fill:()=>EMN(rnd(-6,12)),h:['Monte det = x·'+c+' − '+a+'·'+b+'.','Iguale ao valor dado e resolva.'],e:`${c}x − ${a*b} = ${EMN(d)}, então x = ${EMN(x)}.`,s:MTZ_S({md:2,A:[[1,a],[b,c]],oc:1})})},
+ ()=>{const F=pick([['i + j',(i,j)=>i+j],['2i − j',(i,j)=>2*i-j],['i · j',(i,j)=>i*j],['i² + j',(i,j)=>i*i+j],['3i − 2j',(i,j)=>3*i-2*j],['i − j',(i,j)=>i-j]]),A=[[1,2],[1,2]].map((r,a)=>r.map((_,b)=>F[1](a+1,b+1)));return mk({q:`Construa a matriz A = (aᵢⱼ) de ordem 2 × 2 tal que aᵢⱼ = ${F[0]}.`,ok:MTZ_FM(A),bad:MTZ_BM(A,[MTZ_T(A)],'i é a linha e j é a coluna: calcule cada aᵢⱼ trocando i e j pelos índices.'),fill:()=>MTZ_FM(MTZ_RM(2,2,0,9)),h:['a₁₁ usa i = 1 e j = 1.','a₁₂ usa i = 1 e j = 2.'],e:`A = ${MTZ_FM(A)}.`,s:MTZ_S({md:3,A,oc:0})})},
+ ()=>{const A=MTZ_RM(2,2,-3,6),X=MTZ_RM(2,2,-3,6),B=MTZ_ADD(A,X);return mk({q:`Sendo A = ${MTZ_FM(A)} e B = ${MTZ_FM(B)}, determine a matriz X tal que A + X = B.`,ok:MTZ_FM(X),bad:MTZ_BM(X,[MTZ_ADD(A,B),B.map((r,i)=>r.map((x,j)=>A[i][j]-x))],'X = B − A, posição a posição.'),fill:()=>MTZ_FM(MTZ_RM(2,2,0,9)),h:['Passe A para o outro lado: X = B − A.'],e:`X = B − A = ${MTZ_FM(X)}.`,s:MTZ_S({md:0,A,B:X,oc:1})})},
+ ()=>{const A=MTZ_RM(2,2,-2,5),B=MTZ_RM(2,2,-2,5),C=MTZ_MUL(B,A),ok=C[0][0],T=MTZ_MUL(A,B);return mk({q:`Sendo A = ${MTZ_FM(A)} e B = ${MTZ_FM(B)}, qual é o elemento da 1ª linha e 1ª coluna da matriz B · A?`,ok:EMN(ok),bad:MTZ_BN(ok,[T[0][0],A[0][0]*B[0][0],B[0][0]+A[0][0]],'Atenção à ordem: use a 1ª linha de B e a 1ª coluna de A.'),fill:()=>EMN(rnd(-6,20)),h:['A matriz da esquerda dá as linhas.','Aqui a da esquerda é B.'],e:`${B[0][0]}·${A[0][0]} + ${B[0][1]}·${A[1][0]} = ${EMN(ok)}.`,s:MTZ_S({md:1,A:B,B:A,i:1,j:1,oc:1})})}
+]};
+MODS.push({id:'matriz',ano:10,ic:'🧮',nome:'Matrizes e determinantes',sub:'Soma, produto, transposta e o determinante como área do paralelogramo',liveInfo:true,
+ ctl:[{k:'md',l:'Modo (0 soma · 1 produto · 2 determinante · 3 ler a matriz)',min:0,max:3,v:0},{k:'k',l:'Exemplo pronto',min:0,max:4,v:0},{k:'i',l:'Linha i',min:1,max:4,v:1},{k:'j',l:'Coluna j',min:1,max:4,v:1}],
+ reset:{md:0,k:0,kk:0,i:1,j:1,A:MTZ_PRE[0][0],B:MTZ_PRE[0][1],oc:0},
+ fix(v){const cl=(x,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(x)||0)));v.md=cl(v.md,0,3);v.k=cl(v.k,0,4);v.oc=cl(v.oc,0,1);if(v.k!==v.kk){v.A=MTZ_PRE[v.k][0];v.B=MTZ_PRE[v.k][1];v.kk=v.k}
+  if(!Array.isArray(v.A)||!Array.isArray(v.B)){v.A=MTZ_PRE[0][0];v.B=MTZ_PRE[0][1]}
+  if(v.md===0&&(v.A.length!==v.B.length||v.A[0].length!==v.B[0].length))v.B=v.A.map(r=>r.map(()=>1));
+  v.i=cl(v.i,1,v.A.length);v.j=cl(v.j,1,v.md===1?v.B[0].length:v.A[0].length)},
+ info(v){if(MTZ_OCU(v))return 'Operações com matrizes';if(v.md===2)return `det = ${EMN(MTZ_DET(v.A))}`;if(v.md===0)return `A + B = ${MTZ_FM(MTZ_ADD(v.A,v.B))}`;if(v.md===1)return `A · B = ${MTZ_FM(MTZ_MUL(v.A,v.B))}`;return `A = ${MTZ_FM(v.A)} · Aᵗ = ${MTZ_FM(MTZ_T(v.A))}`},
+ desc(v){return['Soma: cada elemento com o da mesma posição.','Produto: linha da primeira vezes coluna da segunda.','Determinante 2 × 2: a área (com sinal) do paralelogramo formado pelas colunas.','Elemento aᵢⱼ: i é a linha, j é a coluna. A transposta troca linhas por colunas.'][v.md]},
+ draw(c,v,W,H,k){const ocu=MTZ_OCU(v),md=v.md,A=v.A,B=v.B,txt=(s,x,y,col,f,al)=>{c.fillStyle=col;c.font=f;c.textAlign=al||'center';c.fillText(s,x,y)};
+  const fit=(s,x,y,col,px,mw,b=1)=>{let z=px;const f=m=>`${b?'bold ':''}${m}px sans-serif`;c.font=f(z);while(c.measureText(s).width>mw&&z>9){z--;c.font=f(z)}txt(s,x,y,col,f(z))};
+  fit(['Soma de matrizes','Produto de matrizes','Determinante','Elementos e transposta'][md],W/2,16,k.t,15,W-16);
+  const mtx=(M,x,y,cw,o={})=>{const R=M.length,C=M[0].length,ch=26,w=C*cw;c.strokeStyle=k.m;c.lineWidth=1.8;for(const s of[0,1]){const bx=s?x+w+4:x-4,dx=s?-6:6;c.beginPath();c.moveTo(bx+dx,y-2);c.lineTo(bx,y-2);c.lineTo(bx,y+R*ch+2);c.lineTo(bx+dx,y+R*ch+2);c.stroke()}
+    for(let i=0;i<R;i++)for(let j=0;j<C;j++){const hl=o.row===i||o.col===j,cell=o.row===i&&o.col===j,px=x+j*cw+cw/2,py=y+i*ch+17;if(cell||(o.cell&&o.cell[0]===i&&o.cell[1]===j)){c.fillStyle='rgba(255,212,59,.35)';c.fillRect(x+j*cw+1,y+i*ch+1,cw-2,ch-2)}else if(hl){c.fillStyle='rgba(77,171,247,.18)';c.fillRect(x+j*cw+1,y+i*ch+1,cw-2,ch-2)}
+      const s=o.q?'?':EMN(M[i][j]);fit(s,px,py,k.t,15,cw-2)}return w};
+  const row=(ms,y,ops,os)=>{const cols=ms.map(m=>m[0].length),tot=cols.reduce((a,b)=>a+b,0),gap=30,cw=Math.max(18,Math.min(38,(W-16-gap*(ms.length-1)-ms.length*14)/tot)),wsum=tot*cw+ms.length*14+gap*(ms.length-1);let x=(W-wsum)/2+7;ms.forEach((m,i)=>{const w=mtx(m,x,y,cw,os[i]||{});if(i<ms.length-1)txt(ops[i],x+w+7+gap/2,y+ms[0].length*13+6,k.a,'bold 18px sans-serif');x+=w+14+gap});return ms.length&&Math.max(...ms.map(m=>m.length))*26};
+  if(md===0){const C=MTZ_ADD(A,B);const h=row([A,B,C],52,['+','='],[{},{},{q:ocu}]);fit(ocu?'cada posição soma com a posição correspondente':`c${MTZ_SUB(1)}${MTZ_SUB(1)} = ${EMN(A[0][0])} + ${EMN(B[0][0])} = ${EMN(C[0][0])}, e assim em cada posição`,W/2,52+h+34,k.a,13,W-16);fit('as matrizes precisam ter a mesma ordem',W/2,52+h+58,k.m,12,W-16,0)}
+  else if(md===1){const m=A.length,n=A[0].length,p=B[0].length,i=Math.min(v.i,m)-1,j=Math.min(v.j,p)-1,C=MTZ_MUL(A,B),h=row([A,B,C],48,['×','='],[{row:i},{col:j},{cell:[i,j],q:ocu}]);const terms=Array.from({length:n},(_,t)=>`${EMN(A[i][t])}·${EMN(B[t][j])}`).join(' + ');
+    fit(ocu?`c${MTZ_SUB(i+1)}${MTZ_SUB(j+1)}: linha ${i+1} de A com coluna ${j+1} de B`:`c${MTZ_SUB(i+1)}${MTZ_SUB(j+1)} = ${terms} = ${EMN(C[i][j])}`,W/2,48+h+34,k.a,13,W-16);fit(`ordem ${m}×${n} vezes ${n}×${p} dá ${m}×${p}`,W/2,48+h+58,k.m,12,W-16,0)}
+  else if(md===2){const a=A[0][0],b=A[0][1],cc=A[1][0],d=A[1][1],u=[a,cc],w=[b,d],pts=[[0,0],u,w,[a+b,cc+d]],xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),L=30,R=W-30,T=34,Bt=H-70,sc=Math.min((R-L)/Math.max(1,x1-x0),(Bt-T)/Math.max(1,y1-y0)),ox=(L+R)/2-(x0+x1)/2*sc,oy=(T+Bt)/2+(y0+y1)/2*sc,P=pts.map(p=>[ox+p[0]*sc,oy-p[1]*sc]),det=MTZ_DET(A);
+    c.strokeStyle='rgba(150,150,150,.35)';c.lineWidth=1;c.beginPath();c.moveTo(L-10,oy);c.lineTo(R+10,oy);c.moveTo(ox,T-10);c.lineTo(ox,Bt+10);c.stroke();
+    c.fillStyle=ocu?'rgba(77,171,247,.08)':det>=0?'rgba(105,219,124,.25)':'rgba(255,107,157,.25)';c.beginPath();c.moveTo(P[0][0],P[0][1]);c.lineTo(P[1][0],P[1][1]);c.lineTo(P[3][0],P[3][1]);c.lineTo(P[2][0],P[2][1]);c.closePath();c.fill();c.strokeStyle=k.m;c.lineWidth=1.2;c.stroke();
+    [[u,'#4dabf7','u'],[w,'#ff6b9d','w']].forEach(([vv,col,n])=>{const x=ox+vv[0]*sc,y=oy-vv[1]*sc;c.strokeStyle=col;c.lineWidth=2.6;c.beginPath();c.moveTo(ox,oy);c.lineTo(x,y);c.stroke();c.fillStyle=col;c.beginPath();c.arc(x,y,4,0,7);c.fill();txt(`${n}=(${EMN(vv[0])}, ${EMN(vv[1])})`,x,y-9,col,'bold 11px sans-serif')});
+    fit(ocu?'det = a₁₁·a₂₂ − a₁₂·a₂₁':`det = ${EMN(a)}·${EMN(d)} − ${EMN(b)}·${EMN(cc)} = ${EMN(det)}`,W/2,H-44,k.a,14,W-16);fit(ocu?'as colunas da matriz são os vetores u e w':det===0?'det = 0: os vetores ficam na mesma reta e a área some':`a área do paralelogramo é |det| = ${EMN(Math.abs(det))}${det<0?' (sinal negativo: orientação invertida)':''}`,W/2,H-22,k.m,12,W-16,0)}
+  else{const i=Math.min(v.i,A.length)-1,j=Math.min(v.j,A[0].length)-1,T=MTZ_T(A),h=row([A,T],52,['→'],[{row:i,col:j},{row:j,col:i}]);fit(`A tem ordem ${A.length}×${A[0].length}. O elemento a${MTZ_SUB(i+1)}${MTZ_SUB(j+1)} é ${EMN(A[i][j])}`,W/2,52+h+34,k.a,13,W-16);fit(`a transposta Aᵗ tem ordem ${T.length}×${T[0].length}: linhas viram colunas`,W/2,52+h+58,k.m,12,W-16,0)}
+  c.textAlign='left'},
+ rod:8,gens:MTZ_GENS});
+
 const O6=['nat','adsub','muldiv','tabmul','tabdiv','fra','solidos'],ix=MODS.map((m,i)=>m.ano===6?i:-1).filter(i=>i>=0),st=ix.map(i=>MODS[i]).sort((x,y)=>{const a=O6.indexOf(x.id),b=O6.indexOf(y.id);return (a<0?99:a)-(b<0?99:b)});ix.forEach((i,j)=>{MODS[i]=st[j]});
 })();
 
@@ -8919,6 +9332,11 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
     matfin: { eixo:'Números', bncc:['EM13MAT303','EM13MAT104'], prereq:['juros','funcexp'], proximo:[], objetivos:['Calcular montante e juros compostos','Comparar juros simples e compostos','Acumular taxas sucessivas e inflação'], tempo:'3 aulas' },
     angpol: { eixo:'Geometria', bncc:['EF07MA24','EF07MA27'], prereq:['ang','tri'], proximo:['poligonos','paralelas'], objetivos:['Verificar que os ângulos internos de um triângulo somam 180° e os de um quadrilátero somam 360°','Relacionar o ângulo externo com o interno no mesmo vértice','Descobrir que o externo de um triângulo é a soma dos dois internos dos outros vértices e que os externos somam 360°'], tempo:'2 aulas' },
     angx:   { eixo:'Álgebra', bncc:['EF07MA18','EF07MA24'], prereq:['angpol','eq'], proximo:['balanca'], objetivos:['Escrever a soma dos ângulos como uma equação do 1º grau','Ver o x como uma medida que muda a figura e fechar a soma em 180° ou 360°','Resolver equações com ângulos de triângulos, quadriláteros, isósceles, paralelogramo e ângulo externo'], tempo:'2 aulas' },
+    ciclotrig: { eixo:'Geometria', bncc:['EM13MAT306'], prereq:['trigret'], proximo:['functrig'], objetivos:['Passar de graus para radianos e o contrário', 'Reconhecer o quadrante e os sinais de seno e cosseno', 'Calcular seno e cosseno de ângulos notáveis usando o ângulo de referência'], tempo:'3 aulas' },
+    functrig: { eixo:'Álgebra', bncc:['EM13MAT306'], prereq:['ciclotrig','funcexp'], proximo:['leistrig'], objetivos:['Ler amplitude, período e imagem nos gráficos de seno e cosseno', 'Relacionar a função com fenômenos periódicos como maré e roda-gigante', 'Determinar parâmetros a partir de máximo, mínimo e período'], tempo:'3 aulas' },
+    leistrig: { eixo:'Geometria', bncc:['EM13MAT308'], prereq:['trigret','ciclotrig'], proximo:[], objetivos:['Escolher entre a lei dos senos e a lei dos cossenos conforme os dados', 'Calcular lados e ângulos de triângulos quaisquer', 'Usar a fórmula da área com seno e a classificação pelo maior lado'], tempo:'3 aulas' },
+    combinatoria: { eixo:'Números', bncc:['EM13MAT310'], prereq:['contagem'], proximo:[], objetivos:['Calcular fatorial, permutações e anagramas', 'Distinguir arranjo de combinação pela ordem importar ou não', 'Resolver problemas com condição e com a expressão pelo menos'], tempo:'3 aulas' },
+    matriz: { eixo:'Álgebra', bncc:[], prereq:['sist'], proximo:[], objetivos:['Identificar ordem e elementos de uma matriz', 'Somar, multiplicar por escalar e multiplicar matrizes', 'Calcular o determinante 2×2 e ver seu significado como área'], tempo:'3 aulas' },
     prob:   { eixo:'Probabilidade e Estatística', bncc:['EF06MA30','EF07MA34','EF07MA35','EF08MA22','EF08MA25'], prereq:['fra','dec'], proximo:[], objetivos:['Calcular probabilidade teórica','Comparar frequência relativa e probabilidade teórica','Calcular média, mediana e moda'], tempo:'4 aulas' }
 };
   for (const m of MODS) {
@@ -8928,7 +9346,7 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
   }
   window.__meta = META;
   /* Ordem pedagógica na home: dentro de cada eixo, do mais básico ao mais avançado */
-  const ORDEM_HOME=['nat','adsub','muldiv','tabmul','tabdiv','mmc','primos','fra','dec','dizimas','juros','pot','expr','int','sinais','alg','prop','equiv','notaveis','eq','balanca','sist','eq2','func','solidos','ang','pi','tri','poligonos','area','pit','irracionais','semelhanca','tales','cart','simetria','med','volume','prob','probexp','graficos','sequencias','contagem','vistas','quad','paralelas','circ','estim','lergraf','racmul','grandezas','rigidez','trigret','funcafim','funcquad','pa','pg','conj','notcient','funcexp','log','matfin','angpol','angx'];
+  const ORDEM_HOME=['nat','adsub','muldiv','tabmul','tabdiv','mmc','primos','fra','dec','dizimas','juros','pot','expr','int','sinais','alg','prop','equiv','notaveis','eq','balanca','sist','eq2','func','solidos','ang','pi','tri','poligonos','area','pit','irracionais','semelhanca','tales','cart','simetria','med','volume','prob','probexp','graficos','sequencias','contagem','vistas','quad','paralelas','circ','estim','lergraf','racmul','grandezas','rigidez','trigret','funcafim','funcquad','pa','pg','conj','notcient','funcexp','log','matfin','angpol','angx','ciclotrig','functrig','leistrig','combinatoria','matriz'];
   const pos=m=>{const i=ORDEM_HOME.indexOf(m.id);return i<0?999:i};
   MODS.sort((a,b)=>pos(a)-pos(b));
 })();
@@ -9106,7 +9524,7 @@ window.__desc=DESC;
 
 /* ===== BOLETIM DO ALUNO E RELATÓRIO DA TURMA (PDF por impressão) ===== */
 (()=>{
-const DICAS={angx:'Voltar ao simulador: mexer no x e ver a soma fechar.',angpol:'Voltar ao simulador: mudar os ângulos e ver as somas e os ângulos externos.',conj:'Voltar ao simulador: mudar os valores de A e B e ver as regiões do diagrama.',notcient:'Voltar ao simulador: mudar o expoente e ver a vírgula andar.',funcexp:'Voltar ao simulador: mudar a base e comparar com a reta.',log:'Voltar ao simulador: mudar o expoente e ver o logaritmo.',matfin:'Voltar ao simulador: mudar a taxa e o tempo e comparar simples com composto.',trigret:'Voltar ao simulador: mudar o ângulo e ver como seno, cosseno e tangente mudam.',funcafim:'Voltar ao simulador: mexer em a e b e ver a reta girar e subir.',funcquad:'Voltar ao simulador: mudar a, b e c e acompanhar o vértice e as raízes.',pa:'Voltar ao simulador: mudar a razão e ver as barras subirem sempre o mesmo tanto.',pg:'Voltar ao simulador: mudar a razão e comparar com a PA.',grandezas:'Voltar ao simulador: mudar a quantidade de cima e de baixo e ver a razão por unidade.',rigidez:'Voltar ao simulador: aumentar o número de travessas até a estrutura parar de se deformar.',racmul:'Voltar ao simulador: mudar as frações e ver a parte vermelha (multiplicação) e os pedaços que cabem (divisão).',lergraf:'Voltar ao simulador: trocar o conjunto de dados e o tipo de gráfico e conferir que os números são os mesmos.',estim:'Voltar ao simulador: escolher um número e ver de qual múltiplo ele fica mais perto.',circ:'Voltar ao simulador: mexer no arco e na posição de P e conferir que o inscrito é sempre a metade do central.',paralelas:'Voltar ao simulador: destacar cada par de ângulos e mexer na inclinação da transversal para ver o que muda e o que fica igual.',quad:'Voltar ao simulador: mudar os lados e o ângulo até a figura virar quadrado, retângulo, losango, paralelogramo e trapézio.',vistas:'Voltar ao simulador: comparar a construção com as três vistas, e mudar o raio e a altura do cilindro.',contagem:'Voltar ao simulador: mudar o número de opções de cada escolha e ver quantos caminhos aparecem.',sequencias:'Voltar ao simulador: mudar o primeiro termo e a razão e ver como o termo da posição n muda.',graficos:'Voltar ao simulador: mudar o início do eixo, a amplitude da classe e os setores para ver o que muda.',semelhanca:'Voltar ao simulador: mudar a razão e comparar o que acontece com os lados, o perímetro e a área.',simetria:'Voltar ao simulador: mover o ponto A e ver como cada transformação muda as coordenadas.',irracionais:'Voltar ao simulador: aumentar os triângulos da espiral e ver quando a hipotenusa vira número inteiro.',dizimas:'Voltar ao simulador: escolher uma divisão e ver em que passo o resto repete.',poligonos:'Voltar ao simulador: mudar o número de lados e ver o ângulo interno encaixar em 360 graus no mosaico.',notaveis:'Voltar ao simulador: mudar a e b e ver quais pedaços do quadrado formam o termo do meio.',volume:'Voltar ao simulador: montar o bloco de cubinhos e comparar com o aquário, vendo o volume virar litros.',juros:'Voltar ao simulador: mudar o aumento e o desconto e ver o fator multiplicador mudar o resultado.',sist:'Voltar ao simulador: mudar os números das compras e ver onde as duas retas se cruzam.',prop:'Voltar ao simulador: mudar o modo e comparar a reta da proporção direta com a curva da inversa.',probexp:'Voltar ao simulador: aumentar o número de lançamentos e observar a frequência se aproximar da probabilidade teórica.',balanca:'Voltar à balança: mexer no passo da resolução e ver o que acontece ao tirar o mesmo dos dois pratos.',pi:'Voltar ao simulador do círculo desenrolado: ver quantos diâmetros cabem na volta e refazer a conta com 3,14.',func:'Voltar ao gráfico do simulador: mexer em a e em b e observar o que muda na reta e na tabela.',prob:'Comparar no simulador a frequência observada com a probabilidade teórica e aumentar o número de lançamentos.',fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
+const DICAS={ciclotrig:'Voltar ao simulador: girar o ponto e ver seno e cosseno mudarem de sinal.',functrig:'Voltar ao simulador: mudar A, B e D e ver a onda crescer, comprimir e subir.',leistrig:'Voltar ao simulador: mudar os lados e o ângulo e conferir as duas leis.',combinatoria:'Voltar ao simulador: mudar n e p e comparar arranjo com combinação.',matriz:'Voltar ao simulador: trocar os exemplos e acompanhar linha por coluna.',angx:'Voltar ao simulador: mexer no x e ver a soma fechar.',angpol:'Voltar ao simulador: mudar os ângulos e ver as somas e os ângulos externos.',conj:'Voltar ao simulador: mudar os valores de A e B e ver as regiões do diagrama.',notcient:'Voltar ao simulador: mudar o expoente e ver a vírgula andar.',funcexp:'Voltar ao simulador: mudar a base e comparar com a reta.',log:'Voltar ao simulador: mudar o expoente e ver o logaritmo.',matfin:'Voltar ao simulador: mudar a taxa e o tempo e comparar simples com composto.',trigret:'Voltar ao simulador: mudar o ângulo e ver como seno, cosseno e tangente mudam.',funcafim:'Voltar ao simulador: mexer em a e b e ver a reta girar e subir.',funcquad:'Voltar ao simulador: mudar a, b e c e acompanhar o vértice e as raízes.',pa:'Voltar ao simulador: mudar a razão e ver as barras subirem sempre o mesmo tanto.',pg:'Voltar ao simulador: mudar a razão e comparar com a PA.',grandezas:'Voltar ao simulador: mudar a quantidade de cima e de baixo e ver a razão por unidade.',rigidez:'Voltar ao simulador: aumentar o número de travessas até a estrutura parar de se deformar.',racmul:'Voltar ao simulador: mudar as frações e ver a parte vermelha (multiplicação) e os pedaços que cabem (divisão).',lergraf:'Voltar ao simulador: trocar o conjunto de dados e o tipo de gráfico e conferir que os números são os mesmos.',estim:'Voltar ao simulador: escolher um número e ver de qual múltiplo ele fica mais perto.',circ:'Voltar ao simulador: mexer no arco e na posição de P e conferir que o inscrito é sempre a metade do central.',paralelas:'Voltar ao simulador: destacar cada par de ângulos e mexer na inclinação da transversal para ver o que muda e o que fica igual.',quad:'Voltar ao simulador: mudar os lados e o ângulo até a figura virar quadrado, retângulo, losango, paralelogramo e trapézio.',vistas:'Voltar ao simulador: comparar a construção com as três vistas, e mudar o raio e a altura do cilindro.',contagem:'Voltar ao simulador: mudar o número de opções de cada escolha e ver quantos caminhos aparecem.',sequencias:'Voltar ao simulador: mudar o primeiro termo e a razão e ver como o termo da posição n muda.',graficos:'Voltar ao simulador: mudar o início do eixo, a amplitude da classe e os setores para ver o que muda.',semelhanca:'Voltar ao simulador: mudar a razão e comparar o que acontece com os lados, o perímetro e a área.',simetria:'Voltar ao simulador: mover o ponto A e ver como cada transformação muda as coordenadas.',irracionais:'Voltar ao simulador: aumentar os triângulos da espiral e ver quando a hipotenusa vira número inteiro.',dizimas:'Voltar ao simulador: escolher uma divisão e ver em que passo o resto repete.',poligonos:'Voltar ao simulador: mudar o número de lados e ver o ângulo interno encaixar em 360 graus no mosaico.',notaveis:'Voltar ao simulador: mudar a e b e ver quais pedaços do quadrado formam o termo do meio.',volume:'Voltar ao simulador: montar o bloco de cubinhos e comparar com o aquário, vendo o volume virar litros.',juros:'Voltar ao simulador: mudar o aumento e o desconto e ver o fator multiplicador mudar o resultado.',sist:'Voltar ao simulador: mudar os números das compras e ver onde as duas retas se cruzam.',prop:'Voltar ao simulador: mudar o modo e comparar a reta da proporção direta com a curva da inversa.',probexp:'Voltar ao simulador: aumentar o número de lançamentos e observar a frequência se aproximar da probabilidade teórica.',balanca:'Voltar à balança: mexer no passo da resolução e ver o que acontece ao tirar o mesmo dos dois pratos.',pi:'Voltar ao simulador do círculo desenrolado: ver quantos diâmetros cabem na volta e refazer a conta com 3,14.',func:'Voltar ao gráfico do simulador: mexer em a e em b e observar o que muda na reta e na tabela.',prob:'Comparar no simulador a frequência observada com a probabilidade teórica e aumentar o número de lançamentos.',fra:'Voltar às barras e às pizzas do simulador e comparar partes do mesmo inteiro antes de operar.',ang:'Posicionar o ângulo no simulador e estimar a medida antes de classificar.',eq:'Voltar à balança: tirar ou acrescentar a mesma quantidade nos dois lados.',int:'Andar na reta numérica e dizer, a cada passo, para que lado ele vai.',sinais:'Contar os saltos na reta e anotar quando o sinal do resultado muda.',solidos:'Girar o sólido em 3D e contar faces, arestas e vértices com o dedo.',alg:'Testar valores de x na máquina de funções e comparar a saída com a expressão.',equiv:'Dar a mesma entrada às duas máquinas e conferir se as saídas combinam em todos os testes.',area:'Quadricular a figura e contar quadradinhos antes de usar a fórmula.',eq2:'Mexer nos controles da parábola e observar onde ela cruza o eixo x.',tri:'Mexer nos ângulos A e B no simulador, lembrar que os três somam 180° e só depois classificar.',pit:'Comparar as áreas dos três quadrados no simulador: os dois menores somam o maior.',tales:'Escrever as razões na mesma ordem nas duas transversais e comparar com os segmentos do desenho.',nat:'Montar o número no quadro de ordens e dizer o valor de cada algarismo antes de responder.',adsub:'Alinhar as ordens e observar no simulador onde aparece o vai um ou o empréstimo.',muldiv:'Desenhar grupos iguais ou um arranjo de linhas e colunas antes de calcular.',tabmul:'Usar as linhas vizinhas da tabuada: cada linha a mais soma o número da tabuada.',tabdiv:'Contar quantos grupos do divisor cabem no total e conferir com a multiplicação.'};
 const fmtData=d=>d?String(d).split('-').reverse().join('/'):'';
 const pct=(n,d)=>d?Math.round(n*100/d):null;
 const pctT=(n,d)=>d?Math.round(n*100/d)+'%':'—';
@@ -9950,7 +10368,7 @@ const EIXO_META={
  'Grandezas e Medidas':{n:4,d:'Comprimento, massa, tempo, capacidade e conversões entre unidades.',ic:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="26" height="10" rx="2"/><path d="M9 11v5M15 11v7M21 11v5"/></svg>'},
  'Probabilidade e Estatística':{n:5,d:'Chance, tabelas, médias e leitura de dados.',ic:'<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="24" height="24" rx="5"/><circle cx="11" cy="11" r="1.6" fill="currentColor"/><circle cx="21" cy="21" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/><circle cx="21" cy="11" r="1.6" fill="currentColor"/><circle cx="11" cy="21" r="1.6" fill="currentColor"/></svg>'}
 };
-const NOVOS=['pi','balanca','probexp','prop','sist','juros','volume','notaveis','poligonos','dizimas','irracionais','simetria','semelhanca','graficos','sequencias','contagem','vistas','quad','paralelas','circ','estim','lergraf','racmul','grandezas','rigidez','trigret','funcafim','funcquad','pa','pg','conj','notcient','funcexp','log','matfin','angpol','angx'];
+const NOVOS=['pi','balanca','probexp','prop','sist','juros','volume','notaveis','poligonos','dizimas','irracionais','simetria','semelhanca','graficos','sequencias','contagem','vistas','quad','paralelas','circ','estim','lergraf','racmul','grandezas','rigidez','trigret','funcafim','funcquad','pa','pg','conj','notcient','funcexp','log','matfin','angpol','angx','ciclotrig','functrig','leistrig','combinatoria','matriz'];
 let skEixo=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const skinAtiva=()=>S.skin!=='classico';
