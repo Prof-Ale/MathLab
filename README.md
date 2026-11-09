@@ -12,7 +12,7 @@ O MathLab é gratuito e continua sendo. Gratuito não quer dizer sem condições
 
 ## Assuntos disponíveis
 
-São 28 assuntos, organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
+São 74 assuntos (54 do Fundamental II e 20 do Ensino Médio), organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
 
 **Números**
 * 6º, Números naturais e sistema posicional: ordens, classes, valor posicional e comparação
