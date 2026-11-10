@@ -272,6 +272,23 @@ const gcEq = (a, b, r2) => `${gcT(a, 'x')} + ${gcT(b, 'y')} = ${r2}`;
 const gcPar = t => { const m = t.match(/(?:\(x ([−+]) (\d+)\)²|x²) \+ (?:\(y ([−+]) (\d+)\)²|y²) = (\d+)/); const f = (sg, v) => (sg ? (sg === '−' ? +v : -v) : 0); return { a: f(m[1], m[2]), b: f(m[3], m[4]), r2: +m[5] }; };
 const gcGe = t => { let u = t.match(/x² \+ y²([^=]*) = 0/)[1]; const sg = x => (x === '−' ? -1 : 1); let cx = 0, cy = 0; u = u.replace(/ ([+−]) (\d+)x/, (_, s, v) => { cx = sg(s) * +v; return ''; }).replace(/ ([+−]) (\d+)y/, (_, s, v) => { cy = sg(s) * +v; return ''; }); let c = 0; const mm = u.match(/ ([+−]) (\d+)/); if (mm) c = sg(mm[1]) * +mm[2]; const a = -cx / 2, b = -cy / 2; return { a, b, r2: a * a + b * b - c }; };
 const gcPos = (d2, r2) => (d2 < r2 ? 'Interior' : d2 === r2 ? 'Pertence à circunferência' : 'Exterior');
+
+// ---- Lote 5: ajudantes de conferência (independentes dos geradores) ----
+const l5S = n => String(n).replace('-', '−');
+const l5G = (a, b) => (b ? l5G(b, a % b) : Math.abs(a));
+const l5Lin = t => { const m = String(t).trim().match(/^(−?\d*)x(?: ([+−]) (\d+))?$/); if (!m) return null; const a = m[1] === '' ? 1 : m[1] === '−' ? -1 : +m[1].replace('−', '-'); const b = m[2] ? (m[2] === '−' ? -1 : 1) * +m[3] : 0; return [a, b]; };
+const l5Fac = t => [...String(t).replace(/f\(x\)/g, 'F').matchAll(/\((x(?: [−+] \d+)?)\)/g)].map(m => { const r = m[1].match(/x(?: ([−+]) (\d+))?/); return r[1] ? (r[1] === '−' ? +r[2] : -r[2]) : 0; });
+const l5ModH = t => { const m = String(t).match(/\|x(?: ([−+]) (\d+))?\|/); return m ? (m[1] ? (m[1] === '−' ? +m[2] : -m[2]) : 0) : null; };
+const l5ModK = t => { const m = String(t).match(/\|x[^|]*\|(?: ([+−]) (\d+))?/); return m && m[1] ? (m[1] === '+' ? +m[2] : -m[2]) : 0; };
+const l5Eq2 = (p, q) => `x = ${l5S(p)} ou x = ${l5S(q)}`;
+const l5Rad = a => { if (a === 0) return '0'; const g = l5G(a, 180), n = a / g, d = 180 / g; return `${n === 1 ? '' : n}π${d === 1 ? '' : '/' + d}`; };
+const l5Num = x => String(Math.round(x * 100) / 100).replace('.', ',').replace('-', '−');
+const l5Tab = q => [...q.matchAll(/valor (\d): (\d+) vez/g)].map(m => [+m[1], +m[2]]);
+const l5Sort = a => [...a].sort((x, y) => x - y);
+const l5Lst = q => { const m = q.match(/\(([\d, ]+)\)/); return m ? m[1].split(',').map(Number) : []; };
+const l5Pi = t => { const m = t.match(/(\d*)π(?:\/(\d+))?/); return m ? [m[1] === '' ? 1 : +m[1], m[2] ? +m[2] : 1] : null; };
+const l5H = (a, b) => Math.round(Math.sqrt(a * a + b * b));
+
 // Conferências de resposta. Chave "modulo:nivel:gerador" (gerador começa em 1; "*" vale para todos os níveis).
 // Cada função recebe a questão e devolve null se estiver certa, ou um texto explicando o erro.
 // Ela deve recalcular a resposta só a partir do enunciado, sem usar código do app.
@@ -861,6 +878,73 @@ const CONF = {
   'ga_circ:3:2': q => { const e = gcPar(q.q), r = Math.sqrt(e.r2); return igual(certo(q), `k = ${gaS(e.b + r)} ou k = ${gaS(e.b - r)}`); },
   'ga_circ:3:3': q => { const e = gcPar(q.q), k = +q.q.match(/y = (−?\d+) corta/)[1].replace('−', '-'), d = Math.abs(k - e.b); return igualNum(Number(certo(q)), 2 * Math.sqrt(e.r2 - d * d)); },
   'ga_circ:3:4': q => igual(certo(q), `${gcPar(q.q).r2}π`),
+
+  // ---------- Lote 5 ----------
+  'funcmod:1:1': q => { const t = q.q, h = l5ModH(t), k = l5ModK(t), x0 = +t.match(/valor de f\((−?\d+)\)/)[1].replace('−', '-'); return igual(certo(q), l5S(Math.abs(x0 - h) + k)); },
+  'funcmod:1:2': q => { const h = l5ModH(q.q), k = l5ModK(q.q); return igual(certo(q), `(${l5S(h)}, ${l5S(k)})`); },
+  'funcmod:1:3': q => { const c = +q.q.match(/= (\d+)\?/)[1]; return igual(certo(q), l5Eq2(-c, c)); },
+  'funcmod:1:4': q => { const v = [...q.q.matchAll(/\|(−?\d+)\|/g)].map(m => Math.abs(+m[1].replace('−', '-'))); return igual(certo(q), l5S(v[0] + v[1] - v[2])); },
+  'funcmod:2:1': q => { const t = q.q, a0 = t.match(/f\(x\) = (−?\d*)\|/)[1], a = a0 === '' ? 1 : a0 === '−' ? -1 : +a0.replace('−', '-'), h = l5ModH(t), k = l5ModK(t), x0 = +t.match(/valor de f\((−?\d+)\)/)[1].replace('−', '-'); return igual(certo(q), l5S(a * Math.abs(x0 - h) + k)); },
+  'funcmod:2:2': q => { const t = q.q, a0 = t.match(/f\(x\) = (−?\d*)\|/)[1], a = a0 === '' ? 1 : a0 === '−' ? -1 : +a0.replace('−', '-'), k = l5ModK(t); const tipo = a > 0 ? 'mínimo' : 'máximo'; return t.includes(tipo) ? igual(certo(q), l5S(k)) : 'tipo de extremo incoerente com o sinal de a'; },
+  'funcmod:2:3': q => { const h = l5ModH(q.q), c = +q.q.match(/= (\d+)\?/)[1]; return igual(certo(q), l5Eq2(h - c, h + c)); },
+  'funcmod:2:4': q => { const t = q.q, a0 = t.match(/f\(x\) = (−?\d*)\|/)[1], a = a0 === '' ? 1 : a0 === '−' ? -1 : +a0.replace('−', '-'), h = l5ModH(t), k = l5ModK(t), tt = -k / a; return igual(certo(q), l5Eq2(h - tt, h + tt)); },
+  'funcmod:3:1': q => { const h = l5ModH(q.q), c = +q.q.match(/< (\d+)\?/)[1]; return igual(certo(q), `${l5S(h - c)} < x < ${l5S(h + c)}`); },
+  'funcmod:3:2': q => { const h = l5ModH(q.q), c = +q.q.match(/≥ (\d+)\?/)[1]; return igual(certo(q), `x ≤ ${l5S(h - c)} ou x ≥ ${l5S(h + c)}`); },
+  'funcmod:3:3': q => { const c = +q.q.match(/[<≤] (\d+)\?/)[1], est = q.q.includes('< ' + c); let n = 0; const h = l5ModH(q.q); for (let x = h - c - 2; x <= h + c + 2; x++) { const d = Math.abs(x - h); if (est ? d < c : d <= c) n++; } return igual(certo(q), String(n)); },
+  'funcmod:3:4': q => { const m = q.q.match(/\|2x ([−+]) (\d+)\| = (\d+)/), b = (m[1] === '−' ? 1 : -1) * +m[2], c = +m[3], p = (b - c) / 2, r = (b + c) / 2; return igual(certo(q), l5Eq2(Math.min(p, r), Math.max(p, r))); },
+
+  'inequacao:1:1': q => { const [a, b] = l5Lin(q.q.match(/solução de (.+?) > 0/)[1]), p = -b / a; return igual(certo(q), a > 0 ? `x > ${l5S(p)}` : `x < ${l5S(p)}`); },
+  'inequacao:1:2': q => { const [a, b] = l5Lin(q.q.match(/solução de (.+?) > 0/)[1]), p = -b / a; return igual(certo(q), a > 0 ? `x > ${l5S(p)}` : `x < ${l5S(p)}`); },
+  'inequacao:1:3': q => { const m = q.q.match(/solução de (.+?) ≤ (−?\d+)\?/), [a, b] = l5Lin(m[1]), c = +m[2].replace('−', '-'); return igual(certo(q), `x ≤ ${l5S((c - b) / a)}`); },
+  'inequacao:1:4': q => { const m = q.q.match(/f\(x\) = (.+?) tem raiz x = (−?\d+)\. Qual é o sinal de f\((−?\d+)\)/), [a] = l5Lin(m[1]), p = +m[2].replace('−', '-'), t = +m[3].replace('−', '-'), s = Math.sign(a * (t - p)); return igual(certo(q), s > 0 ? 'Positivo' : s < 0 ? 'Negativo' : 'Zero'); },
+  'inequacao:2:1': q => { const [p, r] = l5Fac(q.q).sort((x, y) => x - y); return igual(certo(q), `${l5S(p)} < x < ${l5S(r)}`); },
+  'inequacao:2:2': q => { const [p, r] = l5Fac(q.q).sort((x, y) => x - y); return igual(certo(q), `x < ${l5S(p)} ou x > ${l5S(r)}`); },
+  'inequacao:2:3': q => { const [p, r] = l5Fac(q.q).sort((x, y) => x - y); return igual(certo(q), `${l5S(p)} < x < ${l5S(r)}`); },
+  'inequacao:2:4': q => { const m = q.q.match(/solução de x²(?: ([−+]) (\d+)x)?(?: ([−+]) (\d+))? ≥ 0/), S = m[1] ? (m[1] === '−' ? 1 : -1) * +m[2] : 0, P = m[3] ? (m[3] === '+' ? 1 : -1) * +m[4] : 0, D = Math.sqrt(S * S - 4 * P), p = (S - D) / 2, r = (S + D) / 2; return igual(certo(q), `x ≤ ${l5S(p)} ou x ≥ ${l5S(r)}`); },
+  'inequacao:3:1': q => { const [p, r] = l5Fac(q.q).sort((x, y) => x - y); return igual(certo(q), String(r - p - 1)); },
+  'inequacao:3:2': q => { const [p, r] = l5Fac(q.q).sort((x, y) => x - y); return igual(certo(q), `x ≤ ${l5S(p)} ou x ≥ ${l5S(r)}`); },
+  'inequacao:3:3': q => { const [p, r] = l5Fac(q.q).sort((x, y) => x - y); return igual(certo(q), `x < ${l5S(p)} ou x > ${l5S(r)}`); },
+  'inequacao:3:4': q => { const [p, r] = l5Fac(q.q).sort((x, y) => x - y); return igual(certo(q), String(r - p + 1)); },
+
+  'funccomp:1:1': q => { const m = q.q.match(/f\(x\) = (.+?) e g\(x\) = (.+?), qual é o valor de f\(g\((−?\d+)\)\)/), [a, b] = l5Lin(m[1]), [c, d] = l5Lin(m[2]), x = +m[3].replace('−', '-'); return igual(certo(q), l5S(a * (c * x + d) + b)); },
+  'funccomp:1:2': q => { const m = q.q.match(/f\(x\) = (.+?) e g\(x\) = (.+?), qual é o valor de g\(f\((−?\d+)\)\)/), [a, b] = l5Lin(m[1]), [c, d] = l5Lin(m[2]), x = +m[3].replace('−', '-'); return igual(certo(q), l5S(c * (a * x + b) + d)); },
+  'funccomp:1:3': q => { const m = q.q.match(/f\((−?\d+)\) = (−?\d+)\. Qual é o valor de f⁻¹\((−?\d+)\)/); return m[2] === m[3] ? igual(certo(q), m[1]) : 'f⁻¹ pedida em ponto diferente'; },
+  'funccomp:1:4': q => { const m = q.q.match(/f\(x\) = (.+?), qual é o valor de f\(f\((−?\d+)\)\)/), [a, b] = l5Lin(m[1]), x = +m[2].replace('−', '-'); return igual(certo(q), l5S(a * (a * x + b) + b)); },
+  'funccomp:2:1': q => { const m = q.q.match(/f\(x\) = (.+?) e g\(x\) = (.+?), qual é a expressão de \(f∘g\)/), [a, b] = l5Lin(m[1]), [c, d] = l5Lin(m[2]), mm = a * c, n = a * d + b; const e = mm === 1 ? 'x' : mm === -1 ? '−x' : `${l5S(mm)}x`; return igual(certo(q), e + (n === 0 ? '' : n > 0 ? ` + ${n}` : ` − ${-n}`)); },
+  'funccomp:2:2': q => { const m = q.q.match(/f\(x\) = (.+?) e g\(x\) = (.+?), qual é a expressão de \(g∘f\)/), [a, b] = l5Lin(m[1]), [c, d] = l5Lin(m[2]), mm = a * c, n = c * b + d; const e = mm === 1 ? 'x' : mm === -1 ? '−x' : `${l5S(mm)}x`; return igual(certo(q), e + (n === 0 ? '' : n > 0 ? ` + ${n}` : ` − ${-n}`)); },
+  'funccomp:2:3': q => { const [a, b] = l5Lin(q.q.match(/f\(x\) = (.+?)\?/)[1]); return igual(certo(q), `f⁻¹(x) = (x ${b > 0 ? '−' : '+'} ${Math.abs(b)}) / ${a}`); },
+  'funccomp:2:4': q => { const m = q.q.match(/f\(x\) = (.+?), qual é o valor de f⁻¹\((−?\d+)\)/), [a, b] = l5Lin(m[1]), y = +m[2].replace('−', '-'); return igual(certo(q), l5S((y - b) / a)); },
+  'funccomp:3:1': q => { const m = q.q.match(/f\(x\) = (−?\d*)x² ([+−]) (\d+) e g\(x\) = (.+?), qual é o valor de (f\(g|g\(f)\((−?\d+)\)\)/), a = m[1] === '' ? 1 : m[1] === '−' ? -1 : +m[1].replace('−', '-'), b = (m[2] === '−' ? -1 : 1) * +m[3], [c, d] = l5Lin(m[4]), x = +m[6].replace('−', '-'); const f = z => a * z * z + b, g = z => c * z + d; return igual(certo(q), l5S(m[5] === 'f(g' ? f(g(x)) : g(f(x)))); },
+  'funccomp:3:2': q => { const m = q.q.match(/f\(x\) = (.+?) e g\(x\) = (.+?), para qual valor de x tem-se f\(g\(x\)\) = (−?\d+)/), [a, b] = l5Lin(m[1]), [c, d] = l5Lin(m[2]), v = +m[3].replace('−', '-'); return igual(certo(q), l5S((v - b - a * d) / (a * c))); },
+  'funccomp:3:3': q => { const m = q.q.match(/f\(x\) = (−?\d+)x \+ b\. Sabendo que f\(f\((−?\d+)\)\) = (−?\d+)/), a = +m[1].replace('−', '-'), x = +m[2].replace('−', '-'), v = +m[3].replace('−', '-'); return igual(certo(q), l5S((v - a * a * x) / (a + 1))); },
+  'funccomp:3:4': q => { let m = q.q.match(/ponto \((−?\d+), (−?\d+)\) pertence/); if (m) return igual(certo(q), `(${m[2]}, ${m[1]})`); m = q.q.match(/f\((−?\d+)\) = (−?\d+) e f\((−?\d+)\) = (−?\d+)\. Quanto vale/); const M = +m[1].replace('−', '-'), R = +m[4].replace('−', '-'); return igual(certo(q), l5S(M + R)); },
+
+  'trigrel:1:1': q => { const a = +q.q.match(/a (\d+)°/)[1]; return igual(certo(q), `${l5Rad(a)} rad`); },
+  'trigrel:1:2': q => { const [n, d] = l5Pi(q.q.match(/a (\S+) rad/)[1]); return igual(certo(q), `${180 * n / d}°`); },
+  'trigrel:1:3': q => { const m = q.q.match(/sen θ = (\d+)\/(\d+)/), s = +m[1], h = +m[2], c = Math.round(Math.sqrt(h * h - s * s)); return igual(certo(q), `${c}/${h}`); },
+  'trigrel:1:4': q => { const m = q.q.match(/sen θ = (\d+)\/(\d+) e cos θ = (\d+)\/(\d+)/), g = l5G(+m[1], +m[3]); return igual(certo(q), (+m[3] / g === 1) ? String(+m[1] / g) : `${+m[1] / g}/${+m[3] / g}`); },
+  'trigrel:2:1': q => { const m = q.q.match(/sen θ = (\d+)\/(\d+)/), s = +m[1], h = +m[2], c = Math.round(Math.sqrt(h * h - s * s)); return igual(certo(q), `−${c}/${h}`); },
+  'trigrel:2:2': q => { const m = q.q.match(/tg θ = (\d+)\/(\d+)/), o = +m[1], a = +m[2]; return igual(certo(q), `${o}/${l5H(o, a)}`); },
+  'trigrel:2:3': q => { const M = { 'tg x · cos x': 'sen x', 'sen x / tg x': 'cos x', '(1 − cos² x) / sen x': 'sen x', '(1 − sen² x) / cos x': 'cos x', 'sen x / cos x': 'tg x' }, ex = q.q.match(/Simplificando (.+?), com x agudo/)[1]; return igual(certo(q), M[ex]); },
+  'trigrel:2:4': q => { const m = q.q.match(/arco de (\S+) rad .* raio (\d+) cm/), [n, d] = l5Pi(m[1]), r = +m[2], k = n * r / d; return igual(certo(q), `${k === 1 ? '' : k}π cm`); },
+  'trigrel:3:1': q => { const m = q.q.match(/sen θ = −(\d+)\/(\d+)/), s = +m[1], h = +m[2], c = Math.round(Math.sqrt(h * h - s * s)); return igual(certo(q), `−${c}/${h}`); },
+  'trigrel:3:2': q => { const m = q.q.match(/cos θ = (\d+)\/(\d+)/), a = +m[1], h = +m[2], o = Math.round(Math.sqrt(h * h - a * a)); return igual(certo(q), `−${o}/${a}`); },
+  'trigrel:3:3': q => { const m = q.q.match(/arco de (\d+)° .* raio (\d+) cm/), a = +m[1], r = +m[2], k = a * r / 180; return igual(certo(q), `${k === 1 ? '' : k}π cm`); },
+  'trigrel:3:4': q => { let m = q.q.match(/determinação positiva de (\S+) rad/); if (m) { const [n, d] = l5Pi(m[1]); const deg = ((n / d) * 180) % 360; return igual(certo(q), `${l5Rad(deg)} rad`); } m = q.q.match(/arco de (\d+)°/); return igual(certo(q), `${+m[1] % 360}°`); },
+
+  'freqbox:1:1': q => igual(certo(q), String(l5Tab(q.q).reduce((a, r) => a + r[1], 0))),
+  'freqbox:1:2': q => { const m = q.q.match(/grupo de (\d+) pessoas, (\d+) escolhe\S+/); return igual(certo(q), `${100 * +m[2] / +m[1]}%`); },
+  'freqbox:1:3': q => { const T = l5Tab(q.q), mx = Math.max(...T.map(r => r[1])); const w = T.filter(r => r[1] === mx); return w.length === 1 ? igual(certo(q), String(w[0][0])) : 'moda não é única'; },
+  'freqbox:1:4': q => { const L = q.q.match(/conjunto (.+?)\?/)[1].split(', ').map(x => +x.replace('−', '-')); return igual(certo(q), l5S(Math.max(...L) - Math.min(...L))); },
+  'freqbox:2:1': q => { const T = l5Tab(q.q), n = T.reduce((a, r) => a + r[1], 0), s = T.reduce((a, r) => a + r[0] * r[1], 0); return igualNum(+certo(q).replace(',', '.'), s / n); },
+  'freqbox:2:2': q => { const rows = []; l5Tab(q.q).forEach(([v, f]) => { for (let i = 0; i < f; i++) rows.push(v); }); const n = rows.length, med = n % 2 ? rows[(n - 1) / 2] : (rows[n / 2 - 1] + rows[n / 2]) / 2; return igual(certo(q), l5Num(med)); },
+  'freqbox:2:3': q => { const s = l5Sort(l5Lst(q.q)); return igual(certo(q), String(s[1])); },
+  'freqbox:2:4': q => { const s = l5Sort(l5Lst(q.q)); return igual(certo(q), String(q.q.includes('mediana') ? s[3] : s[5])); },
+  'freqbox:3:1': q => { const s = l5Sort(l5Lst(q.q)); return igual(certo(q), String(s[5] - s[1])); },
+  'freqbox:3:2': q => { const s = l5Sort(l5Lst(q.q)); return igual(certo(q), l5Num(s[5] + 1.5 * (s[5] - s[1]))); },
+  'freqbox:3:3': q => { const M = { 'fica entre Q1 e Q3': 50, 'fica entre o mínimo e Q1': 25, 'fica acima de Q3': 25, 'fica entre Q1 e a mediana': 25, 'fica abaixo da mediana': 50, 'fica entre o mínimo e Q3': 75 }, k = Object.keys(M).find(x => q.q.includes(x)); return igual(certo(q), `${M[k]}%`); },
+  'freqbox:3:4': q => { const f = [...q.q.matchAll(/\((\d+)(?: pessoas)?\)/g)].map(m => +m[1]), n = f.reduce((a, b) => a + b, 0), s = f.reduce((a, x, i) => a + x * (5 + 10 * i), 0); return igualNum(+certo(q).replace(',', '.'), s / n); },
+
   // ---------- juros ----------
   'juros:1:1': q => { const m = q.q.match(/custa (R\$ [\d.,]+) e está com (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 - m[2] / 100), 1e-6); },
   'juros:1:2': q => { const m = q.q.match(/de (R\$ [\d.,]+) sofreu aumento de (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 + m[2] / 100), 1e-6); },

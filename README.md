@@ -12,7 +12,7 @@ O MathLab é gratuito e continua sendo. Gratuito não quer dizer sem condições
 
 ## Assuntos disponíveis
 
-São 74 assuntos (54 do Fundamental II e 20 do Ensino Médio), organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
+São 79 assuntos (54 do Fundamental II e 25 do Ensino Médio: 15 na 1ª EM, 8 na 2ª EM e 2 na 3ª EM), organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
 
 **Números**
 * 6º, Números naturais e sistema posicional: ordens, classes, valor posicional e comparação
@@ -505,3 +505,19 @@ O que faz:
 
 Privacidade: guarda só apelidos agregados e contagens de erro por tipo, sem listar quem errou. Os dados ficam só no aparelho.
 Limites: testado em partida local simulada no Chromium. O modo por celulares usa os mesmos dados, mas foi testado só por leitura do código. Safari e iOS não testados.
+
+
+## Lote 5 e séries do Ensino Médio (v4.7)
+
+Cinco módulos novos, cada um com 12 geradores em 3 níveis e simulador próprio:
+1. funcmod (1ª EM): Função modular, com gráfico em V, vértice, zeros, equações e inequações com módulo.
+2. inequacao (1ª EM): Inequações e sinal da função do 1º e do 2º grau, produto, quociente e domínio.
+3. funccomp (1ª EM): Função composta como máquinas em fila e função inversa com a simetria em y = x.
+4. trigrel (2ª EM): Radianos, comprimento de arco, sen² + cos² = 1, tg = sen / cos e sinais por quadrante.
+5. freqbox (1ª EM): Tabela de frequência, média ponderada, mediana, quartis e diagrama de caixa.
+
+Séries: o campo `ano` dos módulos do Ensino Médio agora vale 10 (1ª EM), 11 (2ª EM) ou 12 (3ª EM). Mudei de série, a partir da distribuição que costuma aparecer no Currículo Paulista: ciclotrig, functrig, leistrig, combinatoria, matriz, probcond e geoesp foram para a 2ª EM, e ga_reta e ga_circ para a 3ª EM. Para mudar um módulo de série, troque o `ano` na linha `MODS.push` dele. Confira essa distribuição no Currículo Paulista antes de divulgar.
+
+Correção na Arena: o filtro de ano agora mostra "1ª EM", "2ª EM" e "3ª EM" em vez de "10º ano", "11º ano" e "12º ano".
+
+Códigos BNCC: funcmod, inequacao e funccomp ficam sem código EM13 próprio. trigrel cita EM13MAT306 e freqbox cita EM13MAT406. Os dois foram escritos de memória, confira no texto oficial.
