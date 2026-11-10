@@ -289,6 +289,34 @@ const l5Lst = q => { const m = q.match(/\(([\d, ]+)\)/); return m ? m[1].split('
 const l5Pi = t => { const m = t.match(/(\d*)π(?:\/(\d+))?/); return m ? [m[1] === '' ? 1 : +m[1], m[2] ? +m[2] : 1] : null; };
 const l5H = (a, b) => Math.round(Math.sqrt(a * a + b * b));
 
+// ---- Lote 6: ajudantes ----
+const l6N = t => +String(t).replace('−', '-');
+const l6Eq = (str, vs) => { const [lhs, rhs] = str.split(' = '); const co = vs.map(() => 0); [...lhs.replace(/−/g, '-').matchAll(/([+-]?)\s*(\d*)([a-z])/g)].forEach(m => { const i = vs.indexOf(m[3]); if (i >= 0) co[i] += (m[1] === '-' ? -1 : 1) * (m[2] === '' ? 1 : +m[2]); }); return { co, r: l6N(rhs) }; };
+const l6D3 = M => M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) - M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) + M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
+const l6Solve3 = (M, r) => { const D = l6D3(M); return [0, 1, 2].map(j => l6D3(M.map((row, i) => row.map((v, k) => (k === j ? r[i] : v)))) / D); };
+const l6Tr = a => `(${a.map(x => l5S(Math.round(x * 1000) / 1000)).join(', ')})`;
+const l6Cl = (a1, b1, c1, a2, b2, c2) => { const D = a1 * b2 - a2 * b1; if (D !== 0) return 0; return (a1 * c2 - a2 * c1 === 0 && b1 * c2 - b2 * c1 === 0) ? 1 : 2; };
+const l6Sys2 = q => { const m = q.q.match(/sistema:? (.+?); (.+?)(?:\.|\?)/); const e1 = l6Eq(m[1], ['x', 'y']), e2 = l6Eq(m[2], ['x', 'y']); return [e1.co[0], e1.co[1], e1.r, e2.co[0], e2.co[1], e2.r]; };
+
+const l6Poly = str => { const ts = String(str).replace(/−/g, '-').replace(/\s+/g, '').match(/[+-]?[^+-]+/g) || []; const d = {}; ts.forEach(t => { const m = t.match(/^([+-]?)(\d*)(x[²³]?)?$/); if (!m) return; const e = m[3] ? (m[3] === 'x³' ? 3 : m[3] === 'x²' ? 2 : 1) : 0; d[e] = (d[e] || 0) + (m[1] === '-' ? -1 : 1) * (m[2] === '' ? 1 : +m[2]); }); const n = Math.max(...Object.keys(d).map(Number)); return Array.from({ length: n + 1 }, (_, i) => d[n - i] || 0); };
+const l6Val = (co, x) => co.reduce((s, c) => s * x + c, 0);
+const l6Ruf = (co, r) => { const q = [co[0]]; for (let i = 1; i < co.length; i++) q.push(co[i] + r * q[i - 1]); return q; };
+const l6Tx = co => { const n = co.length - 1; let t = ''; co.forEach((c, i) => { if (!c) return; const e = n - i, a = Math.abs(c), b = e === 0 ? String(a) : (a === 1 ? '' : String(a)) + (e === 1 ? 'x' : e === 2 ? 'x²' : 'x³'); t += t === '' ? (c < 0 ? '−' + b : b) : (c < 0 ? ' − ' + b : ' + ' + b); }); return t; };
+const l6Set = a => `{${[...a].sort((x, y) => x - y).map(l5S).join(', ')}}`;
+const l6Div = q => { const m = q.q.match(/por x ([+−]) (\d+)/); return (m[1] === '+' ? -1 : 1) * +m[2]; };
+
+const l6Un = s => +String(s || '').replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, c => '⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(c));
+const l6Pas = n => { let r = [1]; for (let i = 0; i < n; i++) { const t = [1]; for (let j = 1; j < r.length; j++) t.push(r[j - 1] + r[j]); t.push(1); r = t; } return r; };
+const l6Mil = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const l6Term = (c, e) => e === 0 ? String(c) : (c === 1 ? '' : String(c)) + (e === 1 ? 'x' : 'x' + String(e).replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]));
+
+const l6Mon = s => parseFloat(String(s).replace(/R\$\s*/, '').replace(/\./g, '').replace(',', '.'));
+const l6M = x => { const [a, b] = (Math.round(x * 100) / 100).toFixed(2).split('.'); return `R$ ${a.replace(/\B(?=(\d{3})+(?!\d))/g, '.')},${b}`; };
+const l6Fin = q => { const t = q.q; const P = l6Mon(t.match(/(?:de|financiamento de) (R\$ [\d.,]+)/)[1]); const n = +(t.match(/em (\d+) parcelas/) || [])[1]; const i = +(t.match(/a (\d+)% ao mês/) || [])[1]; return { P, n, i }; };
+
+const l6Fr = (n, d) => { const g = l5G(n, d); n /= g; d /= g; return d === 1 ? String(n) : `${n}/${d}`; };
+const l6Pi = n => `${n === 1 ? '' : l6Mil(n)}π`;
+
 // Conferências de resposta. Chave "modulo:nivel:gerador" (gerador começa em 1; "*" vale para todos os níveis).
 // Cada função recebe a questão e devolve null se estiver certa, ou um texto explicando o erro.
 // Ela deve recalcular a resposta só a partir do enunciado, sem usar código do app.
@@ -944,6 +972,76 @@ const CONF = {
   'freqbox:3:2': q => { const s = l5Sort(l5Lst(q.q)); return igual(certo(q), l5Num(s[5] + 1.5 * (s[5] - s[1]))); },
   'freqbox:3:3': q => { const M = { 'fica entre Q1 e Q3': 50, 'fica entre o mínimo e Q1': 25, 'fica acima de Q3': 25, 'fica entre Q1 e a mediana': 25, 'fica abaixo da mediana': 50, 'fica entre o mínimo e Q3': 75 }, k = Object.keys(M).find(x => q.q.includes(x)); return igual(certo(q), `${M[k]}%`); },
   'freqbox:3:4': q => { const f = [...q.q.matchAll(/\((\d+)(?: pessoas)?\)/g)].map(m => +m[1]), n = f.reduce((a, b) => a + b, 0), s = f.reduce((a, x, i) => a + x * (5 + 10 * i), 0); return igualNum(+certo(q).replace(',', '.'), s / n); },
+
+  // ---------- Lote 6: sislin ----------
+  'sislin:1:1': q => { const m = q.q.match(/x \+ y \+ z = (−?\d+); y \+ z = (−?\d+); z = (−?\d+)\./), S = l6N(m[1]), T = l6N(m[2]), Z = l6N(m[3]); return igual(certo(q), l6Tr([S - T, T - Z, Z])); },
+  'sislin:1:2': q => igual(certo(q), ['Possível e determinado', 'Possível e indeterminado', 'Impossível'][l6Cl(...l6Sys2(q))]),
+  'sislin:1:3': q => { const m = q.q.match(/sistema (.+?); (.+?)\?/), e1 = l6Eq(m[1], ['x', 'y']), e2 = l6Eq(m[2], ['x', 'y']); return igual(certo(q), l5S(e1.co[0] * e2.co[1] - e1.co[1] * e2.co[0])); },
+  'sislin:1:4': q => igual(certo(q), ['Uma', 'Infinitas', 'Nenhuma'][l6Cl(...l6Sys2(q))]),
+  'sislin:2:1': q => { const m = q.q.match(/sistema: (.+?)\. Qual/)[1].split('; ').map(e => l6Eq(e, ['x', 'y', 'z'])); return igual(certo(q), l6Tr(l6Solve3(m.map(e => e.co), m.map(e => e.r)))); },
+  'sislin:2:2': q => { const rows = q.q.match(/\[ (.+?) \]/)[1].split(' | ').map(r => r.split(' ').map(l6N)); return igual(certo(q), l5S(l6D3(rows))); },
+  'sislin:2:3': q => { const m = q.q.match(/x \+ y = (\d+); (.+?) \+ ky = (−?\d+) é (impossível|possível e indeterminado)/), p = +m[1], mm = l6Eq(m[2] + ' = 0', ['x', 'y']).co[0], qq = l6N(m[3]), imp = m[4] === 'impossível'; if ((qq === mm * p) === imp) return 'tipo incoerente com o termo independente'; return igual(certo(q), l5S(mm)); },
+  'sislin:2:4': q => { const m = q.q.match(/(\d+) (\S+) e (\d+) (\S+) custam R\$ (\d+)\. (\d+) \S+ e (\d+) \S+ custam R\$ (\d+)\. Quanto custa 1/), a1 = +m[1], b1 = +m[3], t1 = +m[5], a2 = +m[6], b2 = +m[7], t2 = +m[8], D = a1 * b2 - a2 * b1, y = (a1 * t2 - a2 * t1) / D; return igual(certo(q), `R$ ${y}`); },
+  'sislin:3:1': q => { const m = q.q.match(/Se (.+?), qual é o valor de (.+?)\?/), es = m[1].split('; ').map(e => l6Eq(e, ['x', 'y', 'z'])), [x, y, z] = l6Solve3(es.map(e => e.co), es.map(e => e.r)); const F = { 'x + y + z': x + y + z, 'x − z': x - z, '2x + y': 2 * x + y, 'y − x + z': y - x + z }; return igual(certo(q), l5S(F[m[2]])); },
+  'sislin:3:2': q => { const m = q.q.match(/sistema (.+?); (.+?), qual/), e1 = l6Eq(m[1], ['x', 'y']), e2 = l6Eq(m[2], ['x', 'y']), D = e1.co[0] * e2.co[1] - e1.co[1] * e2.co[0], x = (e1.r * e2.co[1] - e1.co[1] * e2.r) / D; return igual(certo(q), l5S(x)); },
+  'sislin:3:3': q => { const SETS = [['livro', 'caderno', 'estojo'], ['bola', 'boné', 'camiseta'], ['caderno', 'caneta', 'lápis']], ask = q.q.match(/Quanto custa 1 (\S+)\?/)[1], set = SETS.find(s => s.includes(ask)), sing = w => (w === 'lápis' ? w : w.replace(/s$/, '')), rows = [...q.q.matchAll(/compra: (.+?) custam R\$ (\d+)\./g)], M = [], r = []; rows.forEach(m => { const co = [0, 0, 0]; m[1].split(', ').forEach(t => { const [n, ...w] = t.split(' '); const i = set.indexOf(sing(w.join(' '))); co[i] = +n; }); M.push(co); r.push(+m[2]); }); const sol = l6Solve3(M, r); return igual(certo(q), `R$ ${sol[set.indexOf(ask)]}`); },
+  'sislin:3:4': q => { const m = q.q.match(/(\d)x ([−+]) (\d+)y = (\d+)/), mm = +m[1], n = (m[2] === '−' ? -1 : 1) * +m[3]; return igual(certo(q), `k ≠ ${l5S(n / mm)}`); },
+
+  // ---------- Lote 6: polinomios ----------
+  'polinomios:1:1': q => { const m = q.q.match(/p\(x\) = (.+?), qual é o valor de p\((−?\d+)\)/); return igual(certo(q), l5S(l6Val(l6Poly(m[1]), l6N(m[2])))); },
+  'polinomios:1:2': q => igual(certo(q), l5S(l6Poly(q.q.match(/p\(x\) = (.+?)\?/)[1]).reduce((a, b) => a + b, 0))),
+  'polinomios:1:3': q => { const m = q.q.match(/grau (\d+) e q\(x\) tem grau (\d+)\. Qual é o grau de p\(x\) ([·+])/), a = +m[1], b = +m[2]; return igual(certo(q), String(m[3] === '·' ? a + b : Math.max(a, b))); },
+  'polinomios:1:4': q => { const m = q.q.match(/\(x − (\d+)\)\(x \+ (\d+)\)/), a = +m[1], b = +m[2], ok = l6N(certo(q)); return (ok === a) ? null : `a resposta ${certo(q)} não é a raiz esperada ${a}`; },
+  'polinomios:2:1': q => { const m = q.q.match(/Qual é (a soma|o produto) das raízes da equação (.+?) = 0/), co = l6Poly(m[2]); return igual(certo(q), l5S(m[1] === 'a soma' ? -co[1] / co[0] : co[2] / co[0])); },
+  'polinomios:2:2': q => { const co = l6Poly(q.q.match(/p\(x\) = (.+?) por x/)[1]); return igual(certo(q), l5S(l6Val(co, l6Div(q)))); },
+  'polinomios:2:3': q => { const co = l6Poly(q.q.match(/p\(x\) = (.+?) por x/)[1]), qq = l6Ruf(co, l6Div(q)); return qq[3] !== 0 ? 'divisão não exata' : igual(certo(q), `q(x) = ${l6Tx(qq.slice(0, 3))}`); },
+  'polinomios:2:4': q => { const rs = [...q.q.matchAll(/\(x ([−+]) (\d+)\)/g)].map(m => (m[1] === '−' ? 1 : -1) * +m[2]); return igual(certo(q), l6Set(rs)); },
+  'polinomios:3:1': q => { const co = l6Poly(q.q.match(/p\(x\) = (.+?) são/)[1]); const t = q.q; const v = t.includes('r₁ + r₂ + r₃') ? -co[1] : t.includes('r₁ · r₂ · r₃') ? -co[3] : co[2]; return igual(certo(q), l5S(v)); },
+  'polinomios:3:2': q => { const m = q.q.match(/p\(x\) = (.+?) é divisível por x ([+−]) (\d+)/), co = l6Poly(m[1].replace('kx²', '0x²')), r = (m[2] === '+' ? -1 : 1) * +m[3], c = co[2], d = co[3]; return igual(certo(q), l5S(-(r * r * r + c * r + d) / (r * r))); },
+  'polinomios:3:3': q => { const m = q.q.match(/que (−?\d+) é raiz de p\(x\) = (.+?), qual/), co = l6Poly(m[2]); return igual(certo(q), l5S(-co[1] - l6N(m[1]))); },
+  'polinomios:3:4': q => { const m = q.q.match(/que (−?\d+) é raiz de p\(x\) = (.+?), quais/), co = l6Poly(m[2]), r = l6N(m[1]), qq = l6Ruf(co, r); if (qq[3] !== 0) return 'não é raiz'; const D = qq[1] * qq[1] - 4 * qq[2], s = Math.sqrt(D); return igual(certo(q), l6Set([(-qq[1] - s) / 2, (-qq[1] + s) / 2])); },
+
+  // ---------- Lote 6: binomio ----------
+  'binomio:1:1': q => { const m = q.q.match(/C\((\d+), (\d+)\)/); return igual(certo(q), String(l6Pas(+m[1])[+m[2]])); },
+  'binomio:1:2': q => igual(certo(q), String(2 ** +q.q.match(/linha (\d+)/)[1])),
+  'binomio:1:3': q => igual(certo(q), String(l6Un(q.q.match(/\(x \+ y\)([⁰¹²³⁴⁵⁶⁷⁸⁹]+)/)[1]) + 1)),
+  'binomio:1:4': q => igual(certo(q), l6Pas(+q.q.match(/linha (\d+)/)[1]).join(', ')),
+  'binomio:2:1': q => { const m = q.q.match(/coeficiente de x([⁰¹²³⁴⁵⁶⁷⁸⁹]*) no desenvolvimento de \(x \+ (\d)\)([⁰¹²³⁴⁵⁶⁷⁸⁹]+)/), k = m[1] ? l6Un(m[1]) : 1, a = +m[2], n = l6Un(m[3]); return igual(certo(q), String(l6Pas(n)[k] * a ** (n - k))); },
+  'binomio:2:2': q => { const m = q.q.match(/\((\d*)x ([−+]) (\d+)\)([⁰¹²³⁴⁵⁶⁷⁸⁹]+)/), a = m[1] === '' ? 1 : +m[1], b = (m[2] === '−' ? -1 : 1) * +m[3], n = l6Un(m[4]); return igual(certo(q), l5S(l6Mil((a + b) ** n))); },
+  'binomio:2:3': q => { const m = q.q.match(/\(x − (\d)\)([⁰¹²³⁴⁵⁶⁷⁸⁹]+)/), a = +m[1], n = l6Un(m[2]); let k; if (q.q.includes('termo independente')) k = 0; else { const t = q.q.match(/coeficiente de x([⁰¹²³⁴⁵⁶⁷⁸⁹]*) /); k = t[1] ? l6Un(t[1]) : 1; } return igual(certo(q), l5S(l6Pas(n)[k] * (-a) ** (n - k))); },
+  'binomio:2:4': q => { const m = q.q.match(/\(x \+ (\d)\)([⁰¹²³⁴⁵⁶⁷⁸⁹]+).*qual é o (\d+)º termo/), a = +m[1], n = l6Un(m[2]), k = +m[3] - 1; return igual(certo(q), l6Term(l6Pas(n)[k] * a ** k, n - k)); },
+  'binomio:3:1': q => { const m = q.q.match(/\(x \+ (\d)\/x\)([⁰¹²³⁴⁵⁶⁷⁸⁹]+)/), a = +m[1], n = l6Un(m[2]); return igual(certo(q), String(l6Pas(n)[n / 2] * a ** (n / 2))); },
+  'binomio:3:2': q => { const m = q.q.match(/coeficiente de x([⁰¹²³⁴⁵⁶⁷⁸⁹]+) no desenvolvimento de \(x \+ (\d)\)([⁰¹²³⁴⁵⁶⁷⁸⁹]+)/), k = l6Un(m[1]), a = +m[2], n = l6Un(m[3]); return igual(certo(q), l6Mil(l6Pas(n)[k] * a ** (n - k))); },
+  'binomio:3:3': q => { const m = q.q.match(/C\((\d+), (\d+)\) = (\d+) e C\(\d+, \d+\) = (\d+)/), n = +m[1], k = +m[2]; if (+m[3] !== l6Pas(n)[k] || +m[4] !== l6Pas(n)[k + 1]) return 'valores dados incoerentes'; return igual(certo(q), String(l6Pas(n + 1)[k + 1])); },
+  'binomio:3:4': q => igual(certo(q), String(Math.max(...l6Pas(+q.q.match(/linha (\d+)/)[1])))),
+
+  // ---------- Lote 6: financ ----------
+  'financ:1:1': q => { const { P, n } = l6Fin(q); return igual(certo(q), l6M(P / n)); },
+  'financ:1:2': q => { const { P, i } = l6Fin(q); return igual(certo(q), l6M(P * i / 100)); },
+  'financ:1:3': q => { const { P, n, i } = l6Fin(q); return igual(certo(q), l6M(P / n + P * i / 100)); },
+  'financ:1:4': q => { const m = q.q.match(/financiamento de (R\$ [\d.,]+) foi pago em (\d+) parcelas fixas de (R\$ [\d.,]+)/), P = l6Mon(m[1]), n = +m[2], A = l6Mon(m[3]); return igual(certo(q), l6M(A * n - P)); },
+  'financ:2:1': q => { const m = q.q.match(/SAC de (R\$ [\d.,]+) em (\d+) parcelas.*após o pagamento da (\d+)ª/), P = l6Mon(m[1]), n = +m[2], k = +m[3]; return igual(certo(q), l6M(P - k * P / n)); },
+  'financ:2:2': q => { const { P, n, i } = l6Fin(q), k = +q.q.match(/juros da (\d+)ª/)[1]; return igual(certo(q), l6M((P - (k - 1) * P / n) * i / 100)); },
+  'financ:2:3': q => { const { P, n, i } = l6Fin(q), k = +q.q.match(/valor da (\d+)ª parcela/)[1]; return igual(certo(q), l6M(P / n + (P - (k - 1) * P / n) * i / 100)); },
+  'financ:2:4': q => { const m = q.q.match(/Price de (R\$ [\d.,]+), a (\d+)% ao mês, a parcela fixa é (R\$ [\d.,]+)/), P = l6Mon(m[1]), i = +m[2], A = l6Mon(m[3]); return igual(certo(q), l6M(A - P * i / 100)); },
+  'financ:3:1': q => { const { P, n, i } = l6Fin(q); let s = P, j = 0; for (let k = 0; k < n; k++) { j += s * i / 100; s -= P / n; } return igual(certo(q), l6M(j)); },
+  'financ:3:2': q => { const { P, n, i } = l6Fin(q), A = P / n, f = A + P * i / 100, l = A + (P - (n - 1) * A) * i / 100; return igual(certo(q), l6M(f - l)); },
+  'financ:3:3': q => { const m = q.q.match(/é (\d,\d{4})\. Qual é a parcela de um financiamento de (R\$ [\d.,]+)/), c = parseFloat(m[1].replace(',', '.')), P = l6Mon(m[2]); return igual(certo(q), l6M(P * c)); },
+  'financ:3:4': q => { const m = q.q.match(/Price de (R\$ [\d.,]+), a (\d+)% ao mês, a parcela fixa é (R\$ [\d.,]+)/), P = l6Mon(m[1]), i = +m[2], A = l6Mon(m[3]); return igual(certo(q), l6M(P + P * i / 100 - A)); },
+
+  // ---------- Lote 6: troncos ----------
+  'troncos:1:1': q => { const m = q.q.match(/altura (\d+) cm e raio da base (\d+) cm .* a (\d+) cm do vértice/), H = +m[1], R = +m[2], hp = +m[3]; return igual(certo(q), `${R * hp / H} cm`); },
+  'troncos:1:2': q => { const m = q.q.match(/é (\d+)\/(\d+)\./), p = +m[1], d = +m[2]; return igual(certo(q), l6Fr(p * p, d * d)); },
+  'troncos:1:3': q => { const m = q.q.match(/lado (\d+) cm e altura (\d+) cm/), L = +m[1], H = +m[2]; return igual(certo(q), `${l6Mil(L * L * H / 3)} cm³`); },
+  'troncos:1:4': q => { const m = q.q.match(/altura (\d+) cm, é obtido .* altura (\d+) cm por/), a = +m[1], b = +m[2]; return igual(certo(q), l6Fr(a, b)); },
+  'troncos:2:1': q => { const m = q.q.match(/lados (\d+) cm e (\d+) cm e altura (\d+) cm/), A = +m[1], B = +m[2], h = +m[3]; return igual(certo(q), `${l6Mil(h * (A * A + A * B + B * B) / 3)} cm³`); },
+  'troncos:2:2': q => { const m = q.q.match(/bases (\d+) cm e (\d+) cm e altura (\d+) cm/), A = +m[1], B = +m[2], h = +m[3]; return igual(certo(q), `${l6Pi(h * (A * A + A * B + B * B) / 3)} cm³`); },
+  'troncos:2:3': q => { const m = q.q.match(/altura (\d+) cm tem raios das bases (\d+) cm e (\d+) cm/), h = +m[1], R = +m[2], r = +m[3]; return igual(certo(q), `${h * R / (R - r)} cm`); },
+  'troncos:2:4': q => { const m = q.q.match(/áreas (\d+) cm² e (\d+) cm² e a altura é (\d+) cm/), A = +m[1], a = +m[2], h = +m[3]; return igual(certo(q), `${l6Mil(h * (A + Math.sqrt(A * a) + a) / 3)} cm³`); },
+  'troncos:3:1': q => { const m = q.q.match(/bases (\d+) cm e (\d+) cm e altura (\d+) cm/), R = +m[1], r = +m[2], h = +m[3]; return igual(certo(q), `${Math.round(Math.sqrt(h * h + (R - r) ** 2))} cm`); },
+  'troncos:3:2': q => { const m = q.q.match(/bases (\d+) cm e (\d+) cm e altura (\d+) cm.*geratriz mede (\d+) cm/), R = +m[1], r = +m[2], h = +m[3], g = +m[4]; if (g * g !== h * h + (R - r) ** 2) return 'geratriz incoerente'; return igual(certo(q), `${l6Pi((R + r) * g)} cm²`); },
+  'troncos:3:3': q => { const m = q.q.match(/raio (\d+) cm e altura (\d+) cm retira-se .* raio (\d+) cm e altura (\d+) cm/), R = +m[1], H = +m[2], r = +m[3], hp = +m[4]; if (r * H !== R * hp) return 'cones não semelhantes'; return igual(certo(q), `${l6Pi((R * R * H - r * r * hp) / 3)} cm³`); },
+  'troncos:3:4': q => { const m = q.q.match(/é (\d+)\/(\d+) da altura/), p = +m[1], d = +m[2]; return igual(certo(q), l6Fr(p ** 3, d ** 3)); },
 
   // ---------- juros ----------
   'juros:1:1': q => { const m = q.q.match(/custa (R\$ [\d.,]+) e está com (\d+)%/); return igualNum(pt(certo(q)), pt(m[1]) * (1 - m[2] / 100), 1e-6); },

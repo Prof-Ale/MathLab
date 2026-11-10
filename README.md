@@ -12,7 +12,7 @@ O MathLab é gratuito e continua sendo. Gratuito não quer dizer sem condições
 
 ## Assuntos disponíveis
 
-São 79 assuntos (54 do Fundamental II e 25 do Ensino Médio: 15 na 1ª EM, 8 na 2ª EM e 2 na 3ª EM), organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
+São 84 assuntos (54 do Fundamental II e 30 do Ensino Médio: 15 na 1ª EM, 11 na 2ª EM e 4 na 3ª EM), organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
 
 **Números**
 * 6º, Números naturais e sistema posicional: ordens, classes, valor posicional e comparação
@@ -521,3 +521,15 @@ Séries: o campo `ano` dos módulos do Ensino Médio agora vale 10 (1ª EM), 11 
 Correção na Arena: o filtro de ano agora mostra "1ª EM", "2ª EM" e "3ª EM" em vez de "10º ano", "11º ano" e "12º ano".
 
 Códigos BNCC: funcmod, inequacao e funccomp ficam sem código EM13 próprio. trigrel cita EM13MAT306 e freqbox cita EM13MAT406. Os dois foram escritos de memória, confira no texto oficial.
+
+
+## Lote 6 (v4.8)
+
+Cinco módulos novos, cada um com 12 geradores em 3 níveis e simulador próprio:
+1. sislin (2ª EM): Sistemas lineares 3 por 3 com escalonamento, Sarrus, Cramer e classificação (SPD, SPI, SI) com as duas retas no plano.
+2. polinomios (3ª EM): Gráfico do polinômio de 3º grau, Briot-Ruffini, teorema do resto e relações de Girard.
+3. binomio (3ª EM): Triângulo de Pascal, números binomiais, termo geral e coeficientes do desenvolvimento de (ax + b)ⁿ.
+4. financ (2ª EM): Financiamento pelo SAC e pela Tabela Price, com tabela de parcelas, juros, amortização e saldo.
+5. troncos (2ª EM): Tronco de pirâmide e de cone, semelhança, volume, geratriz e área lateral.
+
+Os testes agora cobrem 963 geradores e 84 simuladores. Séries e códigos BNCC: a série de cada módulo novo foi escolhida de memória a partir do Currículo Paulista e os cinco ficam sem código EM13, porque não consegui conferir o texto oficial. Confira os dois antes de divulgar.
