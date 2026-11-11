@@ -12,7 +12,7 @@ O MathLab é gratuito e continua sendo. Gratuito não quer dizer sem condições
 
 ## Assuntos disponíveis
 
-São 84 assuntos (54 do Fundamental II e 30 do Ensino Médio: 6 na 1ª EM, 9 na 2ª EM e 15 na 3ª EM), organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
+São 92 assuntos (54 do Fundamental II e 38 do Ensino Médio: 8 na 1ª EM, 12 na 2ª EM e 18 na 3ª EM), organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
 
 **Números**
 * 6º, Números naturais e sistema posicional: ordens, classes, valor posicional e comparação
@@ -550,3 +550,21 @@ Limite conhecido: 962 dos 963 geradores têm menos de 3 dicas distintas. O 3º d
 ## Séries conforme o Guia 2026 (v4.10)
 
 Os 30 módulos do Ensino Médio foram redistribuídos conforme o Escopo-Sequência oficial. 1ª EM (6): conjuntos e intervalos, função afim, função quadrática, função modular, inequações, função composta e inversa. 2ª EM (9): notação científica, função exponencial, logaritmos, PA, PG, juros compostos, financiamento SAC e Price, sólidos e tronco. 3ª EM (15): sistemas lineares, combinatória, probabilidade condicional, trigonometria (triângulo retângulo, ciclo, funções, leis, radianos), média e desvio padrão, tabela de frequência e box plot, matrizes, polinômios, binômio de Newton e geometria analítica.
+
+## Lote 7: lacunas do Ensino Médio (v4.11)
+
+Oito módulos novos, cada um com 12 geradores em 3 níveis, simulador próprio e dicas em dois degraus, escolhidos ao comparar os 84 módulos com o Escopo-Sequência do Guia 2026.
+
+1. radicais (1ª EM): Radicais e expoentes racionais, com a raiz simplificada em blocos e o expoente fracionário.
+2. funcconc (1ª EM): Conceito de função, com diagrama de flechas, domínio, contradomínio, imagem e gráfico.
+3. fatoracao (2ª EM): Fator comum, trinômio, quadrado perfeito e diferença de quadrados, com o modelo de áreas.
+4. eqexplog (2ª EM): Equações exponenciais e logarítmicas, com a solução vista no gráfico.
+5. funclog (2ª EM): Função logarítmica, com assíntota, domínio, crescimento e a inversa da exponencial.
+6. probuniao (3ª EM): Probabilidade da união, com diagrama de Venn, eventos excludentes, complementar e três conjuntos.
+7. setorcirc (3ª EM): Setor circular, com comprimento do arco, área, perímetro e radianos.
+8. regra3c (3ª EM): Regra de três simples e composta, com grandezas direta e inversamente proporcionais.
+
+Total agora: 1ª EM com 8 assuntos, 2ª EM com 12 e 3ª EM com 18. Fatoração ficou na 2ª EM porque o Guia a coloca no 1º bimestre dessa série. Os códigos EM13MAT só aparecem onde há correspondência direta com a BNCC anexada, e os demais ficam sem código.
+
+Limites conhecidos: nenhum teste em Safari, iPhone ou com alunos; toque e impressão foram só simulados. Ficam para depois o painel do professor em três camadas, a identificação opcional com LGPD, o combo visível e o reforço dos geradores com uma dica só.
+
