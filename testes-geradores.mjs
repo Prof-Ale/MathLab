@@ -1261,6 +1261,8 @@ function validarQuestao(q, mod) {
   else if (RE_RUIM.test(q.e)) erros.push(`explicação com valor inválido: "${q.e.slice(0, 40)}"`);
   if (!Array.isArray(q.h) || !q.h.length) erros.push('dicas vazias');
   else if (q.h.some(h => typeof h !== 'string' || !h.trim() || RE_RUIM.test(h))) erros.push('dica vazia ou inválida');
+  if (Array.isArray(q.ms) && Array.isArray(q.o) && q.ms.length !== q.o.length) erros.push(`ms tem ${q.ms.length} itens e o tem ${q.o.length}`);
+  if (Array.isArray(q.tg) && Array.isArray(q.o) && q.tg.length !== q.o.length) erros.push(`tg tem ${q.tg.length} itens e o tem ${q.o.length}`);
   // tg e ms: a alternativa certa não tem etiqueta de erro, as erradas têm
   if (Array.isArray(q.tg) && Number.isInteger(q.c)) {
     if (q.tg[q.c] != null) erros.push('a alternativa certa tem etiqueta de erro (tg)');
@@ -1310,13 +1312,14 @@ for (const m of mods) {
       totalGer++; porModulo[m.id].ger++;
       if (conf) { comConf++; porModulo[m.id].conf++; }
       semear(nome);
-      const f = [], enun = new Set(), lintVisto = new Set();
+      let dicasMin = 99; const f = [], enun = new Set(), lintVisto = new Set();
       for (let r = 0; r < RODADAS && f.length < 4; r++) {
         let q;
         try { q = fn(); } catch (e) { f.push(`rodada ${r}: exceção: ${e.message}`); continue; }
         const erros = validarQuestao(q, m);
         if (!erros.length && typeof q.q === 'string') {
           enun.add(q.q);
+          dicasMin = Math.min(dicasMin, new Set((q.h || []).filter(Boolean)).size);
           for (const [re, desc] of LINT) if (re.test(textoTodo(q)) && !lintVisto.has(desc)) { lintVisto.add(desc); avisos.push({ nome, msg: `texto: ${desc}: ${textoTodo(q).slice(0, 150)}` }); porModulo[m.id].avisos++; }
           if (conf) {
             let res;
@@ -1327,6 +1330,7 @@ for (const m of mods) {
         if (erros.length) f.push(`rodada ${r}: ${erros.join(' | ')}`);
       }
       if (f.length) { falhas.push({ nome, f }); porModulo[m.id].falhas++; }
+      else if (dicasMin < 2 && RODADAS >= 100) { avisos.push({ nome, msg: 'só 1 dica distinta: o 2º degrau da escada de ajuda não traz dica nova' }); porModulo[m.id].avisos++; }
       else if (enun.size < 3 && RODADAS >= 100) { avisos.push({ nome, msg: `variedade baixa: só ${enun.size} enunciados diferentes em ${RODADAS} rodadas` }); porModulo[m.id].avisos++; }
     });
   }

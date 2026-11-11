@@ -50,9 +50,21 @@ input[type=range]{width:100%;accent-color:var(--gold);cursor:pointer}
 .opt:disabled{opacity:.5;cursor:default}.opt.ok{border-color:var(--gr);background:rgba(16,185,129,.2);opacity:1}
 .fb{font-weight:700;padding:.8rem;border-radius:8px;text-align:center;display:none}
 .fb.ok{display:block;background:rgba(16,185,129,.2);color:var(--gr);border:1px solid var(--gr)}
-.fb.no{display:block;background:rgba(239,68,68,.2);color:var(--rd);border:1px solid var(--rd)}
+.fb.no{display:block;background:rgba(255,183,3,.16);color:var(--gold2);border:1px solid var(--gold2);text-align:left}
+.fb .aj-t{font-size:1.05rem;margin-bottom:.4rem}
+.fb .aj-p{font-weight:600;margin:.4rem 0;line-height:1.5}
+.fb .aj-barra{display:flex;gap:.3rem;max-width:12rem;margin:.2rem 0 .5rem}
+.fb .aj-barra i{flex:1;height:.4rem;border-radius:4px;background:rgba(148,163,184,.4)}
+.fb .aj-barra i.on{background:var(--gold2)}
+.fb .aj-b{margin:.4rem .5rem 0 0;padding:.5rem .9rem;border-radius:10px;border:1px solid var(--gold2);background:transparent;color:inherit;font:inherit;font-weight:700;cursor:pointer}
+.fb .aj-me{background:var(--gold2);color:#002855}
+.fb.aj-res{text-align:left}
+.opt.x{text-decoration:line-through}
+#cv.aj-pulso{outline:3px solid var(--gold2);outline-offset:3px;animation:ajp 1.2s ease-out 2}
+@keyframes ajp{from{outline-color:var(--gold2)}to{outline-color:transparent}}
+@media (prefers-reduced-motion:reduce){#cv.aj-pulso{animation:none}}
 body.theme-contrast .fb,body.theme-contrast .fb.ok,body.theme-contrast .fb.no{color:#fff}
-.go{background:linear-gradient(90deg,var(--blue),var(--gold));color:#fff;border:0;padding:.75rem;border-radius:10px;font-weight:700;cursor:pointer;font-size:.95rem}
+.go{background:var(--gold);color:#002855;border:0;padding:.75rem;border-radius:10px;font-weight:800;cursor:pointer;font-size:.95rem}
 .go:disabled{opacity:.4;cursor:default}
 footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1rem;margin-top:2rem;color:#f8fafc}
 .ft{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
@@ -103,7 +115,7 @@ footer{background:var(--nav);border-top:3px solid var(--gold);padding:1.2rem 1re
  
 /* ===== Badges de pré-requisito e próximo passo (Fase 1.2) ===== */
 .mod-badges{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem}
-.badge{font-size:.7rem;padding:.2rem .5rem;border-radius:6px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.badge{font-size:.78rem;padding:.2rem .5rem;border-radius:6px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .badge-prereq{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.4)}
 .badge-prox{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.4)}
 .badge-bncc{background:rgba(6,182,212,.12);color:#67e8f9;border:1px solid rgba(6,182,212,.35);font-family:monospace}
@@ -1865,6 +1877,35 @@ function questao(){
   Q.o.forEach((t,i)=>{const b=document.createElement('button');b.className='opt';b.textContent=t;b.onclick=()=>resp(i,b);$('qo').appendChild(b)});
   ajustarSim(Q.s);
 }
+function ajuda(i,q,ms){
+  const fb=$('fb'),n=tries,hs=(q.h||[]).filter((x,k,a)=>x&&a.indexOf(x)===k);
+  const dica=hs[n-1]||'';
+  fb.className='fb no';fb.replaceChildren();
+  const mk=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;fb.appendChild(e);return e};
+  mk('div','aj-t',n===1?'Ainda não. Falta um passo.':n===2?'Vamos achar onde escorregou.':'Quer ver a resolução?');
+  const bar=mk('div','aj-barra');bar.setAttribute('role','img');bar.setAttribute('aria-label','Ajuda '+Math.min(n,3)+' de 3');
+  for(let k=1;k<=3;k++){const e=document.createElement('i');if(k<=Math.min(n,3))e.className='on';bar.appendChild(e)}
+  if(n>=2){const r=mk('p','aj-p');r.append('Você escolheu ');const sd=document.createElement('s');sd.textContent=q.o[i];r.appendChild(sd);r.append('.');if(ms)mk('p','aj-p',ms)}
+  if(dica)mk('p','aj-p','Dica: '+dica);
+  else if(n===1&&ms)mk('p','aj-p',ms);
+  if(n>=2){const bt=mk('button','aj-b','🔬 Olhar o simulador');bt.type='button';bt.onclick=olharSim}
+  if(n>=3){const bt=mk('button','aj-b aj-me','💡 Não sei, me mostra passo a passo');bt.type='button';bt.onclick=()=>mostrarResolucao(q)}
+}
+function olharSim(){
+  const c=$('cv');if(!c)return;const r=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  c.scrollIntoView({behavior:r?'auto':'smooth',block:'center'});c.classList.remove('aj-pulso');void c.offsetWidth;c.classList.add('aj-pulso');
+}
+function mostrarResolucao(q){
+  if(locked||q!==Q||!cur)return;locked=true;
+  [...$('qo').children].forEach((x,k)=>{x.disabled=true;if(k===q.c)x.classList.add('ok')});
+  if(cur.gens){seqOk=0;seqErr++;if(seqErr>=2&&niv>1){niv--;seqErr=0;ultG=-1}S.niv[cur.id]=niv}
+  const fb=$('fb');fb.className='fb ok aj-res';fb.textContent='💡 '+q.e+' Esta ficou sem XP. A próxima você faz.';
+  $('nx').disabled=false;
+  try{if(cur.gg||cur.liveInfo)$('info').textContent=cur.info(V)}catch(e){}
+  try{desenhar()}catch(e){}
+  try{const h={id:mlId(),questaoId:questionId,data:dataLocal(),horario:new Date().toISOString(),estudante:(S.student||'').trim()||'Não identificado',turma:S.turma||'',modulo:cur.id,questao:q.q,resposta:'(pediu a resolução)',correta:q.o[q.c],acertou:false,desistiu:true,nivel:niv,tentativa:tries+1,tempoSegundos:Math.round((Date.now()-questionStart)/1000),xpGanho:0,erro:'Pediu a resolução'};S.hist.push(h);mlDB.gravar(h);limitarHist()}catch(e){console.warn('hist desistiu',e)}
+  save();stats();som('ok');
+}
 function resp(i,b){
   if(locked)return;const q=Q,fb=$('fb');
   if(i===q.c){
@@ -1882,8 +1923,7 @@ function resp(i,b){
     b.disabled=true;combo=0;
     const tg=q.tg&&q.tg[i],ms=q.ms&&q.ms[i];
     if(tg&&cur.gens){const E=(S.err[cur.id]=S.err[cur.id]||{});E[tg]=(E[tg]||0)+1;sessErr[tg]=(sessErr[tg]||0)+1}
-    const dica=q.h[Math.min(tries,q.h.length-1)];
-    fb.className='fb no';fb.textContent='❌ '+(ms?ms+(tries>0?' Dica: '+dica:''):'Dica: '+dica);tries++;som('no');
+    tries++;b.classList.add('x');ajuda(i,q,ms);som('no');
   }
   save();stats();
 }
@@ -7520,7 +7560,7 @@ const TR_GENS={
    fill:()=>`${pick([15,20,25,35,40])}°`,h:f[2]===45?['Catetos iguais dão tangente 1.']:[`Calcule a razão ${f[0]==='oposto'?'seno':'cosseno'}.`,'Procure na tabela o ângulo que dá esse valor.'],e:f[2]===45?'Catetos iguais: tg α = 1, então α = 45°.':`${f[0]==='oposto'?'seno':'cosseno'} α = ${h/2}/${h} = 1/2, então α = ${ok}°.`,s:TR_S({ang:ok,h:Math.min(h,20),oc:1})})}
 ]};
 
-MODS.push({id:'trigret',ano:10,ic:'📐',nome:'Trigonometria no triângulo retângulo',sub:'Seno, cosseno e tangente: oposto, adjacente e hipotenusa',liveInfo:true,
+MODS.push({id:'trigret',ano:12,ic:'📐',nome:'Trigonometria no triângulo retângulo',sub:'Seno, cosseno e tangente: oposto, adjacente e hipotenusa',liveInfo:true,
  ctl:[{k:'ang',l:'Ângulo α, em graus',min:15,max:75,v:30},{k:'h',l:'Hipotenusa, em cm',min:5,max:20,v:10}],
  reset:{ang:30,h:10,oc:0},
  fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.ang=cl(v.ang,15,75);v.h=cl(v.h,5,20);v.oc=cl(v.oc,0,1)},
@@ -7802,7 +7842,7 @@ const PA_GENS={
    fill:()=>`R$ ${rnd(20,120)}`,h:['É o termo de posição n da PA.','a(n) = a(1) + (n − 1)·r.'],e:`a(${n}) = ${a1} + ${n-1}·${r} = ${ok}.`,s:PA_S({a1,r,n,oc:1})})}
 ]};
 
-MODS.push({id:'pa',ano:10,ic:'🪜',nome:'Progressão aritmética (PA)',sub:'Razão, termo geral e soma dos termos',liveInfo:true,
+MODS.push({id:'pa',ano:11,ic:'🪜',nome:'Progressão aritmética (PA)',sub:'Razão, termo geral e soma dos termos',liveInfo:true,
  ctl:[{k:'a1',l:'Primeiro termo a(1)',min:-20,max:40,v:3},{k:'r',l:'Razão r',min:-10,max:10,v:2},{k:'n',l:'Número de termos n',min:2,max:12,v:8},{k:'md',l:'Modo (0 barras · 1 soma de Gauss)',min:0,max:1,v:0}],
  reset:{a1:3,r:2,n:8,md:0,oc:0},
  fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.a1=cl(v.a1,-20,40);v.r=cl(v.r,-10,10);v.n=cl(v.n,2,12);v.md=cl(v.md,0,1);v.oc=cl(v.oc,0,1)},
@@ -7894,7 +7934,7 @@ const PGE_GENS={
    fill:()=>`${rnd(2,50)} g`,h:['Cada hora divide por 2.','Depois de h horas: m0 ÷ 2^h.'],e:`${m0} ÷ 2^${h} = ${m0} ÷ ${Math.pow(2,h)} = ${j} g.`,s:PGE_S({a1:m0,q:2,inv:1,n:h+1,oc:1})})}
 ]};
 
-MODS.push({id:'pg',ano:10,ic:'🌱',nome:'Progressão geométrica (PG)',sub:'Razão, termo geral, soma e crescimento exponencial',liveInfo:true,
+MODS.push({id:'pg',ano:11,ic:'🌱',nome:'Progressão geométrica (PG)',sub:'Razão, termo geral, soma e crescimento exponencial',liveInfo:true,
  ctl:[{k:'a1',l:'Primeiro termo a(1)',min:1,max:200,v:2},{k:'q',l:'Razão q',min:-4,max:5,v:2},{k:'inv',l:'Razão (0 usa q · 1 usa 1/q)',min:0,max:1,v:0},{k:'n',l:'Número de termos n',min:2,max:8,v:6},{k:'md',l:'Modo (0 barras · 1 metade do quadrado)',min:0,max:1,v:0}],
  reset:{a1:2,q:2,inv:0,n:6,md:0,oc:0},
  fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.a1=cl(v.a1,1,200);v.q=cl(v.q,-4,5);v.inv=cl(v.inv,0,1);if(v.inv===1&&(v.q===0))v.q=2;v.n=cl(v.n,2,8);v.md=cl(v.md,0,1);v.oc=cl(v.oc,0,1)},
@@ -8110,7 +8150,7 @@ const NC_GENS={
    fill:()=>'São iguais',h:['Escreva os dois com o mesmo expoente.','Depois compare as mantissas.'],e:`Com o mesmo expoente fica mais fácil comparar: o maior é ${ok}.`,s:NC_S({m:m1,e:e1,m2:m2,e2,md:1,oc:1})})}
 ]};
 
-MODS.push({id:'notcient',ano:10,ic:'🔬',nome:'Notação científica',sub:'Números muito grandes e muito pequenos, operações e ordem de grandeza',liveInfo:true,
+MODS.push({id:'notcient',ano:11,ic:'🔬',nome:'Notação científica',sub:'Números muito grandes e muito pequenos, operações e ordem de grandeza',liveInfo:true,
  ctl:[{k:'md',l:'Modo (0 um número · 1 multiplicar · 2 dividir)',min:0,max:2,v:0},{k:'m',l:'Mantissa (10 a 99, a vírgula fica depois do 1º algarismo)',min:10,max:99,v:34},{k:'e',l:'Expoente',min:-9,max:9,v:7},{k:'m2',l:'Segundo número: mantissa',min:10,max:99,v:25},{k:'e2',l:'Segundo número: expoente',min:-9,max:9,v:3}],
  reset:{m:34,e:7,md:0,m2:25,e2:3,oc:0},
  fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.md=cl(v.md,0,2);v.m=cl(v.m,10,99);v.e=cl(v.e,-9,9);v.m2=cl(v.m2,10,99);v.e2=cl(v.e2,-9,9);v.oc=cl(v.oc,0,2)},
@@ -8201,7 +8241,7 @@ const FE_GENS={
    fill:()=>'São iguais',h:['Substitua x pelo valor dado nas duas expressões.'],e:`${b}^${n} = ${A} e ${k*10}·${n} = ${B}. O maior é ${ok}.`,s:FE_S({a:1,b,md:1,oc:1})})}
 ]};
 
-MODS.push({id:'funcexp',ano:10,ic:'📈',nome:'Função exponencial',sub:'f(x) = a · bˣ: crescimento, decaimento e comparação com a reta',liveInfo:true,
+MODS.push({id:'funcexp',ano:11,ic:'📈',nome:'Função exponencial',sub:'f(x) = a · bˣ: crescimento, decaimento e comparação com a reta',liveInfo:true,
  ctl:[{k:'a',l:'Valor inicial a',min:1,max:20,v:3},{k:'b',l:'Base b (2 a 5)',min:2,max:5,v:2},{k:'inv',l:'Base (0 usa b · 1 usa 1/b, decaimento)',min:0,max:1,v:0},{k:'md',l:'Modo (0 só a curva · 1 comparar com a reta)',min:0,max:1,v:0}],
  reset:{a:3,b:2,inv:0,md:0,oc:0},
  fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.a=cl(v.a,1,20);v.b=cl(v.b,2,5);v.inv=cl(v.inv,0,1);v.md=cl(v.md,0,1);v.oc=cl(v.oc,0,1)},
@@ -8290,7 +8330,7 @@ const LGT_GENS={
    fill:()=>EMN(Math.pow(10,rnd(1,4))),h:['Cada ponto multiplica por 10.'],e:`${m1} − ${m2} = ${d} pontos: 10^${d} = ${EMN(ok)}.`,s:LGT_S({md:2,mag:m1,oc:1})})}
 ]};
 
-MODS.push({id:'log',ano:10,ic:'🧮',nome:'Logaritmos',sub:'O expoente que procuramos: potências, pH e terremotos',liveInfo:true,
+MODS.push({id:'log',ano:11,ic:'🧮',nome:'Logaritmos',sub:'O expoente que procuramos: potências, pH e terremotos',liveInfo:true,
  ctl:[{k:'md',l:'Modo (0 potências e logaritmo · 1 escala de pH · 2 escala Richter)',min:0,max:2,v:0},{k:'b',l:'Base',min:2,max:10,v:2},{k:'x',l:'Expoente (o logaritmo)',min:-3,max:6,v:5},{k:'ph',l:'pH (modo 1)',min:0,max:14,v:7},{k:'mag',l:'Magnitude (modo 2)',min:1,max:9,v:5}],
  reset:{b:2,x:5,md:0,ph:7,mag:5,oc:0},
  fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.md=cl(v.md,0,2);v.b=cl(v.b,2,10);v.x=cl(v.x,-3,6);v.ph=cl(v.ph,0,14);v.mag=cl(v.mag,1,9);v.oc=cl(v.oc,0,1)},
@@ -8385,7 +8425,7 @@ const MF_GENS={
    fill:()=>'4º mês',h:['No 1º mês os dois são iguais.','No 2º mês, sobre o que incidem os juros compostos?'],e:`No 1º mês os dois rendem ${i}% sobre o capital. No 2º mês, os compostos já incidem sobre o montante, então rendem mais.`,s:MF_S({C:1000,i,n:6,md:0,oc:0})})}
 ]};
 
-MODS.push({id:'matfin',ano:10,ic:'🏦',nome:'Juros compostos e inflação',sub:'Montante, juros sobre juros, taxas acumuladas e comparação com juros simples',liveInfo:true,
+MODS.push({id:'matfin',ano:11,ic:'🏦',nome:'Juros compostos e inflação',sub:'Montante, juros sobre juros, taxas acumuladas e comparação com juros simples',liveInfo:true,
  ctl:[{k:'C',l:'Capital (R$)',min:100,max:5000,v:1000},{k:'i',l:'Taxa por período (%)',min:1,max:50,v:10},{k:'n',l:'Número de períodos',min:1,max:12,v:6},{k:'md',l:'Modo (0 simples e composto · 1 capital e juros)',min:0,max:1,v:0}],
  reset:{C:1000,i:10,n:6,md:0,oc:0},
  fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.C=cl(v.C,100,5000);v.i=cl(v.i,1,50);v.n=cl(v.n,1,12);v.md=cl(v.md,0,1);v.oc=cl(v.oc,0,1)},
@@ -8836,7 +8876,7 @@ const CIC_GENS={
    bad:[[`${k+1} voltas e ${r}°`,'contou uma volta a mais','Divida por 360°: o quociente são as voltas completas e o resto é a posição.'],[`${k} voltas e ${360-r}°`,'usou o complemento','O resto da divisão por 360° é a posição final.'],[`${k-1} voltas e ${r+360}°`,'não terminou de tirar as voltas','Tire todas as voltas completas: o resto deve ser menor que 360°.'],[`${k} voltas e ${(r+180)%360}°`,'errou a conta','O resto da divisão por 360° é a posição final.']].filter(x=>x[0]!==`${k} voltas e ${r}°`),
    fill:()=>`${rnd(1,6)} voltas e ${rnd(1,35)*10}°`,h:['Divida o total por 360°.','O quociente são as voltas, e o resto, a posição.'],e:`${t} ÷ 360 dá ${k} e sobram ${r}. São ${k} voltas completas e ${r}°.`,s:CIC_S({md:2,ang:r,oc:1})})}
 ]};
-MODS.push({id:'ciclotrig',ano:11,ic:'🎡',nome:'Ciclo trigonométrico',sub:'Radianos, quadrantes, seno, cosseno e tangente no círculo de raio 1',liveInfo:true,
+MODS.push({id:'ciclotrig',ano:12,ic:'🎡',nome:'Ciclo trigonométrico',sub:'Radianos, quadrantes, seno, cosseno e tangente no círculo de raio 1',liveInfo:true,
  ctl:[{k:'md',l:'Modo (0 seno e cosseno · 1 radianos · 2 quadrantes e simetria)',min:0,max:2,v:0},{k:'ang',l:'Ângulo θ (graus)',min:0,max:360,v:30,u:'°'}],
  reset:{md:0,ang:30,oc:0},
  fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.md=cl(v.md,0,2);v.ang=cl(v.ang,0,360);v.oc=cl(v.oc,0,1)},
@@ -8929,7 +8969,7 @@ const FTR_GENS={
    bad:[[`${FTR_N(D+A)} m`,'usou o seno como 1','Calcule o ângulo B·t e depois o seno dele.'],[`${FTR_N(D-A*v)} m`,'errou o sinal do seno',`O seno de ${ang}° vale ${FTR_N(v)}.`],[`${FTR_N(D)} m`,'achou que o seno vale 0','Calcule o ângulo B·t e depois o seno dele.'],[`${FTR_N(A*v)} m`,'esqueceu o nível médio','Some D ao final.']].filter(x=>x[0]!==`${FTR_N(ok)} m`),
    fill:()=>`${rnd(1,12)} m`,h:[`Calcule ${B}·${T} = ${ang}°.`,'Ache o seno desse ângulo, multiplique por A e some D.'],e:`${B}·${T} = ${ang}°, sen ${ang}° = ${FTR_N(v)}. Altura = ${D} + ${A}·${FTR_N(v)} = ${FTR_N(ok)} m.`,s:FTR_S({md:0,A:Math.min(A,5),B:1,D:Math.min(D,3),oc:1})})}
 ]};
-MODS.push({id:'functrig',ano:11,ic:'🌊',nome:'Funções seno e cosseno',sub:'Amplitude, período e deslocamento: da onda no gráfico à maré e à roda-gigante',liveInfo:true,
+MODS.push({id:'functrig',ano:12,ic:'🌊',nome:'Funções seno e cosseno',sub:'Amplitude, período e deslocamento: da onda no gráfico à maré e à roda-gigante',liveInfo:true,
  ctl:[{k:'md',l:'Função (0 seno · 1 cosseno)',min:0,max:1,v:0},{k:'A',l:'Amplitude A',min:1,max:5,v:2},{k:'B',l:'Frequência B (ondas em 360°)',min:1,max:4,v:1},{k:'D',l:'Deslocamento D (sobe e desce)',min:-3,max:3,v:0}],
  reset:{md:0,A:2,B:1,D:0,oc:0},
  fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.md=cl(v.md,0,1);v.A=cl(v.A,1,5);v.B=cl(v.B,1,4);v.D=cl(v.D,-3,3);v.oc=cl(v.oc,0,1)},
@@ -9025,7 +9065,7 @@ const LSN_GENS={
    bad:['Acutângulo','Retângulo','Obtusângulo'].filter(t=>t!==ok).map(t=>[t,'comparou errado o maior lado','Compare o quadrado do maior lado com a soma dos quadrados dos outros dois: igual é retângulo, menor é acutângulo e maior é obtusângulo.']),
    fill:()=>'Equilátero',h:['Veja o quadrado do maior lado.','Compare com a soma dos quadrados dos outros dois.'],e:`O maior lado é ${Math.max(x,y,z)}. Seu quadrado é ${Math.max(x,y,z)**2} e a soma dos quadrados dos outros é ${x*x+y*y+z*z-Math.max(x,y,z)**2}. O triângulo é ${ok.toLowerCase()}.`,s:LSN_S({md:1,b:Math.min(24,x),c:Math.min(24,y),A:Math.max(20,Math.min(160,A)),oc:1})})}
 ]};
-MODS.push({id:'leistrig',ano:11,ic:'📐',nome:'Lei dos senos e dos cossenos',sub:'Triângulos quaisquer: circunferência circunscrita, lados, ângulos e área',liveInfo:true,
+MODS.push({id:'leistrig',ano:12,ic:'📐',nome:'Lei dos senos e dos cossenos',sub:'Triângulos quaisquer: circunferência circunscrita, lados, ângulos e área',liveInfo:true,
  ctl:[{k:'md',l:'Lei (0 senos · 1 cossenos)',min:0,max:1,v:0},{k:'b',l:'Lado b',min:2,max:24,v:8},{k:'c',l:'Lado c',min:2,max:24,v:10},{k:'A',l:'Ângulo A, entre b e c',min:20,max:160,v:60,u:'°'}],
  reset:{md:0,b:8,c:10,A:60,oc:0},
  fix(v){const cl=(n,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(n)||0)));v.md=cl(v.md,0,1);v.b=cl(v.b,2,24);v.c=cl(v.c,2,24);v.A=cl(v.A,20,160);v.oc=cl(v.oc,0,1)},
@@ -9083,7 +9123,7 @@ const CMB_GENS={
  ()=>{const n=rnd(5,12),k=n*(n-1)/2;return mk({q:`Em uma reunião, todos se cumprimentaram com um aperto de mão, uma única vez por par de pessoas. Foram ${k} apertos de mão. Quantas pessoas havia na reunião?`,ok:String(n),bad:[...new Set([n-1,n+1,k/2|0,k-1,n+2,n-2])].filter(x=>x!==n&&x>1).slice(0,4).map(x=>[String(x),'errou a equação','O número de apertos é C(n,2) = n(n−1)/2. Resolva n(n−1) = '+2*k+'.']),fill:()=>String(rnd(3,20)),h:['Cada par de pessoas dá um aperto: C(n,2).','Resolva n(n−1)/2 = '+k+'.'],e:`n(n−1) = ${2*k}, logo n = ${n}.`,s:CMB_S({md:2,n:Math.min(10,n),p:2,oc:1})})},
  ()=>{const n=rnd(6,12),ok=n*(n-1);return mk({q:`Em um campeonato com ${n} times, todos jogam contra todos em dois turnos (turno e returno). Quantos jogos serão disputados?`,ok:String(ok),bad:[...new Set([ok/2,ok+n,n*n,n*2,ok-n])].filter(x=>x!==ok&&x>0).slice(0,4).map(x=>[String(x),'errou a contagem','Cada par joga duas vezes: 2 · C(n,2) = n(n−1).']),fill:()=>String(rnd(10,150)),h:['Em um turno, cada par joga uma vez: C(n,2).','No returno, repete.'],e:`2 · C(${n},2) = ${n} · ${n-1} = ${ok} jogos.`,s:CMB_S({md:2,n:Math.min(10,n),p:2,oc:1})})}
 ]};
-MODS.push({id:'combinatoria',ano:11,ic:'🎲',nome:'Análise combinatória',sub:'Fatorial, permutação, arranjo e combinação: quando a ordem importa e quando não',liveInfo:true,
+MODS.push({id:'combinatoria',ano:12,ic:'🎲',nome:'Análise combinatória',sub:'Fatorial, permutação, arranjo e combinação: quando a ordem importa e quando não',liveInfo:true,
  ctl:[{k:'md',l:'Tipo (0 permutação · 1 arranjo · 2 combinação)',min:0,max:2,v:0},{k:'n',l:'Total de elementos n',min:1,max:10,v:5},{k:'p',l:'Escolhidos p',min:0,max:10,v:3}],
  reset:{md:0,n:5,p:3,oc:0},
  fix(v){const cl=(x,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(x)||0)));v.md=cl(v.md,0,2);v.n=cl(v.n,1,10);v.p=cl(v.p,0,v.n);v.oc=cl(v.oc,0,1)},
@@ -9141,7 +9181,7 @@ const MTZ_GENS={
  ()=>{const A=MTZ_RM(2,2,-3,6),X=MTZ_RM(2,2,-3,6),B=MTZ_ADD(A,X);return mk({q:`Sendo A = ${MTZ_FM(A)} e B = ${MTZ_FM(B)}, determine a matriz X tal que A + X = B.`,ok:MTZ_FM(X),bad:MTZ_BM(X,[MTZ_ADD(A,B),B.map((r,i)=>r.map((x,j)=>A[i][j]-x))],'X = B − A, posição a posição.'),fill:()=>MTZ_FM(MTZ_RM(2,2,0,9)),h:['Passe A para o outro lado: X = B − A.'],e:`X = B − A = ${MTZ_FM(X)}.`,s:MTZ_S({md:0,A,B:X,oc:1})})},
  ()=>{const A=MTZ_RM(2,2,-2,5),B=MTZ_RM(2,2,-2,5),C=MTZ_MUL(B,A),ok=C[0][0],T=MTZ_MUL(A,B);return mk({q:`Sendo A = ${MTZ_FM(A)} e B = ${MTZ_FM(B)}, qual é o elemento da 1ª linha e 1ª coluna da matriz B · A?`,ok:EMN(ok),bad:MTZ_BN(ok,[T[0][0],A[0][0]*B[0][0],B[0][0]+A[0][0]],'Atenção à ordem: use a 1ª linha de B e a 1ª coluna de A.'),fill:()=>EMN(rnd(-6,20)),h:['A matriz da esquerda dá as linhas.','Aqui a da esquerda é B.'],e:`${B[0][0]}·${A[0][0]} + ${B[0][1]}·${A[1][0]} = ${EMN(ok)}.`,s:MTZ_S({md:1,A:B,B:A,i:1,j:1,oc:1})})}
 ]};
-MODS.push({id:'matriz',ano:11,ic:'🧮',nome:'Matrizes e determinantes',sub:'Soma, produto, transposta e o determinante como área do paralelogramo',liveInfo:true,
+MODS.push({id:'matriz',ano:12,ic:'🧮',nome:'Matrizes e determinantes',sub:'Soma, produto, transposta e o determinante como área do paralelogramo',liveInfo:true,
  ctl:[{k:'md',l:'Modo (0 soma · 1 produto · 2 determinante · 3 ler a matriz)',min:0,max:3,v:0},{k:'k',l:'Exemplo pronto',min:0,max:4,v:0},{k:'i',l:'Linha i',min:1,max:4,v:1},{k:'j',l:'Coluna j',min:1,max:4,v:1}],
  reset:{md:0,k:0,kk:0,i:1,j:1,A:MTZ_PRE[0][0],B:MTZ_PRE[0][1],oc:0},
  fix(v){const cl=(x,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(x)||0)));v.md=cl(v.md,0,3);v.k=cl(v.k,0,4);v.oc=cl(v.oc,0,1);if(v.k!==v.kk){v.A=MTZ_PRE[v.k][0];v.B=MTZ_PRE[v.k][1];v.kk=v.k}
@@ -9200,7 +9240,7 @@ const PCD_GENS={
  ()=>{const ind=Math.random()<.5;let a,b,c,d;if(ind){const x=rnd(1,3),y=rnd(1,3),u=rnd(1,3),w=rnd(1,3);a=x*u*2;b=x*w*2;c=y*u*2;d=y*w*2}else{do{a=rnd(4,14);b=rnd(4,14);c=rnd(4,14);d=rnd(4,14)}while(a*d===b*c)}
   const ok=a*d===b*c?'Sim':'Não';return mk({q:`Em uma pesquisa, ${a} pessoas têm a característica A e B, ${b} têm A mas não B, ${c} têm B mas não A e ${d} não têm nenhuma das duas. Os eventos A e B são independentes?`,ok,bad:['Sim','Não','Só se a soma for 100'].filter(x=>x!==ok).map(x=>[x,'comparou errado as probabilidades','A e B são independentes quando P(A e B) = P(A) · P(B).']),fill:()=>'Talvez',h:['Calcule P(A), P(B) e P(A e B) sobre o total.','Compare P(A e B) com P(A) · P(B).'],e:`Com T = ${a+b+c+d}: P(A e B) = ${PCD_FR(a,a+b+c+d)}; P(A)·P(B) = ${PCD_FR((a+b)*(a+c),(a+b+c+d)**2)}. ${ok==='Sim'?'São iguais':'São diferentes'}.`,s:PCD_S({md:1,p1:a,p2:b,p3:c,p4:d,lb:['Tem A','Não tem A','Tem B','Não tem B'],cd:0,oc:1})})}
 ]};
-MODS.push({id:'probcond',ano:11,ic:'🎯',nome:'Probabilidade condicional',sub:'Com e sem reposição, tabela de dupla entrada e eventos independentes',liveInfo:true,
+MODS.push({id:'probcond',ano:12,ic:'🎯',nome:'Probabilidade condicional',sub:'Com e sem reposição, tabela de dupla entrada e eventos independentes',liveInfo:true,
  ctl:[{k:'md',l:'Modo (0 urna e árvore · 1 tabela)',min:0,max:1,v:0},{k:'p1',l:'Vermelhas, ou célula linha 1 coluna 1',min:1,max:20,v:3},{k:'p2',l:'Azuis, ou célula linha 1 coluna 2',min:1,max:20,v:5},{k:'p3',l:'Célula linha 2 coluna 1 (tabela)',min:1,max:20,v:4},{k:'p4',l:'Célula linha 2 coluna 2 (tabela)',min:1,max:20,v:6},{k:'rp',l:'Reposição (0 sem · 1 com)',min:0,max:1,v:0},{k:'cd',l:'Condição da tabela (0 a 3)',min:0,max:3,v:0}],
  reset:{md:0,p1:3,p2:5,p3:4,p4:6,rp:0,cd:0,lb:PCD_LB,oc:0},
  fix(v){const cl=(x,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(x)||0)));v.md=cl(v.md,0,1);['p1','p2','p3','p4'].forEach(k=>v[k]=cl(v[k],1,20));if(v.md===0){v.p1=cl(v.p1,1,9);v.p2=cl(v.p2,1,9)}v.rp=cl(v.rp,0,1);v.cd=cl(v.cd,0,3);v.oc=cl(v.oc,0,1);if(!Array.isArray(v.lb)||v.lb.length!==4)v.lb=PCD_LB},
@@ -9260,7 +9300,7 @@ const EDS_GENS={
  ()=>{let V,F,n,m,v;for(let t=0;t<4000;t++){n=rnd(4,6);const a=rnd(1,9),b=rnd(a+1,14),c=rnd(b+1,18),fa=rnd(1,3),fb=rnd(1,3);const fc=n-fa-fb;if(fc<1)continue;const d=[...Array(fa).fill(a),...Array(fb).fill(b),...Array(fc).fill(c)],mm=EDS_M(d),vv=EDS_V(d);if(Number.isInteger(mm)&&Number.isInteger(vv)&&vv>0){V=[a,b,c];F=[fa,fb,fc];m=mm;v=vv;break}}
   if(!V){V=[2,4,6];F=[1,2,1];m=4;v=2;n=4}const d=V.flatMap((x,i)=>Array(F[i]).fill(x));return mk({q:`Uma tabela mostra o valor e sua frequência: ${V.map((x,i)=>`${x} aparece ${F[i]} ${F[i]>1?'vezes':'vez'}`).join(', ')}. Qual é a variância desse conjunto?`,ok:EMN(v),bad:EDS_BN(v,[Math.sqrt(v),v*d.length,EDS_M(d),v+m],'Repita cada valor segundo sua frequência. A variância é a média dos quadrados dos desvios.'),fill:()=>EMN(rnd(1,20)),h:['Escreva o conjunto repetindo cada valor.','Média primeiro, depois os desvios ao quadrado.'],e:`Conjunto: ${EDS_L(d)}. Média ${EMN(m)}, variância ${EMN(v)}.`,s:EDS_S(d,{md:1,oc:1})})}
 ]};
-MODS.push({id:'estatdisp',ano:10,ic:'📊',nome:'Média, mediana e desvio padrão',sub:'Medidas de posição e de dispersão em um conjunto de dados',liveInfo:true,
+MODS.push({id:'estatdisp',ano:12,ic:'📊',nome:'Média, mediana e desvio padrão',sub:'Medidas de posição e de dispersão em um conjunto de dados',liveInfo:true,
  ctl:[{k:'md',l:'Modo (0 média e amplitude · 1 desvios · 2 desvio padrão)',min:0,max:2,v:0},{k:'n',l:'Quantidade de valores',min:3,max:6,v:3},{k:'x1',l:'Valor 1',min:0,max:20,v:4},{k:'x2',l:'Valor 2',min:0,max:20,v:8},{k:'x3',l:'Valor 3',min:0,max:20,v:12},{k:'x4',l:'Valor 4',min:0,max:20,v:10},{k:'x5',l:'Valor 5',min:0,max:20,v:10},{k:'x6',l:'Valor 6',min:0,max:20,v:10}],
  reset:{md:0,n:3,x1:4,x2:8,x3:12,x4:10,x5:10,x6:10,oc:0},
  fix(v){const cl=(x,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(x)||0)));v.md=cl(v.md,0,2);v.n=cl(v.n,3,6);EDS_X.forEach(k=>v[k]=cl(v[k],0,20));v.oc=cl(v.oc,0,1)},
@@ -9674,7 +9714,7 @@ const TRL_GENS={
  ()=>{const t=pick(TRL_ANG.filter(x=>x<360&&x!==0)),n=rnd(1,3),rad=Math.random()<.5;if(rad){const g=FG_G(t,180),d=180/g,nn=t/g,tot=`${nn+2*n*d}π${d===1?'':'/'+d}`,ok=`${TRL_RAD(t)} rad`;return FGMK({q:`Qual é a menor determinação positiva de ${tot} rad?`,ok,fill:()=>`${TRL_RAD(pick(TRL_ANG.filter(x=>x<360)))} rad`,bad:TRL_BS(ok,[`${TRL_RAD((t+180)%360||180)} rad`,`${TRL_RAD(360-t)} rad`,`${nn+n*d}π${d===1?'':'/'+d} rad`,`${TRL_RAD(t)} rad`.replace('π','π')+'  '].map(x=>x.trim()),'não retirou as voltas completas','Cada volta completa vale 2π. Subtraia voltas até cair entre 0 e 2π.'),h:['Uma volta completa vale 2π rad.','Subtraia 2π até o ângulo ficar menor que 2π.'],e:`${tot} rad tem ${n} ${n===1?'volta completa':'voltas completas'} a mais que ${TRL_RAD(t)} rad. A menor determinação positiva é ${ok}.`,s:{md:0,ang:t}})}
   const tot=t+360*n,ok=`${t}°`;return FGMK({q:`Qual é a menor determinação positiva de um arco de ${tot}°?`,ok,fill:()=>`${pick(TRL_ANG.filter(x=>x<360))}°`,bad:TRL_BS(ok,[`${(t+180)%360||180}°`,`${360-t}°`,`${tot-360*(n-1)}°`,`${Math.abs(t-90)}°`].map(x=>x),'não retirou as voltas completas','Cada volta completa vale 360°. Subtraia voltas até cair entre 0° e 360°.'),h:['Uma volta completa vale 360°.','Divida por 360 e fique com o resto.'],e:`${tot}° = ${n} voltas de 360° mais ${t}°. A menor determinação positiva é ${t}°.`,s:{md:0,ang:t}})}
 ]};
-MODS.push({id:'trigrel',ano:11,ic:'🧭',nome:'Radianos e relações fundamentais',sub:'Graus e radianos, arco de circunferência, sen² + cos² = 1 e tg = sen / cos',liveInfo:true,alt:300,
+MODS.push({id:'trigrel',ano:12,ic:'🧭',nome:'Radianos e relações fundamentais',sub:'Graus e radianos, arco de circunferência, sen² + cos² = 1 e tg = sen / cos',liveInfo:true,alt:300,
  ctl:[{k:'md',l:'Modo (0 radianos · 1 relações)',min:0,max:1,v:0},{k:'ang',l:'Ângulo θ (graus)',min:0,max:360,v:120}],
  reset:{md:0,ang:120,oc:0},
  fix(v){const cl=(x,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(x)||0)));v.md=cl(v.md,0,1);v.ang=cl(v.ang,0,360);v.oc=cl(v.oc,0,1)},
@@ -9728,7 +9768,7 @@ const FBX_GENS={
  ()=>{const T=[['fica entre Q1 e Q3',50],['fica entre o mínimo e Q1',25],['fica acima de Q3',25],['fica entre Q1 e a mediana',25],['fica abaixo da mediana',50],['fica entre o mínimo e Q3',75]],[tx,p]=pick(T),ok=`${p}%`;return FGMK({q:`Em um box plot, que porcentagem aproximada dos dados ${tx}?`,ok,bad:FBX_BS(ok,['25%','50%','75%','100%','10%'],'confundiu o que cada parte do box plot representa','Os quartis dividem os dados em 4 partes com cerca de 25% cada.'),h:['Os três quartis cortam os dados em quatro partes iguais.','Conte quantas partes de 25% a região tem.'],e:`Cada parte entre os quartis tem cerca de 25% dos dados. Aqui são ${p/25} partes: ${ok}.`,s:{md:1,d1:4,d2:8,d3:11,d4:14,d5:17,d6:21,d7:27}})},
  ()=>{let f,n,s;do{f=[rnd(1,6),rnd(1,6),rnd(1,6),rnd(1,6)];n=f[0]+f[1]+f[2]+f[3];s=5*f[0]+15*f[1]+25*f[2]+35*f[3]}while(s%n!==0||n<6);const ok=String(s/n);return FGMK({q:`Uma pesquisa agrupou idades em classes: 0 a 10 anos (${f[0]} pessoas), 10 a 20 anos (${f[1]}), 20 a 30 anos (${f[2]}) e 30 a 40 anos (${f[3]}). Usando o ponto médio de cada classe, qual é a média de idade?`,ok,bad:FBX_BS(ok,[FBX_N(20),FBX_N((5+15+25+35)/4),FBX_N(Math.round(s/(n+1)*100)/100),FBX_N(n)],'não usou o ponto médio com as frequências','Troque cada classe pelo seu ponto médio, multiplique pela frequência, some e divida pelo total.'),fill:()=>String(rnd(8,35)),h:['Os pontos médios são 5, 15, 25 e 35.','Multiplique cada um pela frequência, some e divida pelo total.'],e:`Soma = ${s}, total = ${n}. Média = ${s}/${n} = ${ok}.`})}
 ]};
-MODS.push({id:'freqbox',ano:10,ic:'📦',nome:'Tabela de frequência e box plot',sub:'Frequência, média ponderada, mediana, quartis e o diagrama de caixa',liveInfo:true,alt:300,
+MODS.push({id:'freqbox',ano:12,ic:'📦',nome:'Tabela de frequência e box plot',sub:'Frequência, média ponderada, mediana, quartis e o diagrama de caixa',liveInfo:true,alt:300,
  ctl:[{k:'md',l:'Modo (0 tabela de frequência · 1 box plot)',min:0,max:1,v:0},{k:'f1',l:'Frequência do valor 1',min:0,max:8,v:3},{k:'f2',l:'Frequência do valor 2',min:0,max:8,v:5},{k:'f3',l:'Frequência do valor 3',min:0,max:8,v:2},{k:'f4',l:'Frequência do valor 4',min:0,max:8,v:4},{k:'f5',l:'Frequência do valor 5',min:0,max:8,v:1},{k:'d1',l:'Dado 1 (box plot)',min:0,max:30,v:4},{k:'d2',l:'Dado 2 (box plot)',min:0,max:30,v:7},{k:'d3',l:'Dado 3 (box plot)',min:0,max:30,v:9},{k:'d4',l:'Dado 4 (box plot)',min:0,max:30,v:12},{k:'d5',l:'Dado 5 (box plot)',min:0,max:30,v:15},{k:'d6',l:'Dado 6 (box plot)',min:0,max:30,v:18},{k:'d7',l:'Dado 7 (box plot)',min:0,max:30,v:25}],
  reset:{md:0,f1:3,f2:5,f3:2,f4:4,f5:1,d1:4,d2:7,d3:9,d4:12,d5:15,d6:18,d7:25,oc:0},
  fix(v){const cl=(x,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(x)||0)));v.md=cl(v.md,0,1);['f1','f2','f3','f4','f5'].forEach(k=>v[k]=cl(v[k],0,8));['d1','d2','d3','d4','d5','d6','d7'].forEach(k=>v[k]=cl(v[k],0,30));v.oc=cl(v.oc,0,1)},
@@ -9791,7 +9831,7 @@ const SLN_GENS={
  ()=>{const It=pick([['livro','caderno','estojo'],['bola','boné','camiseta'],['caderno','caneta','lápis']]),pl=x=>x==='lápis'?x:x+'s';const Y=SLN_SYS3(2,9,0,3),[a,b,c]=Y.s,ok=`R$ ${b}`;const pr=Y.M.map((r,i)=>`${i+1}ª compra: ${[0,1,2].filter(j=>r[j]).map(j=>`${r[j]} ${r[j]>1?pl(It[j]):It[j]}`).join(', ')} custam R$ ${Y.r[i]}.`).join(' ');return FGMK({q:`${pr} Quanto custa 1 ${It[1]}?`,ok,bad:FG_BS(ok,[`R$ ${a}`,`R$ ${c}`,`R$ ${b+1}`,`R$ ${b-1}`,`R$ ${a+b}`],'montou o sistema com erro','Chame os preços de x, y e z, escreva uma equação por compra e escalone.'),fill:()=>`R$ ${rnd(1,12)}`,h:['Chame os preços de x, y e z.','Escreva uma equação para cada compra e resolva o sistema.'],e:`Resolvendo o sistema, o preço de 1 ${It[1]} é R$ ${b}.`})},
  ()=>{const m=pick([2,3,4]),k0=rnd(-3,4),n=m*k0;if(n===0||Math.abs(n)>12)return SLN_GENS[3][3]();const ok=`k ≠ ${EMN(k0)}`;return FGMK({q:`Para quais valores de k o sistema x + ky = 3; ${m}x ${n<0?'−':'+'} ${Math.abs(n)}y = ${m*3} é possível e determinado?`,ok,bad:FG_BS(ok,[`k = ${EMN(k0)}`,`k ≠ ${EMN(-k0)}`,`k ≠ ${m}`,`k > ${EMN(k0)}`,`k ≠ ${EMN(n)}`],'confundiu a condição do determinante','O sistema é determinado quando o determinante é diferente de zero.'),fill:()=>`k ≠ ${rnd(-6,6)}`,h:['Calcule o determinante dos coeficientes em função de k.','Ele precisa ser diferente de zero.'],e:`D = 1·(${EMN(n)}) − k·${m} = ${EMN(n)} − ${m}k. D = 0 quando k = ${EMN(k0)}. Então o sistema é determinado para k ≠ ${EMN(k0)}.`})}
 ]};
-MODS.push({id:'sislin',ano:11,ic:'🧮',nome:'Sistemas lineares e escalonamento',sub:'Sistemas 3 por 3, escalonamento, determinante, regra de Cramer e classificação',liveInfo:true,alt:300,
+MODS.push({id:'sislin',ano:12,ic:'🧮',nome:'Sistemas lineares e escalonamento',sub:'Sistemas 3 por 3, escalonamento, determinante, regra de Cramer e classificação',liveInfo:true,alt:300,
  ctl:[{k:'md',l:'Modo (0 sistema 3 por 3 · 1 classificação 2 por 2)',min:0,max:1,v:0},{k:'p',l:'Sistema (0 a 3)',min:0,max:3,v:1},{k:'x',l:'Solução x',min:-4,max:4,v:2},{k:'y',l:'Solução y',min:-4,max:4,v:-1},{k:'z',l:'Solução z',min:-4,max:4,v:3},{k:'a1',l:'a1 (1ª equação)',min:-6,max:6,v:1},{k:'b1',l:'b1',min:-6,max:6,v:1},{k:'c1',l:'c1',min:-6,max:6,v:3},{k:'a2',l:'a2 (2ª equação)',min:-6,max:6,v:1},{k:'b2',l:'b2',min:-6,max:6,v:-1},{k:'c2',l:'c2',min:-6,max:6,v:1}],
  reset:{md:0,p:1,x:2,y:-1,z:3,a1:1,b1:1,c1:3,a2:1,b2:-1,c2:1,oc:0},
  fix(v){const cl=(x,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(Number(x)||0)));v.md=cl(v.md,0,1);v.p=cl(v.p,0,3);['x','y','z'].forEach(k=>v[k]=cl(v[k],-4,4));['a1','b1','c1','a2','b2','c2'].forEach(k=>v[k]=cl(v[k],-6,6));if(!v.a1&&!v.b1)v.b1=1;if(!v.a2&&!v.b2)v.b2=1;v.oc=cl(v.oc,0,1)},
@@ -10170,7 +10210,7 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
     pg:     { eixo:'Álgebra', bncc:['EM13MAT508','EM13MAT304'], prereq:['pa','pot'], proximo:[], objetivos:['Reconhecer a razão de uma progressão geométrica','Usar o termo geral a(n) = a(1)·q^(n − 1)','Comparar o crescimento da PA com o da PG e somar termos'], tempo:'3 aulas' },
     conj:   { eixo:'Números', bncc:[], prereq:['int'], proximo:['funcafim'], objetivos:['Reconhecer união, interseção e diferença de conjuntos','Contar elementos com a fórmula n(A ∪ B) = n(A) + n(B) − n(A ∩ B)','Escrever e operar intervalos reais na reta (conteúdo do Currículo Paulista, sem habilidade própria na BNCC do Ensino Médio)'], tempo:'3 aulas' },
     notcient:{ eixo:'Números', bncc:['EM13MAT313'], prereq:['pot','dizimas'], proximo:['funcexp'], objetivos:['Escrever números muito grandes e muito pequenos em notação científica','Multiplicar, dividir e somar números em notação científica','Dar a ordem de grandeza de uma medida'], tempo:'2 aulas' },
-    funcexp:{ eixo:'Álgebra', bncc:['EM13MAT304','EM13MAT101'], prereq:['pg','pot'], proximo:['log'], objetivos:['Reconhecer crescimento e decaimento exponencial pela base','Resolver equações exponenciais simples','Comparar o crescimento exponencial com o linear'], tempo:'3 aulas' },
+    funcexp:{ eixo:'Álgebra', bncc:['EM13MAT304','EM13MAT101','EM13MAT403'], prereq:['pg','pot'], proximo:['log'], objetivos:['Reconhecer crescimento e decaimento exponencial pela base','Resolver equações exponenciais simples','Comparar o crescimento exponencial com o linear'], tempo:'3 aulas' },
     log:    { eixo:'Álgebra', bncc:['EM13MAT305'], prereq:['funcexp'], proximo:['matfin'], objetivos:['Entender o logaritmo como o expoente de uma potência','Aplicar as propriedades da soma, da diferença e da potência','Interpretar escalas logarítmicas: pH e terremotos'], tempo:'3 aulas' },
     matfin: { eixo:'Números', bncc:['EM13MAT303','EM13MAT104'], prereq:['juros','funcexp'], proximo:[], objetivos:['Calcular montante e juros compostos','Comparar juros simples e compostos','Acumular taxas sucessivas e inflação'], tempo:'3 aulas' },
     angpol: { eixo:'Geometria', bncc:['EF07MA24','EF07MA27'], prereq:['ang','tri'], proximo:['poligonos','paralelas'], objetivos:['Verificar que os ângulos internos de um triângulo somam 180° e os de um quadrilátero somam 360°','Relacionar o ângulo externo com o interno no mesmo vértice','Descobrir que o externo de um triângulo é a soma dos dois internos dos outros vértices e que os externos somam 360°'], tempo:'2 aulas' },
@@ -10185,16 +10225,16 @@ MODS.push({id:'prob',ano:8,ic:'🎲',nome:'Probabilidade e estatística',sub:'Da
     geoesp: { eixo:'Geometria', bncc:['EM13MAT309'], prereq:['volume'], proximo:['ga_reta'], objetivos:['Calcular área total e volume de prismas, cilindros, cones, pirâmides e esferas', 'Usar o teorema de Pitágoras para achar geratriz e apótema', 'Resolver problemas de capacidade e proporção entre sólidos'], tempo:'3 aulas' },
     ga_reta: { eixo:'Geometria', bncc:[], prereq:['funcafim'], proximo:['ga_circ'], objetivos:['Calcular distância e ponto médio entre dois pontos', 'Obter o coeficiente angular e a equação reduzida da reta', 'Reconhecer retas paralelas e perpendiculares pelos coeficientes angulares'], tempo:'3 aulas' },
     ga_circ: { eixo:'Geometria', bncc:[], prereq:['ga_reta'], proximo:[], objetivos:['Escrever e ler a equação reduzida da circunferência', 'Decidir se um ponto é interior, exterior ou da circunferência', 'Relacionar a distância do centro a uma reta com o raio'], tempo:'3 aulas' },
-    funcmod: { eixo:'Álgebra e Funções', bncc:[], prereq:['funcafim'], proximo:['inequacao'], objetivos:['Desenhar e ler o gráfico de a|x − h| + k e achar o vértice', 'Resolver equações com módulo separando dois casos', 'Resolver inequações com módulo como distância na reta'], tempo:'3 aulas' },
-    inequacao: { eixo:'Álgebra e Funções', bncc:[], prereq:['funcafim','funcquad'], proximo:['funccomp'], objetivos:['Estudar o sinal de funções do 1º e do 2º grau pelas raízes', 'Resolver inequações do 1º grau lembrando de inverter o sinal ao dividir por negativo', 'Resolver inequações do 2º grau, produto e quociente'], tempo:'3 aulas' },
-    funccomp: { eixo:'Álgebra e Funções', bncc:[], prereq:['funcafim'], proximo:['funcexp'], objetivos:['Calcular f(g(x)) como duas máquinas em fila e ver que a ordem importa', 'Obter a expressão da função composta', 'Achar a inversa de uma função do 1º grau e ver a simetria em y = x'], tempo:'3 aulas' },
+    funcmod: { eixo:'Álgebra', bncc:['EM13MAT404'], prereq:['funcafim'], proximo:['inequacao'], objetivos:['Desenhar e ler o gráfico de a|x − h| + k e achar o vértice', 'Resolver equações com módulo separando dois casos', 'Resolver inequações com módulo como distância na reta'], tempo:'3 aulas' },
+    inequacao: { eixo:'Álgebra', bncc:[], prereq:['funcafim','funcquad'], proximo:['funccomp'], objetivos:['Estudar o sinal de funções do 1º e do 2º grau pelas raízes', 'Resolver inequações do 1º grau lembrando de inverter o sinal ao dividir por negativo', 'Resolver inequações do 2º grau, produto e quociente'], tempo:'3 aulas' },
+    funccomp: { eixo:'Álgebra', bncc:[], prereq:['funcafim'], proximo:['funcexp'], objetivos:['Calcular f(g(x)) como duas máquinas em fila e ver que a ordem importa', 'Obter a expressão da função composta', 'Achar a inversa de uma função do 1º grau e ver a simetria em y = x'], tempo:'3 aulas' },
     trigrel: { eixo:'Geometria', bncc:['EM13MAT306'], prereq:['ciclotrig'], proximo:['functrig'], objetivos:['Converter graus em radianos e calcular o comprimento de um arco', 'Usar sen² θ + cos² θ = 1 e tg θ = sen θ / cos θ', 'Achar o sinal de seno, cosseno e tangente em cada quadrante'], tempo:'3 aulas' },
-    freqbox: { eixo:'Probabilidade e Estatística', bncc:['EM13MAT406'], prereq:['graficos'], proximo:['estatdisp'], objetivos:['Ler uma tabela de frequência e calcular média, mediana e moda', 'Achar os quartis e a amplitude interquartil de 7 dados', 'Interpretar um box plot e o limite de valores atípicos'], tempo:'3 aulas' },
-    sislin:    { eixo:'Álgebra e Funções', bncc:[], prereq:['sist','matriz'], proximo:['polinomios'], objetivos:['Escalonar um sistema 3 por 3 e achar a solução', 'Calcular determinantes e usar a regra de Cramer', 'Classificar sistemas em determinado, indeterminado ou impossível'], tempo:'3 aulas' },
-    polinomios: { eixo:'Álgebra e Funções', bncc:[], prereq:['funcquad','sislin'], proximo:['binomio'], objetivos:['Calcular o valor numérico e o grau de um polinômio', 'Usar o teorema do resto e o dispositivo de Briot-Ruffini', 'Relacionar raízes e coeficientes (relações de Girard)'], tempo:'3 aulas' },
-    binomio:   { eixo:'Álgebra e Funções', bncc:[], prereq:['combinatoria','polinomios'], proximo:[], objetivos:['Usar o triângulo de Pascal e os números binomiais', 'Expandir (x + a)ⁿ e achar o termo geral', 'Achar o termo independente e a soma dos coeficientes'], tempo:'2 aulas' },
-    financ:    { eixo:'Números', bncc:[], prereq:['matfin'], proximo:[], objetivos:['Montar a tabela de um financiamento pelo sistema SAC', 'Calcular a parcela de um financiamento pela Tabela Price', 'Comparar o total de juros de SAC e Price'], tempo:'3 aulas' },
-    troncos:   { eixo:'Geometria', bncc:[], prereq:['geoesp','semelhanca'], proximo:[], objetivos:['Relacionar o tronco com os sólidos semelhantes', 'Calcular o volume do tronco de pirâmide e de cone', 'Calcular a geratriz e a área lateral do tronco de cone'], tempo:'3 aulas' },
+    freqbox: { eixo:'Probabilidade e Estatística', bncc:['EM13MAT406','EM13MAT407'], prereq:['graficos'], proximo:['estatdisp'], objetivos:['Ler uma tabela de frequência e calcular média, mediana e moda', 'Achar os quartis e a amplitude interquartil de 7 dados', 'Interpretar um box plot e o limite de valores atípicos'], tempo:'3 aulas' },
+    sislin:    { eixo:'Álgebra', bncc:['EM13MAT301'], prereq:['sist','matriz'], proximo:['polinomios'], objetivos:['Escalonar um sistema 3 por 3 e achar a solução', 'Calcular determinantes e usar a regra de Cramer', 'Classificar sistemas em determinado, indeterminado ou impossível'], tempo:'3 aulas' },
+    polinomios: { eixo:'Álgebra', bncc:[], prereq:['funcquad','sislin'], proximo:['binomio'], objetivos:['Calcular o valor numérico e o grau de um polinômio', 'Usar o teorema do resto e o dispositivo de Briot-Ruffini', 'Relacionar raízes e coeficientes (relações de Girard)'], tempo:'3 aulas' },
+    binomio:   { eixo:'Álgebra', bncc:[], prereq:['combinatoria','polinomios'], proximo:[], objetivos:['Usar o triângulo de Pascal e os números binomiais', 'Expandir (x + a)ⁿ e achar o termo geral', 'Achar o termo independente e a soma dos coeficientes'], tempo:'2 aulas' },
+    financ:    { eixo:'Números', bncc:['EM13MAT303'], prereq:['matfin'], proximo:[], objetivos:['Montar a tabela de um financiamento pelo sistema SAC', 'Calcular a parcela de um financiamento pela Tabela Price', 'Comparar o total de juros de SAC e Price'], tempo:'3 aulas' },
+    troncos:   { eixo:'Geometria', bncc:['EM13MAT309','EM13MAT504'], prereq:['geoesp','semelhanca'], proximo:[], objetivos:['Relacionar o tronco com os sólidos semelhantes', 'Calcular o volume do tronco de pirâmide e de cone', 'Calcular a geratriz e a área lateral do tronco de cone'], tempo:'3 aulas' },
     prob:   { eixo:'Probabilidade e Estatística', bncc:['EF06MA30','EF07MA34','EF07MA35','EF08MA22','EF08MA25'], prereq:['fra','dec'], proximo:[], objetivos:['Calcular probabilidade teórica','Comparar frequência relativa e probabilidade teórica','Calcular média, mediana e moda'], tempo:'4 aulas' }
 };
   for (const m of MODS) {
@@ -10662,7 +10702,7 @@ function aplicarModoProf(){
     }
   }
 }
-let PROF_INATIVO_MS=20*60*1000;
+let PROF_INATIVO_MS=45*60*1000;
 function marcarAtividadeProf(){if(!S.modoProfessor)return;const t=Date.now();if(t-(S.modoProfAtividade||0)>15000){S.modoProfAtividade=t;save()}}
 function checarExpiracaoProf(){
   if(S.modoProfessor&&Date.now()-(S.modoProfAtividade||0)>PROF_INATIVO_MS){S.modoProfessor=false;S.modoProfAtividade=0;save();window.__profExpirou=true;return true}
@@ -11378,5 +11418,6 @@ window.__skin={aplicar,abrirAda};
 }catch(e){console.warn('Skin v2 desativada por erro:',e);try{document.body.classList.remove('sk')}catch(_){}}
 })();
 </script>
+<script src="ml-ux.js"></script>
 </body>
 </html>

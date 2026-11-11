@@ -12,7 +12,7 @@ O MathLab é gratuito e continua sendo. Gratuito não quer dizer sem condições
 
 ## Assuntos disponíveis
 
-São 84 assuntos (54 do Fundamental II e 30 do Ensino Médio: 15 na 1ª EM, 11 na 2ª EM e 4 na 3ª EM), organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
+São 84 assuntos (54 do Fundamental II e 30 do Ensino Médio: 6 na 1ª EM, 9 na 2ª EM e 15 na 3ª EM), organizados pelos cinco eixos da BNCC. O ano indica a série em que o assunto aparece na tela inicial. Os códigos de habilidade de cada assunto aparecem no card e no relatório.
 
 **Números**
 * 6º, Números naturais e sistema posicional: ordens, classes, valor posicional e comparação
@@ -532,4 +532,21 @@ Cinco módulos novos, cada um com 12 geradores em 3 níveis e simulador próprio
 4. financ (2ª EM): Financiamento pelo SAC e pela Tabela Price, com tabela de parcelas, juros, amortização e saldo.
 5. troncos (2ª EM): Tronco de pirâmide e de cone, semelhança, volume, geratriz e área lateral.
 
-Os testes agora cobrem 963 geradores e 84 simuladores. Séries e códigos BNCC: a série de cada módulo novo foi escolhida de memória a partir do Currículo Paulista e os cinco ficam sem código EM13, porque não consegui conferir o texto oficial. Confira os dois antes de divulgar.
+Os testes agora cobrem 963 geradores e 84 simuladores. Os códigos EM13 de todos os módulos do Ensino Médio foram conferidos contra o texto oficial da BNCC. sislin cita EM13MAT301, financ cita EM13MAT303, troncos cita EM13MAT309 e EM13MAT504. polinomios, binomio, inequacao e funccomp ficam sem código, porque a BNCC não traz habilidade própria para eles. Ajustes da conferência: funcmod passou a citar EM13MAT404, freqbox ganhou EM13MAT407 (box plot) e funcexp ganhou EM13MAT403. A série de cada módulo segue o Escopo-Sequência do Guia de Matemática do Ensino Médio 2026 da SEDUC-SP: 1ª série com conjuntos, função afim e quadrática; 2ª série com notação científica, exponencial, logaritmo, PA, PG, juros e volumes; 3ª série com sistemas, contagem, probabilidade, trigonometria e estatística. Os módulos complementares ficaram na série do assunto mais próximo. Os módulos sem objeto de conhecimento correspondente no Currículo Paulista (binômio de Newton, polinômios, escalonamento e determinantes, SAC e Price, tronco, matrizes, geometria analítica, inequações, função modular e função inversa) são conteúdo complementar, comum em livros didáticos e vestibulares.
+
+## Melhorias de interface e de ajuda (v4.9)
+
+Camada nova em `ml-ux.js`, carregada no fim do `index.html`. Se o arquivo faltar ou falhar, o app funciona como antes.
+1. Busca de assuntos no topo da Home, sem acento, por nome, tema, série ou código BNCC. Enter abre o primeiro resultado.
+2. Aviso dois minutos antes de o modo professor encerrar, com botão para continuar. O prazo de inatividade subiu de 20 para 45 minutos.
+3. O rodapé "Para reforçar" sem erros agora traz o botão para começar pelo primeiro desafio.
+4. O botão principal passou a ter fundo dourado sólido com texto azul escuro, para ler melhor. Os selos ficaram um pouco maiores.
+5. Escada de ajuda em 3 degraus, em `resp()`: no 1º erro o app reenquadra com a dica; no 2º mostra a alternativa escolhida riscada, a explicação daquele erro e um botão que leva ao simulador; no 3º oferece "Não sei, me mostra passo a passo", que revela a resolução sem XP e registra `desistiu` no histórico. O erro deixa de ser vermelho e passa a âmbar.
+6. O eixo "Álgebra e Funções" dos Lotes 5 e 6 foi unido a Álgebra, e o sexto cartão sem ícone da Home sumiu.
+7. `testes-geradores.mjs` agora confere que `ms` e `tg` têm o mesmo número de itens que as alternativas e avisa quando um gerador tem uma única dica distinta (74 casos, listados com `--verbose`).
+
+Limite conhecido: 962 dos 963 geradores têm menos de 3 dicas distintas. O 3º degrau usa a resolução (`q.e`), que todos têm.
+
+## Séries conforme o Guia 2026 (v4.10)
+
+Os 30 módulos do Ensino Médio foram redistribuídos conforme o Escopo-Sequência oficial. 1ª EM (6): conjuntos e intervalos, função afim, função quadrática, função modular, inequações, função composta e inversa. 2ª EM (9): notação científica, função exponencial, logaritmos, PA, PG, juros compostos, financiamento SAC e Price, sólidos e tronco. 3ª EM (15): sistemas lineares, combinatória, probabilidade condicional, trigonometria (triângulo retângulo, ciclo, funções, leis, radianos), média e desvio padrão, tabela de frequência e box plot, matrizes, polinômios, binômio de Newton e geometria analítica.
