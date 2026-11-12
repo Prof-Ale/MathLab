@@ -5,7 +5,7 @@
    - Ícones e manifesto: cache primeiro.
    - GeoGebra (3D) e ADA ficam fora do cache: precisam de internet e o app já avisa.
    Mude VERSAO só quando alterar ESTE arquivo ou a lista SHELL. Isso mostra o aviso "nova versão". */
-const VERSAO = 'mathlab-2026-11-12-37';
+const VERSAO = 'mathlab-2026-11-12-38';
 const CRITICOS = ['./', 'index.html', 'manifest.webmanifest'];
 const EXTRAS = ['icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'assets/logo-circular.webp', 'assets/logo-oficial.webp', 'assets/avatar-prof-ale-clean.webp', 'arena.html', 'arena.js', 'arena-host.js', 'arena-live.js', 'arena-config.js', 'arena-qr.js', 'arena-relatorio.js', 'arena-painel.js', 'ml-ux.js'];
 // Arena: arquivos que também tentam a rede primeiro, para atualizar sem mexer neste arquivo.
