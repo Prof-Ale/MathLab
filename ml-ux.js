@@ -28,10 +28,11 @@ css.textContent=`
 #mlBusca input{width:100%;box-sizing:border-box;padding:.75rem 1rem;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font:inherit;font-size:1rem}
 #mlBusca input:focus{outline:3px solid var(--gold);outline-offset:1px}
 #mlRes{display:none;margin:0 0 1rem}
-#mlRes .cards{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+#mlRes .cards{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
 #mlRes .vazio{color:var(--mu)}
 body.mlBuscando #mlRes{display:block}
-body.mlBuscando #main>*:not(#mlBusca):not(#mlRes){display:none!important}
+body.mlBuscando #main>*:not(#mlBusca):not(#mlRes):not(#skTopo){display:none!important}
+body.mlBuscando #skTopo>*:not(#mlBusca):not(#mlRes){display:none!important}
 #mlAvisoProf{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);z-index:60;max-width:92vw;background:var(--card);color:var(--tx);border:2px solid var(--gold);border-radius:14px;padding:.8rem 1rem;box-shadow:0 8px 30px rgba(0,0,0,.5);display:flex;gap:.8rem;align-items:center;flex-wrap:wrap}
 #mlAvisoProf button{background:var(--gold);color:#002855;border:0;border-radius:10px;padding:.5rem .9rem;font-weight:800;cursor:pointer}
 .mlComecar{background:var(--gold);color:#002855;border:0;border-radius:12px;padding:.8rem 1.2rem;font-weight:800;font-size:1rem;cursor:pointer}
@@ -45,7 +46,13 @@ function montarBusca(){
   const box=document.createElement('div');box.id='mlBusca';box.setAttribute('role','search');
   box.innerHTML='<label for="mlBuscaIn">🔎 Buscar assunto, tema ou código BNCC</label><input id="mlBuscaIn" type="search" autocomplete="off" placeholder="Ex.: Pitágoras, frações, juros, EF07MA18">';
   const res=document.createElement('div');res.id='mlRes';res.setAttribute('aria-live','polite');
-  main.insertBefore(res,main.firstChild);main.insertBefore(box,main.firstChild);
+  const skTopo=$('skTopo'),skFiltros=$('skFiltros');
+  if(skTopo&&skFiltros&&skFiltros.parentNode===skTopo){
+    skTopo.insertBefore(box,skFiltros);
+    skTopo.insertBefore(res,skFiltros);
+  }else{
+    main.insertBefore(res,main.firstChild);main.insertBefore(box,main.firstChild);
+  }
   const inp=box.querySelector('input');
   function atualizar(){
     const q=inp.value.trim();
@@ -56,6 +63,9 @@ function montarBusca(){
          let ano='';try{ano=rotuloAno(m.ano)}catch(e){}
          return `<button class="mod" onclick="abrir('${m.id}')"><span class="ic">${m.ic||''}</span><b>${m.nome}</b><small>${m.sub||''}</small><small>${ano}</small></button>`}).join('')+'</div>'
       :'<p class="vazio">Nenhum assunto com esses termos. Tente uma palavra só, como "área" ou "função".</p>';
+    if(document.body.classList.contains('sk')&&typeof window.__mlDecorarCard==='function'){
+      res.querySelectorAll('.mod[onclick^="abrir("]').forEach(window.__mlDecorarCard);
+    }
   }
   inp.addEventListener('input',atualizar);
   inp.addEventListener('keydown',e=>{
