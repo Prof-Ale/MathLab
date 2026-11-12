@@ -5,11 +5,11 @@
    - Ícones e manifesto: cache primeiro.
    - GeoGebra (3D) e ADA ficam fora do cache: precisam de internet e o app já avisa.
    Mude VERSAO só quando alterar ESTE arquivo ou a lista SHELL. Isso mostra o aviso "nova versão". */
-const VERSAO = 'mathlab-2026-11-11-34';
+const VERSAO = 'mathlab-2026-11-12-35';
 const CRITICOS = ['./', 'index.html', 'manifest.webmanifest'];
-const EXTRAS = ['icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'arena.html', 'arena.js', 'arena-host.js', 'arena-live.js', 'arena-config.js', 'arena-qr.js', 'arena-relatorio.js', 'ml-ux.js'];
+const EXTRAS = ['icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'arena.html', 'arena.js', 'arena-host.js', 'arena-live.js', 'arena-config.js', 'arena-qr.js', 'arena-relatorio.js', 'arena-painel.js', 'ml-ux.js'];
 // Arena: arquivos que também tentam a rede primeiro, para atualizar sem mexer neste arquivo.
-const REDE_PRIMEIRO = ['arena.js', 'arena.html', 'arena-host.js', 'arena-live.js', 'arena-config.js', 'arena-qr.js', 'arena-relatorio.js', 'aluno.html', 'aluno.js', 'ml-ux.js'];
+const REDE_PRIMEIRO = ['arena.js', 'arena.html', 'arena-host.js', 'arena-live.js', 'arena-config.js', 'arena-qr.js', 'arena-relatorio.js', 'arena-painel.js', 'aluno.html', 'aluno.js', 'ml-ux.js'];
 const IMAGENS_EXTERNAS = ['lh3.googleusercontent.com', 'api.dicebear.com'];
 
 self.addEventListener('install', e => {

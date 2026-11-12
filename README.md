@@ -568,3 +568,17 @@ Total agora: 1ª EM com 8 assuntos, 2ª EM com 12 e 3ª EM com 18. Fatoração f
 
 Limites conhecidos: nenhum teste em Safari, iPhone ou com alunos; toque e impressão foram só simulados. Ficam para depois o painel do professor em três camadas, a identificação opcional com LGPD, o combo visível e o reforço dos geradores com uma dica só.
 
+## Painel do professor e segunda dica (v4.12)
+
+Painel do professor: na Arena, os botões "Painel do professor" ficam ao lado do relatório, no pódio (abre a última partida) e na tela de configuração (abre todas). São três camadas.
+
+1. Visão rápida: acerto geral com faixa Bem, Atenção ou Retomar (texto e símbolo, não só cor), uma frase sobre a turma, comparação da última partida com as anteriores e até três sugestões para a próxima aula, usando os pré-requisitos e os próximos assuntos de cada módulo.
+2. Assuntos e erros: acerto por assunto e os enganos mais comuns, com o que retomar.
+3. Detalhe: cada questão, da que mais desafiou para a que menos, com a resposta certa, a resolução e a alternativa errada mais escolhida, mais a lista de partidas.
+
+Dá para filtrar por turma ou pela última partida, imprimir ou salvar em PDF (as três camadas saem juntas) e baixar a planilha. Os dados continuam só neste aparelho. Como a Arena guarda apenas apelidos e contagens, não há detalhe por aluno.
+
+Segunda dica: os 74 geradores que tinham uma dica só ganharam uma segunda, escrita com os números do enunciado, que diz como montar a conta sem dar o resultado. Assim o 2º degrau da escada de ajuda deixou de repetir o 1º. Falta ainda reforçar os demais geradores, que têm duas dicas mas não três distintas.
+
+Limites: sem teste em Safari, iPhone ou com alunos. Identificação opcional e LGPD ficam de fora por decisão do professor.
+

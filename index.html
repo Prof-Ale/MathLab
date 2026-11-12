@@ -10416,6 +10416,110 @@ MODS.push({id:'regra3c',ano:12,ic:'⚖️',nome:'Regra de três simples e compos
   c.textAlign='left'},
  rod:8,gens:R3C_GENS});
 
+/* ===== Segunda dica para geradores que tinham só uma (camada separada) =====
+   Cada função recebe a questão já sorteada e monta o 2º degrau da escada de ajuda com os números
+   do enunciado: diz COMO montar a conta, sem dar o resultado. Se algo não casar, usa a dica geral. */
+(function(){
+const GEN='Releia o enunciado e anote o que ele dá e o que ele pede. Depois escolha a conta.';
+const M=(q,re)=>q.q.match(re);
+const SUB=s=>String(s).replace(/[₀-₉]/g,d=>'₀₁₂₃₄₅₆₇₈₉'.indexOf(d));
+const P=s=>/^[−-]/.test(s)?`(${s})`:s;
+const LADOS={pentágono:5,hexágono:6,heptágono:7,octógono:8,eneágono:9,decágono:10};
+const H={
+'quad:1:4':q=>{let m=M(q,/retângulo tem (\d+) cm de comprimento e (\d+) cm de largura/);if(m)return `Há dois lados de ${m[1]} cm e dois de ${m[2]} cm. Some os quatro lados.`;m=M(q,/lado de (\d+) cm/);return m?`Os quatro lados medem ${m[1]} cm cada. Some os quatro, ou multiplique por 4.`:null},
+'paralelas:1:2':q=>{const t=M(q,/Os ângulos (\d) e (\d) são ([a-zç ]+)\. O ângulo (\d) mede (\d+)°/);if(!t)return null;return /colaterais/.test(t[3])?`Escreva ângulo ${t[1]} + ângulo ${t[2]} = 180° e isole o ângulo ${t[2]}.`:`Escreva ângulo ${t[2]} = ângulo ${t[1]} e troque pelo valor que o enunciado dá para o ângulo ${t[1]}.`},
+'paralelas:1:4':q=>{const t=M(q,/ângulos ([a-zç ]+) medem (\d+)° e (\d+)°/);if(!t)return null;return /colaterais/.test(t[1])?`Entre paralelas esses ângulos somariam 180°. Some ${t[2]}° e ${t[3]}° e compare.`:`Entre paralelas esses ângulos teriam a mesma medida. Compare ${t[2]}° com ${t[3]}°.`},
+'circ:1:1':q=>{const m=M(q,/mede (\d+)°/);return m?`O ângulo central de ${m[1]}° abre o arco. Compare as duas medidas: o arco é igual, a metade ou o dobro do ângulo central?`:null},
+'circ:1:3':q=>{const m=M(q,/arco de circunferência mede (\d+)°/);return m?`Divida a medida do arco, ${m[1]}°, por 2.`:null},
+'estim:1:2':q=>{const m=M(q,/([\d.]+) está entre quais (\S+) exatas/);return m?`Zere os algarismos à direita da ordem das ${m[2]} em ${m[1]} para achar a menor. A maior é a próxima.`:null},
+'estim:1:4':q=>{const m=M(q,/resulta em ([\d.]+)/);return m?`Para cada alternativa, veja de qual múltiplo da ordem pedida ela fica mais perto. Marque a que cai em ${m[1]}.`:null},
+'estim:2:1':q=>{const m=M(q,/estimar ([\d.]+) × ([\d.]+)/);return m?`Arredonde ${m[1]} e ${m[2]} olhando o algarismo das unidades. Depois multiplique os dois números redondos.`:null},
+'estim:2:2':q=>'Com os números redondos, corte um zero de cada para a divisão ficar mais curta.',
+'estim:3:3':q=>{const m=M(q,/arredondou ([\d.]+) primeiro/);return m?`Arredonde ${m[1]} direto para a centena. Compare os dois últimos algarismos com 50.`:null},
+'lergraf:1:2':q=>'Liste os valores do gráfico e compare um a um. A pergunta pede o nome da categoria, não o número.',
+'lergraf:1:3':q=>'Some os valores da tabela um de cada vez, na ordem em que aparecem.',
+'lergraf:2:3':q=>'Compare a temperatura de cada dia e guarde a maior até o fim. A resposta é o dia, não o número.',
+'racmul:1:3':q=>{const m=M(q,/de (\d+) pizzas/);return m?`Conte quantos pedaços saem de 1 pizza e multiplique pelo número de pizzas, ${m[1]}.`:null},
+'grandezas:1:1':q=>{const m=M(q,/percorreu ([\d.]+) km em ([\d.]+) horas/);return m?`Divida a distância, ${m[1]} km, pelo tempo, ${m[2]} horas. A distância fica em cima.`:null},
+'grandezas:1:2':q=>{const m=M(q,/tem ([\d.]+) habitantes em ([\d.]+) km²/);return m?`Divida ${m[1]} habitantes por ${m[2]} km².`:null},
+'grandezas:1:3':q=>{const m=M(q,/massa de ([\d.,]+) g e volume de ([\d.,]+) cm³/);return m?`Divida a massa, ${m[1]} g, pelo volume, ${m[2]} cm³. A massa fica em cima.`:null},
+'grandezas:2:1':q=>{const m=M(q,/velocidade média de ([\d.]+) km\/h.*em ([\d.]+) horas/);return m?`Multiplique ${m[1]} km/h por ${m[2]} horas.`:null},
+'grandezas:2:2':q=>{const m=M(q,/percorrer ([\d.]+) km a ([\d.]+) km\/h/);return m?`Divida ${m[1]} km por ${m[2]} km/h.`:null},
+'grandezas:2:3':q=>{const m=M(q,/densidade demográfica de ([\d.]+) hab\/km² e área de ([\d.]+) km²/);return m?`Multiplique ${m[1]} hab/km² por ${m[2]} km².`:null},
+'rigidez:1:1':q=>'Imagine empurrar cada figura. Qual delas não tem como inclinar sem esticar ou encolher algum lado?',
+'rigidez:1:3':q=>'Veja em que figuras a peça inclinada divide o quadrilátero. Essas figuras se deformam ou ficam travadas?',
+'rigidez:2:1':q=>{const m=M(q,/polígono de (\d+) lados/);return m?`Use n = ${m[1]} na fórmula n − 2.`:null},
+'rigidez:2:2':q=>{const m=M(q,/Um (\S+) tem (\d+) travessas?/);const n=m&&LADOS[m[1]];return n?`O total necessário é ${n} − 3. Desse total, desconte as ${m[2]} que já existem.`:null},
+'rigidez:2:3':q=>{const m=M(q,/Um (\S+) de varetas tem (\d+) travessas?/);const n=m&&LADOS[m[1]];return n?`Calcule o total necessário, ${n} − 3, e compare com as ${m[2]} que ele tem.`:null},
+'rigidez:3:1':q=>{const m=M(q,/de (\d+) cm, (\d+) cm e (\d+) cm/);if(!m)return null;const a=[+m[1],+m[2],+m[3]].sort((x,y)=>x-y);return `Some os dois menores, ${a[0]} e ${a[1]}, e compare a soma com o maior, ${a[2]}.`},
+'rigidez:3:2':q=>{const m=M(q,/estrutura de (\d+) lados/);return m?`Calcule as travessas, ${m[1]} − 3, e some com os ${m[1]} lados.`:null},
+'trigret:3:4':q=>/igual ao cateto adjacente/.test(q.q)?'Se os dois catetos são iguais, a razão entre eles vale 1. Qual ângulo tem tangente 1?':'Monte a razão entre os lados dados e procure, entre 30°, 45° e 60°, o ângulo que tem esse valor.',
+'funcquad:1:3':q=>{const m=M(q,/= (−?\d*)x² ([+−]) (\d+)x/);return m?`Aqui a = ${m[1]==='−'?'−1':m[1]||1} e b = ${m[2]==='−'?'−':''}${m[3]}. Troque na fórmula −b ÷ (2a).`:null},
+'pa:1:1':q=>{const m=M(q,/\(([^)]+?), \.\.\.\)/);if(!m)return null;const t=m[1].split(', ');return `Pegue os dois primeiros termos, ${t[0]} e ${t[1]}, e faça o segundo menos o primeiro. Cuidado com os sinais.`},
+'pa:1:4':q=>{const m=M(q,/primeiro termo é (\S+) e o terceiro é (\S+)\./);return m?`Some os termos vizinhos, ${P(m[1])} e ${P(m[2])}, e divida por 2.`:null},
+'pa:2:1':q=>{const m=M(q,/primeiro termo é (\S+) e a razão é (\S+)\. Qual é o termo de posição (\d+)/);return m?`Use a(n) = a(1) + (n − 1)·r com a(1) = ${m[1]}, r = ${m[2]} e n = ${m[3]}. Calcule n − 1 primeiro.`:null},
+'pg:1:1':q=>{const m=M(q,/\(([^)]+?), \.\.\.\)/);if(!m)return null;const t=m[1].split(', ');return `Divida o 2º termo, ${t[1]}, pelo 1º, ${t[0]}.`},
+'pg:1:3':q=>{const m=M(q,/primeiro termo é (\d+) e o terceiro é (\d+)/);return m?`Multiplique ${m[1]} por ${m[2]} e tire a raiz quadrada do resultado.`:null},
+'pg:2:1':q=>{const m=M(q,/primeiro termo é (\S+) e a razão é (\S+)\. Qual é o termo de posição (\d+)/);return m?`Use a(n) = a(1)·q^(n − 1) com a(1) = ${m[1]}, q = ${m[2]} e n = ${m[3]}. Calcule o expoente n − 1 primeiro.`:null},
+'pg:3:1':q=>{const m=M(q,/primeiro termo é (\d+), a razão é (\d+) e há (\d+) termos/);return m?`Na fórmula, a(1) = ${m[1]}, q = ${m[2]} e n = ${m[3]}. Calcule q^n primeiro.`:null},
+'conj:2:1':q=>{const m=M(q,/n\(A\) = (\d+), n\(B\) = (\d+) e n\(A ∩ B\) = (\d+)/);return m?`Some ${m[1]} e ${m[2]}. Depois tire ${m[3]}, que foi contado duas vezes.`:null},
+'conj:2:2':q=>'Marque em A os elementos que também aparecem em B. Conte os que ficaram sem marca.',
+'conj:3:2':q=>{const m=M(q,/(\d+) alunos gostam de matemática, (\d+) gostam de física e (\d+) gostam das duas/);return m?`Só matemática: ${m[1]} − ${m[3]}. Só física: ${m[2]} − ${m[3]}. Depois some os dois resultados.`:null},
+'notcient:2:3':q=>{const m=M(q,/ordem de grandeza de (\S+) × 10(\S+)\?/);return m?`Compare a mantissa ${m[1]} com 3,16. Se for menor, o expoente ${m[2]} fica. Se for maior, o expoente sobe 1.`:null},
+'funcexp:1:4':q=>{const m=M(q,/Quanto vale (\d+)⁻(\S+)\?/);return m?`Escreva 1 ÷ ${m[1]}${m[2]} (expoente positivo) e calcule a potência no denominador.`:null},
+'funcexp:3:4':q=>{const m=M(q,/Para x = (\d+)/);return m?`Calcule cada expressão com x = ${m[1]}. Comece pela potência.`:null},
+'log:1:1':q=>{const m=M(q,/log([₀-₉]+) (\d+)/);if(!m)return null;const b=SUB(m[1]);return `Teste as potências de ${b}: ${b}¹, ${b}², ${b}³ e assim por diante, até chegar em ${m[2]}.`},
+'log:1:3':q=>'Qualquer base elevada a 0 dá 1, e elevada a 1 dá a própria base. Para 1/base, pense em expoente negativo.',
+'log:1:4':q=>'Cada zero a mais é mais um fator 10. Conte os zeros e escreva 10 elevado a essa quantidade.',
+'log:2:1':q=>{const m=M(q,/log([₀-₉]+) x = (\d+)/);return m?`Troque por potência: x = ${SUB(m[1])} elevado a ${m[2]}. Calcule a potência.`:null},
+'log:2:2':q=>{const m=M(q,/logaritmo de (\d+) na base b vale (\d+)/);return m?`Teste bases pequenas (2, 3, 4, 5...): qual delas elevada a ${m[2]} dá ${m[1]}?`:null},
+'log:2:3':q=>'Outra forma: log A + log B = log (A · B) e log A − log B = log (A ÷ B), na mesma base.',
+'log:2:4':q=>'Propriedade: log na base b de b elevado a n vale n. Se preciso, reescreva o número com a base do logaritmo.',
+'log:3:2':q=>'Calcule a diferença entre os dois pHs e eleve 10 a esse número.',
+'log:3:3':q=>{const m=M(q,/sobra 1\/(\d+)/);return m?`Cada hora divide por 2. Quantos fatores 2 multiplicados dão ${m[1]}? Esse é o número de horas.`:null},
+'log:3:4':q=>'Subtraia as duas magnitudes para ver quantos pontos de diferença há. Depois eleve 10 a esse número.',
+'matfin:1:3':q=>{const m=M(q,/R\$ ([\d.]+) a juros compostos de (\d+)% ao mês durante (\d+) meses/);if(!m)return null;const i=+m[2];return `Multiplique ${m[1]} por 1,${String(i).padStart(2,'0')} uma vez por mês, ${m[3]} vezes. Depois tire o capital.`},
+'combinatoria:1:1':q=>{const m=M(q,/(\d+)!/);if(!m)return null;const n=+m[1],L=[];for(let i=n;i>=1;i--)L.push(i);return `Multiplique ${L.join(' · ')}, de dois em dois.`},
+'combinatoria:1:2':q=>{const m=M(q,/(\d+) pessoas/);if(!m)return null;const n=+m[1];return `Opções para o 1º lugar: ${n}. Para o 2º: ${n-1}. E assim até sobrar 1. Multiplique tudo.`},
+'combinatoria:1:3':q=>{const m=M(q,/(\d+) atletas/);if(!m)return null;const n=+m[1];return `Ouro: ${n} opções. Prata: ${n-1}. Bronze: ${n-2}. Multiplique os três números.`},
+'combinatoria:2:2':q=>{const m=M(q,/senhas de (\d+) dígitos/);return m?`A 1ª posição tem 10 opções e cada posição seguinte tem uma a menos. Multiplique ${m[1]} fatores.`:null},
+'matriz:1:3':q=>{const m=M(q,/A = \[(\S+) [^\]]*\] e B = \[(\S+) /);return m?`Some o 1º elemento de A com o 1º de B (${P(m[1])} + ${P(m[2])}), depois o 2º com o 2º, e assim por diante.`:null},
+'matriz:1:4':q=>{const m=M(q,/calcule (\d+)·A/);return m?`Multiplique cada número da matriz por ${m[1]}, um de cada vez, sem esquecer os sinais.`:null},
+'matriz:2:2':q=>{const m=M(q,/elemento c([₀-₉])([₀-₉])/);if(m){m[1]=SUB(m[1]);m[2]=SUB(m[2])}return m?`Para c${m[1]}${m[2]}: pegue a linha ${m[1]} de A e a coluna ${m[2]} de B. Multiplique os pares na ordem e some.`:null},
+'matriz:2:3':q=>{const m=M(q,/A = \[([^\]]+)\]/);if(!m)return null;const L=m[1].split(';').map(s=>s.trim().split(/\s+/));return `A matriz tem ${L.length} linhas e ${L[0].length} colunas. A transposta terá o contrário. A 1ª linha de A vira a 1ª coluna.`},
+'matriz:2:4':q=>'Multiplique a diagonal principal e subtraia o produto da outra diagonal. Use parênteses nos números negativos.',
+'matriz:3:3':q=>'Calcule B − A posição a posição, com atenção ao sinal de cada resultado.',
+'probcond:1:2':q=>{const m=M(q,/(\d+) bolas vermelhas e (\d+) azuis/);return m?`A urna tem ${+m[1]+ +m[2]} bolas. A chance de sair vermelha é ${m[1]} em ${+m[1]+ +m[2]} nas duas retiradas. Multiplique as duas chances.`:null},
+'probcond:3:3':q=>{const m=M(q,/entre ([^,]+), qual/);return m?`Olhe só ${m[1]}: some os que fazem e os que não fazem para ter o total. A probabilidade é quem faz dividido por esse total.`:null},
+'estatdisp:1:2':q=>{const m=M(q,/são ([\d, ]+)\. Qual é a amplitude/);return m?`Amplitude é maior menos menor. Percorra ${m[1]} procurando o maior e o menor.`:null},
+'estatdisp:1:4':q=>{const m=M(q,/são ([\d, ]+)\. Qual é a moda/);return m?`Conte quantas vezes cada número de ${m[1]} aparece. A moda é o que mais se repete.`:null},
+'geoesp:1:1':q=>{const m=M(q,/mede (\d+) cm de comprimento, (\d+) cm de largura e (\d+) cm de altura/);return m?`Volume é comprimento × largura × altura: ${m[1]} × ${m[2]} × ${m[3]}. Multiplique dois por vez.`:null},
+'geoesp:1:4':q=>{const m=M(q,/raio (\d+) cm/);return m?`Calcule ${m[1]}³ primeiro. Depois multiplique por 4/3 e deixe o π indicado.`:null},
+'geoesp:2:2':q=>{const m=M(q,/raio da base (\d+) cm e altura (\d+) cm/);return m?`Calcule ${m[1]}² + ${m[2]}², que dá g². Depois tire a raiz quadrada.`:null},
+'geoesp:2:3':q=>{const m=M(q,/raio da base (\d+) cm e altura (\d+) cm/);return m?`Calcule a área da base, π · ${m[1]}², e multiplique pela altura, ${m[2]}. Depois divida por 3.`:null},
+'ga_reta:1:3':q=>{const m=M(q,/A\((\S+), (\S+)\) e B\((\S+), (\S+)\)/);return m?`Calcule y de B menos y de A: ${P(m[4].replace(')',''))} − ${P(m[2].replace(')',''))}. Calcule x de B menos x de A: ${P(m[3].replace(',',''))} − ${P(m[1].replace(',',''))}. Divida o primeiro pelo segundo.`:null},
+'ga_circ:1:2':q=>{const m=M(q,/equação ([^.]*?= \d+)\./);return m?`Na forma (x − a)² + (y − b)² = r², o centro é (a, b) e o lado direito é r². Compare com ${m[1]}.`:null},
+'ga_circ:3:4':q=>'O centro da circunferência não entra na conta da área. Só o lado direito da equação importa.'
+};
+const SEMHIF=s=>typeof s==='string'?s.replace(/(^|[\s(+·])-(?=\d)/g,'$1−'):s;
+Object.keys(H).forEach(k=>{
+  const [id,lv,i]=k.split(':'),m=MODS.find(x=>x.id===id);
+  if(!m||!m.gens||!m.gens[lv])return;
+  const g=m.gens[lv][i-1];if(typeof g!=='function')return;
+  m.gens[lv][i-1]=function(){
+    const q=g.apply(this,arguments);
+    try{
+      if(q&&Array.isArray(q.h)&&(q.h.length<2||q.h[0]===q.h[1])){
+        let x=null;try{x=H[k](q)}catch(_){}
+        q.h=[q.h[0],x||GEN];
+      }
+      if(q&&typeof q.e==='string')q.e=SEMHIF(q.e);
+    }catch(_){}
+    return q;
+  };
+});
+})();
+
 const O6=['nat','adsub','muldiv','tabmul','tabdiv','fra','solidos'],ix=MODS.map((m,i)=>m.ano===6?i:-1).filter(i=>i>=0),st=ix.map(i=>MODS[i]).sort((x,y)=>{const a=O6.indexOf(x.id),b=O6.indexOf(y.id);return (a<0?99:a)-(b<0?99:b)});ix.forEach((i,j)=>{MODS[i]=st[j]});
 })();
 
