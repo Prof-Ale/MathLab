@@ -44,7 +44,7 @@ function montarBusca(){
   document.body.classList.remove('mlBuscando');
   const old=$('mlBusca');if(old)old.remove();const oldR=$('mlRes');if(oldR)oldR.remove();
   const box=document.createElement('div');box.id='mlBusca';box.setAttribute('role','search');
-  box.innerHTML='<label for="mlBuscaIn">🔎 Buscar assunto, tema ou código BNCC</label><input id="mlBuscaIn" type="search" autocomplete="off" placeholder="Ex.: Pitágoras, frações, juros, EF07MA18">';
+  box.innerHTML='<label for="mlBuscaIn">Buscar assunto, tema ou código BNCC</label><input id="mlBuscaIn" type="search" autocomplete="off" placeholder="Ex.: Pitágoras, frações, juros, EF07MA18">';
   const res=document.createElement('div');res.id='mlRes';res.setAttribute('aria-live','polite');
   const skTopo=$('skTopo'),skFiltros=$('skFiltros');
   if(skTopo&&skFiltros&&skFiltros.parentNode===skTopo){
