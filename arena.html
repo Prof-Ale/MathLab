@@ -3,24 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#04122b">
+<meta name="theme-color" content="#001a3a">
 <title>Arena MathLab | Prof. Alê Chocolate</title>
 <link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500;600;700&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500;600;700&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet"></noscript>
+
 <style>
-:root{--fs:1rem;--cy:#06b6d4;--pk:#ec4899;--gr:#10b981;--rd:#ef4444}
-body{--bg:#061a38;--card:#0d2c58;--nav:#04122b;--tx:#eef3fb;--mu:#b3c3dc;--gold:#f2b01e;--gold2:#f6c453;--bd:#27497f;--cv:#041225;--sf2:#143b73;--glow:rgba(242,176,30,.22);--sh:0 10px 30px rgba(0,0,0,.35);
+:root{--f-display:'Montserrat','Segoe UI',system-ui,sans-serif;--f-body:'Atkinson Hyperlegible','Segoe UI',system-ui,sans-serif;--f-mono:'JetBrains Mono',ui-monospace,Consolas,monospace;--fs:1rem;--cy:#06b6d4;--pk:#ec4899;--gr:#10b981;--rd:#ef4444}
+body{--bg:#001a3a;--card:#0a2a57;--nav:#00224a;--tx:#eef3fb;--mu:#b3c3dc;--gold:#f2b01e;--gold2:#f6c453;--bd:#27497f;--cv:#041225;--sf2:#143b73;--glow:rgba(242,176,30,.22);--sh:0 10px 30px rgba(0,0,0,.35);
 --ax1:#38bdf8;--ax2:#a78bfa;--ax3:#2dd4bf;--ax4:#fb923c;--ax5:#f472b6;--axfg:#061a38;--ok:#22c55e;--okbg:rgba(34,197,94,.16)}
 body.theme-light{--bg:#f3f6fb;--card:#ffffff;--nav:#0b2a52;--tx:#0b2347;--mu:#4a5c7a;--gold:#e09000;--gold2:#8a5a00;--bd:#ccd7ea;--cv:#f8fafc;--sf2:#eef3fb;--glow:rgba(224,144,0,.18);--sh:0 8px 24px rgba(11,35,71,.12);
 --ax1:#0369a1;--ax2:#6d28d9;--ax3:#0f766e;--ax4:#c2410c;--ax5:#be185d;--axfg:#fff;--ok:#15803d;--okbg:rgba(21,128,61,.12)}
 body.theme-contrast{--bg:#000;--card:#111;--nav:#1a1a1a;--tx:#ff0;--mu:#fff;--gold:#ff0;--gold2:#ff0;--bd:#fff;--cv:#000;--sf2:#111;--glow:transparent;--sh:none;--cy:#0ff;--gr:#0f0;
 --ax1:#ff0;--ax2:#ff0;--ax3:#ff0;--ax4:#ff0;--ax5:#ff0;--axfg:#000;--ok:#0f0;--okbg:#021}
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;font-family:var(--f-body)}
+h1,h2,h3,h4,.brand,.btn,button,.go{font-family:var(--f-display)}
+.tn,.mono,input.cod{font-family:var(--f-mono)}
 html{font-size:var(--fs)}
 body{background:var(--bg);color:var(--tx);min-height:100vh;display:flex;flex-direction:column;line-height:1.45}
 button,select,input{font:inherit}
 :focus-visible{outline:3px solid var(--cy);outline-offset:2px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#071d40,var(--nav));border-bottom:2px solid var(--gold);padding:.55rem 1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem;color:#eef3fb}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#00224a,var(--nav));border-bottom:2px solid var(--gold);padding:.55rem 1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem;color:#eef3fb}
 body.theme-light header,body.theme-contrast header{background:var(--nav)}
 .brand{display:flex;align-items:center;gap:.7rem;text-decoration:none;color:var(--gold2)}
 .brand img{height:40px;width:40px;border-radius:50%;display:block;object-fit:cover}
