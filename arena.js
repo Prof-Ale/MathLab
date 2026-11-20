@@ -40,12 +40,14 @@ const EIXOS=Object.keys(EIXO_N);
 const CORES=['#38bdf8','#f472b6','#2dd4bf','#f2b01e','#a78bfa','#fb923c','#4ade80','#f87171'];
 const SIMB=['●','▲','■','◆','★','✚','⬟','⬢'];
 const HIST_KEY='mathlab-arena-hist',PREF_KEY='mathlab-arena-pref';
+/* Opções de quantidade de questões por partida. O padrão (15) está em E.total. */
+const TOTAIS=[5,10,15,20,25,30];
 const fmt1=n=>n.toFixed(1).replace('.',',');
 
 /* ===== ESTADO ===== */
 const E={
   parts:[{nome:'Equipe Alfa'},{nome:'Equipe Beta'}],
-  sel:new Set(),ano:'todos',nivel:0,total:10,tempo:30,bonus:false,
+  sel:new Set(),ano:'todos',nivel:0,total:15,tempo:30,bonus:false,
   ativa:false,qs:[],qi:0,placar:[],resp:{},revelada:false,tInicio:0,tRestante:0,timer:null,
   erros:{},rodadas:[],somOn:true,fs:1
 };
@@ -58,7 +60,7 @@ function lerPref(){
   if(!p.tema){try{const s=JSON.parse(localStorage.getItem('mathlab')||'{}');if(s&&['light','contrast','dark'].includes(s.tema))p.tema=s.tema;if(s&&Number.isFinite(s.fs)&&!p.fs)p.fs=s.fs}catch(_){}}
   return p;
 }
-function salvarPref(){try{localStorage.setItem(PREF_KEY,JSON.stringify({tema:E.tema,fs:E.fs,som:E.somOn}))}catch(_){}}
+function salvarPref(){try{localStorage.setItem(PREF_KEY,JSON.stringify({tema:E.tema,fs:E.fs,som:E.somOn,total:E.total}))}catch(_){}}
 function aplicarTema(m){
   E.tema=m;document.body.classList.remove('theme-light','theme-contrast');
   if(m==='light')document.body.classList.add('theme-light');if(m==='contrast')document.body.classList.add('theme-contrast');
@@ -131,10 +133,11 @@ function telaConfig(){
   <section class="ar-box" aria-labelledby="hComo"><h2 id="hComo">2. Como joga</h2>
     <div class="ar-cfg">
       <label class="ar-fld">Nível<select id="cNivel" onchange="ArenaUI.cfg()"><option value="0" ${E.nivel===0?'selected':''}>Progressivo (1, 2 e 3)</option><option value="1" ${E.nivel===1?'selected':''}>Nível 1, base</option><option value="2" ${E.nivel===2?'selected':''}>Nível 2, cálculo</option><option value="3" ${E.nivel===3?'selected':''}>Nível 3, problemas</option></select></label>
-      <label class="ar-fld">Questões<select id="cTotal" onchange="ArenaUI.cfg()">${[5,10,15,20].map(n=>`<option value="${n}" ${E.total===n?'selected':''}>${n}</option>`).join('')}</select></label>
+      <label class="ar-fld">Questões<select id="cTotal" onchange="ArenaUI.cfg()">${TOTAIS.map(n=>`<option value="${n}" ${E.total===n?'selected':''}>${n}</option>`).join('')}</select></label>
       <label class="ar-fld">Tempo por questão<select id="cTempo" onchange="ArenaUI.cfg()">${[[15,'15 segundos'],[30,'30 segundos'],[45,'45 segundos'],[60,'60 segundos'],[0,'Sem limite']].map(([v,t])=>`<option value="${v}" ${E.tempo===v?'selected':''}>${t}</option>`).join('')}</select></label>
       <label class="ar-chk"><input type="checkbox" id="cBonus" ${E.bonus?'checked':''} ${E.tempo===0?'disabled':''} onchange="ArenaUI.cfg()"><span><b>Bônus de rapidez</b> (até 25 pontos). Conta o tempo até você marcar a resposta da equipe. Use quando marcar na ordem em que elas respondem.</span></label>
     </div>
+    ${E.total>=20&&E.sel.size>0&&E.sel.size<=2?'<p class="ar-dica" role="note">Com poucos assuntos marcados e muitas questões, os modelos de questão se repetem. Marque mais assuntos para dar variedade.</p>':''}
     <p class="ar-dica">Pontos: acerto <b>100</b> · sequência de 3 acertos <b>+30</b> · sequência de 5 ou mais <b>+60</b>${E.bonus&&E.tempo?' · rapidez <b>até +25</b>':''} · erro ou sem resposta <b>0</b>. Empate fica empatado.</p>
   </section>
 
@@ -159,7 +162,7 @@ const UI={
     E.parts.push({nome:n});telaConfig();const x=$('novoNome');if(x)x.focus()},
   quatro(){E.parts=['Equipe Alfa','Equipe Beta','Equipe Gama','Equipe Delta'].map(nome=>({nome}));telaConfig()},
   rem(i){if(E.parts.length<=1){anunciar('Precisa de pelo menos um participante.');return}E.parts.splice(i,1);telaConfig()},
-  cfg(){E.nivel=+$('cNivel').value;E.total=+$('cTotal').value;E.tempo=+$('cTempo').value;E.bonus=$('cBonus').checked&&E.tempo>0;telaConfig()},
+  cfg(){E.nivel=+$('cNivel').value;E.total=+$('cTotal').value;E.tempo=+$('cTempo').value;E.bonus=$('cBonus').checked&&E.tempo>0;salvarPref();telaConfig()},
   ano(v){E.ano=v;telaConfig()},
   mod(id,on){on?E.sel.add(id):E.sel.delete(id);const h=$('hO');if(h)h.textContent=`3. O que entra (${E.sel.size} de ${elegiveis().length} assuntos)`},
   eixo(e,on){elegiveis().filter(m=>(m.eixo||'Outros')===e&&(E.ano==='todos'||String(m.ano)===String(E.ano))).forEach(m=>on?E.sel.add(m.id):E.sel.delete(m.id));telaConfig()},
@@ -169,24 +172,51 @@ const UI={
 window.ArenaUI=UI;
 
 /* ===== SORTEIO ===== */
+/*SORTEIO-INI*/
+/* Memória das últimas partidas, só neste aparelho. Guarda (1) um código curto de cada questão usada
+   e (2) quais modelos (geradores) de cada assunto e nível foram usados por último. Serve para
+   rodar os modelos em rodízio e evitar repetir questão entre uma partida e a seguinte. */
+const SORT_KEY='mathlab-arena-recentes',SORT_MAX_Q=600,SORT_MAX_G=12;
+function lerRecentes(){
+  try{const r=JSON.parse(localStorage.getItem(SORT_KEY)||'{}')||{};return{q:Array.isArray(r.q)?r.q:[],g:(r.g&&typeof r.g==='object')?r.g:{}}}
+  catch(_){return{q:[],g:{}}}
+}
+function salvarRecentes(r){try{r.q=r.q.slice(-SORT_MAX_Q);localStorage.setItem(SORT_KEY,JSON.stringify(r))}catch(_){}}
+function chaveQ(modId,txt){let h=5381;const s=modId+'|'+txt;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return(h>>>0).toString(36)}
+/* Escolhe o modelo menos usado recentemente; no empate, o usado há mais tempo; depois, sorteio. */
+function escolherGerador(n,uso,rnd){
+  const cont=new Array(n).fill(0),ult=new Array(n).fill(-1);
+  uso.forEach((ix,pos)=>{if(Number.isInteger(ix)&&ix>=0&&ix<n){cont[ix]++;ult[ix]=pos}});
+  const min=Math.min(...cont),c1=[];for(let i=0;i<n;i++)if(cont[i]===min)c1.push(i);
+  const velho=Math.min(...c1.map(i=>ult[i])),c2=c1.filter(i=>ult[i]===velho);
+  return c2[Math.floor(rnd()*c2.length)];
+}
+/*SORTEIO-FIM*/
 function montar(){
   const mods=elegiveis().filter(m=>E.sel.has(m.id));if(!mods.length)return null;
-  const lista=[],vistos=new Set();let fila=[];
+  const R=lerRecentes(),rec=new Set(R.q),lista=[],vistos=new Set();let fila=[];
   for(let i=0;i<E.total;i++){
     if(!fila.length)fila=sh(mods);
     const m=fila.pop();
     const nv=E.nivel===0?(i<E.total/3?1:i<2*E.total/3?2:3):E.nivel;
     const gens=m.gens[nv]||m.gens[1];
-    let q=null;
+    const gk=m.id+'|'+nv,uso=R.g[gk]||(R.g[gk]=[]);
+    const pref=escolherGerador(gens.length,uso,Math.random);
+    let q=null,gi=-1;
     try{PONTE.setCur(m)}catch(_){}
-    for(let t=0;t<30&&!q;t++){
-      try{const c=gens[Math.floor(Math.random()*gens.length)]();
-        if(validarQuestao(c)&&!vistos.has(m.id+'|'+c.q)){q=c;vistos.add(m.id+'|'+c.q)}}catch(_){}
+    /* 1ª passada evita questões das últimas partidas; a 2ª aceita repetir se o assunto não tiver mais o que sortear. */
+    for(let pass=0;pass<2&&!q;pass++){
+      for(let t=0;t<30&&!q;t++){
+        const ix=t<8?pref:Math.floor(Math.random()*gens.length);
+        try{const c=gens[ix]();
+          if(validarQuestao(c)&&!vistos.has(m.id+'|'+c.q)&&(pass===1||!rec.has(chaveQ(m.id,c.q)))){q=c;gi=ix;vistos.add(m.id+'|'+c.q)}}catch(_){}
+      }
     }
-    if(!q){try{const c=gens[0]();if(validarQuestao(c))q=c}catch(_){}}
+    if(!q){try{const c=gens[0]();if(validarQuestao(c)){q=c;gi=0}}catch(_){}}
     try{PONTE.setCur(null)}catch(_){}
-    if(q)lista.push({mod:m,nivel:nv,q});
+    if(q){lista.push({mod:m,nivel:nv,q});uso.push(gi);if(uso.length>SORT_MAX_G)uso.splice(0,uso.length-SORT_MAX_G);R.q.push(chaveQ(m.id,q.q))}
   }
+  salvarRecentes(R);
   return lista;
 }
 function iniciar(){
@@ -359,11 +389,11 @@ window.ArenaHdr={
   som:()=>{E.somOn=!E.somOn;const b=$('btnSom');if(b){b.setAttribute('aria-pressed',String(E.somOn));b.textContent=E.somOn?'Som ligado':'Som desligado'}salvarPref();if(E.somOn)som('tic')}
 };
 function iniciarApp(){
-  const p=lerPref();aplicarFonte(p.fs||1);E.somOn=p.som!==false;
+  const p=lerPref();aplicarFonte(p.fs||1);E.somOn=p.som!==false;if(TOTAIS.includes(p.total))E.total=p.total;
   const b=$('btnSom');if(b){b.setAttribute('aria-pressed',String(E.somOn));b.textContent=E.somOn?'Som ligado':'Som desligado'}
   aplicarTema(p.tema||'dark');carregar();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciarApp);else iniciarApp();
 window.__arenaEstado=E;
-window.__arenaInt={E,montar,desenharFigura,elegiveis,telaConfig,anunciar,som,esc,L,CORES,SIMB,corEixo,temFigura,fmt1,hist,HIST_KEY,EIXO_N,get PONTE(){return PONTE},get MODS(){return MODS}};
+window.__arenaInt={E,montar,TOTAIS,escolherGerador,desenharFigura,elegiveis,telaConfig,anunciar,som,esc,L,CORES,SIMB,corEixo,temFigura,fmt1,hist,HIST_KEY,EIXO_N,get PONTE(){return PONTE},get MODS(){return MODS}};
 })();
