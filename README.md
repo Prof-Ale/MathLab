@@ -138,6 +138,7 @@ A versão 1.6 renovou o visual sem mexer em módulos, geradores, pontuação nem
 * Três níveis por assunto, com subida e descida automáticas conforme os acertos de primeira
 * Escada de ajuda em três degraus. No 1º erro, o app mostra uma dica. No 2º, mostra a alternativa escolhida riscada, a explicação daquele erro, uma segunda dica diferente e um botão que leva ao simulador. No 3º, oferece "Não sei, me mostra passo a passo", que revela a resolução sem dar XP e registra a desistência no histórico
 * Erros classificados: cada alternativa errada carrega o tipo de erro (por exemplo "somou em vez de multiplicar"), e o painel "Para reforçar" mostra os mais frequentes
+* Revisão espaçada (caixas de Leitner): cada assunto volta depois de 1, 3, 7, 14, 30 e 60 dias se o aluno acertou de primeira pelo menos 80% das questões da sessão, e volta para o dia seguinte se não acertou. Uma sessão conta como uma única evidência, e sessões com menos de 3 respostas não mudam a agenda. A página inicial mostra até 3 assuntos em "Para revisar hoje", com o pré-requisito vencido antes do assunto que depende dele. O dado fica só no aparelho, separado por aluno
 * Simulador que não entrega a resposta: o resultado só aparece depois do acerto
 * Pontuação (XP), títulos por nível e sequência diária de estudo
 * Música de fundo e efeitos sonoros, ambos opcionais
@@ -222,7 +223,11 @@ MathLab/
 ├── database.rules.json      # regras do Realtime Database
 ├── assets/                  # logo, logo circular e avatar do professor (WebP)
 ├── icons/                   # ícones do aplicativo
+├── revisao-core.js          # lógica da revisão espaçada (sem tela)
+├── revisao.js               # camada aditiva: registra respostas e mostra "Para revisar hoje"
 ├── testes-geradores.mjs     # testes (opcional, só para desenvolvimento)
+├── testes-arena.mjs         # testes da quantidade de questões da Arena
+├── testes-revisao.mjs       # testes da revisão espaçada
 ├── LICENSE.md
 └── README.md
 ```
@@ -276,6 +281,8 @@ node testes-geradores.mjs
 Opções: `--rodadas=N` (padrão 1000 sorteios por gerador), `--seed=N` (repete uma falha com a mesma semente), `--modulo=med,prob` (só esses módulos), `--estrito` (avisos também reprovam) e `--verbose` (lista os avisos).
 
 Ele verifica a forma de cada questão, o texto (NaN, undefined, concordância), a resposta recalculada por fora do app nos módulos que têm conferência em `CONF`, o estado do simulador, a variedade de enunciados e a descrição de acessibilidade. O simulador é percorrido em uma grade de valores, inclusive fora do intervalo dos controles.
+
+A revisão espaçada tem testes próprios: `node testes-revisao.mjs`.
 
 Resultado na versão 1.6: 1059 geradores e 92 simuladores passaram, com 25 avisos de variedade de enunciado.
 
